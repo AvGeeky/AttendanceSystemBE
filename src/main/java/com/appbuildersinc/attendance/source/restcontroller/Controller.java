@@ -376,7 +376,7 @@ public class Controller {
     @GetMapping("/student/getDetails")
     public ResponseEntity<Map<String,Object>>getStudentDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                    String authorizationHeader)throws Exception {
-        System.out.println(authorizationHeader);
+
         Map<String, Object> claims = functionsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
@@ -403,7 +403,7 @@ public class Controller {
         @PostMapping("/student/setDetails")
         public ResponseEntity<Map<String,Object>> setStudentDetails(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
                                                                     @RequestBody Map<String, Object> requestBody) throws Exception{
-            System.out.printf(authorizationHeader);
+
         Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
         String status=(String)claims.get("status");
         if(status.equals("S")){
