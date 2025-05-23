@@ -1,14 +1,25 @@
 package com.appbuildersinc.attendance.source.restcontroller;
 
 import com.appbuildersinc.attendance.source.Utilities.KeyPairUtil;
+import com.appbuildersinc.attendance.source.Utilities.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.database.UserDB;
 import com.appbuildersinc.attendance.source.Utilities.jwtUtil;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -64,14 +75,16 @@ public class Controller {
     private final UserDB userdbclass;
     private final KeyPairUtil keyclass;
     private final jwtUtil jwtclass;
-
-
+    private final StudentjwtUtil jwtclass2;
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String googleClientId;
     @Autowired
-    public Controller(Functions functionsService, UserDB userdbutil, jwtUtil jwtutil, KeyPairUtil keyutil) {
+    public Controller(Functions functionsService, UserDB userdbutil, jwtUtil jwtutil, KeyPairUtil keyutil,StudentjwtUtil stdjwtutil) {
         this.functionsService = functionsService;
         this.userdbclass = userdbutil;
         this.jwtclass = jwtutil;
         this.keyclass =keyutil;
+        this.jwtclass2 = stdjwtutil;
     }
 
     @PostMapping("/faculty/setEmail")
@@ -314,10 +327,125 @@ public class Controller {
             return ResponseEntity.status(401).body(claims);
         }
     }
+    @PostMapping("/api/auth/google")
+    public ResponseEntity<Map<String, Object>> authenticateWithGoogle(@RequestBody Map<String, String> request) throws IOException {
+        Map<String, Object> response = new HashMap<>();
+
+        // ✅ Check if ID token is provided
+        String idToken = request.get("idToken");
+        if (idToken == null || idToken.isBlank()) {
+            response.put("status", "E");
+            response.put("message", "ID token not provided in request body.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response); // 400
+        }
+
+        // ✅ Setup verifier for Google token
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(), new JacksonFactory())
+                .setAudience(Collections.singletonList(googleClientId)) // Replace with your actual client ID
+                .build();
+
+        GoogleIdToken token;
+        try {
+            token = verifier.verify(idToken);
+        } catch (GeneralSecurityException e) {
+            response.put("status", "E");
+            response.put("message", "Security error while verifying token. Please try again later.");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response); // 503
+        } catch (IOException e) {
+            response.put("status", "E");
+            response.put("message", "Network error occurred while verifying token. Please try again.");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response); // 503
+        }
+
+        // ✅ Token verification failed (e.g. expired, tampered, or wrong audience)
+        if (token == null) {
+            response.put("status", "E");
+            response.put("message", "Invalid or expired Google ID token.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // 401
+        }
+
+        // ✅ Token is valid
+        GoogleIdToken.Payload payload = token.getPayload();
+        String email = payload.getEmail();
+        String userId = payload.getSubject(); // Unique Google user ID
+
+        // You can optionally validate the email domain or userId here
+
+        // ✅ Generate internal JWT for session
+        Map<String, Object> claims = jwtclass2.createClaims(email, userId, true);
+        String jwt = jwtclass2.signJwt(claims);
+
+        response.put("status", "S");
+        response.put("message", "Login successful");
+        response.put("token", jwt);
+        return ResponseEntity.ok(response); // 200
+    }
+    @GetMapping("/student/getDetails")
+    public ResponseEntity<Map<String,Object>>getStudentDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                               String authorizationHeader)throws Exception {
+        Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> details = userdbclass.getStudentDetailsByEmail((String) claims.get("email"));
+            if (details != null) {
+                response.put("status", "S");
+                response.put("message", "Student details retrieved succesully");
+                response.put("details", details);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("status", "E");
+                response.put("message", "Error in retrieving student  details. Please try again.");
+                return ResponseEntity.status(503).body(response);
+            }
+
+
+        } else {
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+        @PostMapping("/student/setDetails")
+        public ResponseEntity<Map<String,Object>> setStudentDetails(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+                                                                    @RequestBody Map<String, Object> requestBody) throws Exception{
+
+        Map<String,Object> claims=functionsService.checkJwtAuthAfterLogin(authorizationHeader);
+        String status=(String)claims.get("status");
+        if(status.equals("S")){
+            Map<String,Object> response =new HashMap<>();
+            boolean succ = userdbclass.updateStudentDocumentsbyemail(
+                    (String) claims.get("email"),
+                    (String) requestBody.get("name"),
+                    (String) requestBody.get("regno"),
+                    (String) requestBody.get("passout"),
+                    (List<String>) requestBody.get("registeredClasses"),
+                    (Map<String, Object>) requestBody.get("attendance")
+            );
+            if (succ) {
+                response.put("status", "S");
+                response.put("message", "Student  details updated successfully!");
+                return ResponseEntity.ok(response);
+
+            } else {
+                //Error in updating user details
+                response.put("status", "E");
+                response.put("message", "Error in updating student  details. Please try again.");
+                return ResponseEntity.status(503).body(response);
+            }
+
+
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+
+        }
+
+        }
+
+
+    }
 
 
 
 
-
-
-}

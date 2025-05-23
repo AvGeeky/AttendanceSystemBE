@@ -11,14 +11,14 @@ public class StudentjwtUtil {
     private final Dotenv dotenv = Dotenv.configure().filename("apiee.env").load();
     private final String HMAC_SECRET = dotenv.get("JWT_HMAC_SECRET");
     private final int EXPIRATION_MINUTES =  Integer.parseInt(dotenv.get("JWT_EXPIRATION_MINUTES"));
-    public Map<String,Object> createClaims(String email,String regno,String authorised){
+    public Map<String,Object> createClaims(String email,String regno,Boolean authorised){
         Map<String,Object> claims =new HashMap<>();
         claims.put("email",email);
         claims.put("regno",regno);
         claims.put("authorised",authorised);
         return claims;
     }
-    public void updateAuthorised(Map<String,Object> claims,String authorised){
+    public void updateAuthorised(Map<String,Object> claims,Boolean authorised){
         claims.put("authorised",authorised);
     }
     public void updateEmailI(Map<String,Object> claims,String email){

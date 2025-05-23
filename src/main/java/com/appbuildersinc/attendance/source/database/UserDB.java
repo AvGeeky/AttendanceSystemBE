@@ -9,6 +9,8 @@ import com.mongodb.client.MongoDatabase;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 import java.util.Map;
 
 //UserDB is a repository class that handles database operations related to user management.
@@ -22,6 +24,7 @@ public class UserDB {
     private static MongoClient mongoClient;
     private static MongoDatabase database;
     private static MongoCollection<Document> collection;
+    private static MongoCollection<Document> studentsCollection;
 
     static {
         try {
@@ -31,6 +34,7 @@ public class UserDB {
             mongoClient = MongoClients.create(settings);
             database = mongoClient.getDatabase("AttendEz");
             collection = database.getCollection("Users");
+            studentsCollection=database.getCollection("Students");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -84,6 +88,22 @@ public class UserDB {
     public Map<String, Object> getUserDetailsByEmail(String email) {
         Document query = new Document("faculty_email", email);
         return collection.find(query).first();
+    }
+    public Map<String,Object> getStudentDetailsByEmail(String email){
+       Document query=new Document("email",email);
+       return studentsCollection.find(query).first();
+    }
+    public Boolean updateStudentDocumentsbyemail(String email, String name, String regno, String passout, List<String> classes, Map<String,Object>attendance){
+        Document query=new Document("email",email);
+        Document updateFields=new Document()
+                .append("name",name)
+                .append("registerNumber",regno)
+                .append("passout",passout)
+                .append("registeredClasses",classes)
+                .append("attendance",attendance);
+        Document update=new Document("$set",updateFields);
+        return studentsCollection.updateOne(query,update).getModifiedCount()>0;
+
     }
 
 
