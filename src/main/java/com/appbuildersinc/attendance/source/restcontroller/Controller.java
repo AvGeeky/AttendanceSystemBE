@@ -62,8 +62,9 @@ Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizati
 public class Controller {
     private final Functions functionsService;
     private final UserDB userdbclass;
-    private final jwtUtil jwtclass;
     private final KeyPairUtil keyclass;
+    private final jwtUtil jwtclass;
+
 
     @Autowired
     public Controller(Functions functionsService, UserDB userdbutil, jwtUtil jwtutil, KeyPairUtil keyutil) {
