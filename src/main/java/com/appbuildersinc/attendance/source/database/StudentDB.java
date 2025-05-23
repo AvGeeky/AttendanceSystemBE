@@ -39,18 +39,18 @@ public class StudentDB {
         Document query=new Document("email",email);
         return studentsCollection.find(query).first();
     }
-    public Boolean updateStudentDocumentsbyemail(String email, String name, String regno, String passout, List<String> classes, Map<String,Object>attendance){
-        Document query=new Document("email",email);
-        Document updateFields=new Document()
-                .append("name",name)
-                .append("registerNumber",regno)
-                .append("passout",passout)
-                .append("registeredClasses",classes)
-                .append("attendance",attendance);
-        Document update=new Document("$set",updateFields);
-        return studentsCollection.updateOne(query,update).getModifiedCount()>0;
-
+    public Boolean updateStudentDocumentsbyemail(String email, String name, String regno, String passout) {
+        Document query = new Document("email", email);
+        Document updateFields = new Document()
+                .append("name", name)
+                .append("registerNumber", regno)
+                .append("passout", passout);
+        Document update = new Document("$set", updateFields);
+        com.mongodb.client.result.UpdateResult result = studentsCollection.updateOne(
+                query, update, new com.mongodb.client.model.UpdateOptions().upsert(true));
+        return result.getModifiedCount() > 0 || result.getUpsertedId() != null;
     }
+
 
 
 

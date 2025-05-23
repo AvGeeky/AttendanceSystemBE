@@ -14,8 +14,8 @@ public class StudentjwtUtil {
     public Map<String,Object> createClaims(String email,Boolean authorised){
         Map<String,Object> claims =new HashMap<>();
         claims.put("email",email);
-
         claims.put("authorised",authorised);
+        claims.put("role","STUDENT");
         return claims;
     }
     public void updateAuthorised(Map<String,Object> claims,Boolean authorised){
