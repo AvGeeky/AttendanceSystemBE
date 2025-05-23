@@ -76,21 +76,25 @@ public class AsyncEmailSenderUtil {
                 MimeMessage message = new MimeMessage(session);
                 message.setFrom(new InternetAddress(username, "Attendez App"));
                 message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
-                message.setSubject("Your OTP for Attendez App Login");
+                message.setSubject("Your OTP for AttendEz App Login");
 
                 String htmlContent = String.format(
-                        "<div style='background:#f7f9fa;padding:32px 0;font-family:Segoe UI,Arial,sans-serif;'>"
-                                + "<div style='max-width:420px;margin:auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px #0001;padding:32px;'>"
-                                + "<h2 style='color:#2d7ff9;text-align:center;margin-bottom:16px;'>Attendex App</h2>"
-                                + "<p style='font-size:16px;color:#333;text-align:center;'>Use the following <b>One-Time Password (OTP)</b> to continue:</p>"
-                                + "<div style='margin:32px 0;text-align:center;'>"
-                                + "  <span style='display:inline-block;background:#f0f4f8;padding:18px 36px;font-size:28px;font-weight:700;letter-spacing:6px;color:#2d7ff9;border-radius:8px;'>%s</span>"
+                        "<div style='background:linear-gradient(135deg,#e0e7ff 0%%,#f7f9fa 100%%);padding:40px 0;font-family:Segoe UI,Arial,sans-serif;'>"
+                                + "<div style='max-width:440px;margin:auto;background:#fff;border-radius:18px;box-shadow:0 4px 24px #0002;padding:40px 32px 32px 32px;'>"
+                                + "<div style='text-align:center;margin-bottom:24px;'>"
+                                + "  <img src='https://img.icons8.com/color/96/000000/lock--v2.png' alt='OTP' style='width:64px;height:64px;margin-bottom:8px;'/>"
+                                + "  <h2 style='color:#2d7ff9;font-size:2rem;margin:0 0 8px 0;'>AttendEz App</h2>"
                                 + "</div>"
-                                + "<p style='color:#666;font-size:14px;text-align:center;'>This OTP is valid for one login and should not be shared with anyone.</p>"
-                                + "<hr style='border:none;border-top:1px solid #eee;margin:24px 0;'>"
-                                + "<p style='font-size:12px;color:#aaa;text-align:center;'>"
+                                + "<p style='font-size:17px;color:#222;text-align:center;margin-bottom:24px;'>"
+                                + "Use the following <b style='color:#2d7ff9;'>One-Time Password (OTP)</b> to continue:</p>"
+                                + "<div style='margin:32px 0;text-align:center;'>"
+                                + "  <span style='display:inline-block;background:linear-gradient(90deg,#e0e7ff,#f0f4f8);padding:22px 44px;font-size:32px;font-weight:800;letter-spacing:8px;color:#2d7ff9;border-radius:10px;box-shadow:0 2px 8px #2d7ff933;'>%s</span>"
+                                + "</div>"
+                                + "<p style='color:#666;font-size:15px;text-align:center;margin-bottom:16px;'>This OTP is valid for one login and should not be shared with anyone.</p>"
+                                + "<hr style='border:none;border-top:1px solid #eee;margin:28px 0;'>"
+                                + "<p style='font-size:13px;color:#aaa;text-align:center;'>"
                                 + "If you did not request this, please ignore this email.<br>"
-                                + "Attendez App &copy; 2025"
+                                + "AttendEz App &copy; 2025"
                                 + "</p></div></div>",
                         otp
                 );
