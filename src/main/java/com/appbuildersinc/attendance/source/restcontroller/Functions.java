@@ -1,9 +1,9 @@
 package com.appbuildersinc.attendance.source.restcontroller;
 
 import com.appbuildersinc.attendance.source.Utilities.Email.emailUtil;
+import com.appbuildersinc.attendance.source.Utilities.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.KeyPairUtil;
 import com.appbuildersinc.attendance.source.Utilities.PasswordUtil;
-import com.appbuildersinc.attendance.source.Utilities.jwtUtil;
 import com.appbuildersinc.attendance.source.database.UserDB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,11 +19,11 @@ public class Functions {
     private final UserDB userdb;
     private emailUtil emailclass;
     private final KeyPairUtil keyclass;
-    private final jwtUtil jwtclass;
+    private final FacultyJwtUtil jwtclass;
 
 
     @Autowired
-    public Functions(UserDB userdb,jwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil) {
+    public Functions(UserDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil) {
         this.userdb = userdb;
         this.emailclass =emailutil;
         this.keyclass =keyutil;
@@ -68,7 +68,7 @@ public class Functions {
         return claims;
     }
 
-    public Map<String,Object> checkJwtAuthAfterLogin(String jwt) throws Exception {
+    public Map<String,Object> checkJwtAuthAfterLoginFaculty(String jwt) throws Exception {
         HashMap<String, Object> response = new HashMap<>();
         // Check if the JWT is null or empty
         if (jwt == null) {
@@ -86,6 +86,53 @@ public class Functions {
             response.put("message", "Login Expired. Please re-login.");
             return response;
         }
+        if (claims.get("role").equals("STUDENT")) {
+            response.put("status", "E");
+            response.put("message", "NOT AUTHORIZED.");
+            return response;
+        }
+        if ("Invalid token".equals(error)) {
+            response.put("status", "TO");
+            response.put("message", "Invalid Login Token. Please re-login.");
+            return response;
+        }
+
+        //return the claims if valid
+        if ((boolean)claims.get("authorised")) {
+            claims.put("status", "S");
+            return claims;
+        }
+        else{
+            response.put("status", "E");
+            response.put("message", "NOT AUTHORIZED. Please re-login.");
+            return response;
+        }
+
+    }
+    public Map<String,Object> checkJwtAuthAfterLoginStudent(String jwt) throws Exception {
+        HashMap<String, Object> response = new HashMap<>();
+        // Check if the JWT is null or empty
+        if (jwt == null) {
+            response.put("status", "E");
+            response.put("message", "JWT TOKEN NOT PASSED");
+            return response;
+        }
+
+        Map<String, Object> claims = jwtclass.parseJwt(jwt);
+        Object error = claims.get("error");
+
+        // Check if the JWT is expired or invalid
+        if ("Token expired".equals(error)) {
+            response.put("status", "TO");
+            response.put("message", "Login Expired. Please re-login.");
+            return response;
+        }
+        if (claims.get("role").equals("FACULTY")) {
+            response.put("status", "E");
+            response.put("message", "NOT AUTHORIZED.");
+            return response;
+        }
+
         if ("Invalid token".equals(error)) {
             response.put("status", "TO");
             response.put("message", "Invalid Login Token. Please re-login.");
