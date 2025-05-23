@@ -41,7 +41,7 @@ import java.util.Map;
  */
 
 /*
-Error handling template:
+Error handling template for Muraribranch:
 Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
