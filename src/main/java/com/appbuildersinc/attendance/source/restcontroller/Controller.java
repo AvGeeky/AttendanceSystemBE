@@ -48,6 +48,8 @@ Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizati
         if (status.equals("S")) {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
+
+
         }
         else{
             //JWT is invalid, return error response
