@@ -8,23 +8,23 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-//jwtUtil is a utility class for creating, signing, parsing, and validating JSON Web Tokens (JWTs) using HMAC SHA-256 algorithm
+//FacultyJwtUtil is a utility class for creating, signing, parsing, and validating JSON Web Tokens (JWTs) using HMAC SHA-256 algorithm
 @Service
-public class jwtUtil {
+public class FacultyJwtUtil {
     private final Dotenv dotenv = Dotenv.configure().filename("apiee.env").load();
     private final String HMAC_SECRET = dotenv.get("JWT_HMAC_SECRET");
     private final int EXPIRATION_MINUTES =  Integer.parseInt(dotenv.get("JWT_EXPIRATION_MINUTES"));
 
     // Create initial claims map
     public Map<String, Object> createClaims(String email,
-                                                   boolean authorised, String role, String enc_otp,
+                                                   boolean authorised,  String enc_otp,
                                                    boolean otp_auth, String addnl_role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", email);
         claims.put("authorised", authorised);
         claims.put("enc_otp", enc_otp);
         claims.put("otp_auth", otp_auth);
-        claims.put("role", role);
+        claims.put("role", "FACULTY");
         claims.put("addnl_role", addnl_role);
         return claims;
     }
@@ -34,12 +34,8 @@ public class jwtUtil {
     public void updateAddnlRole(Map<String, Object> claims, String addnl_role) {
         claims.put("addnl_role", addnl_role);
     }
-
     public void updateAuthorised(Map<String, Object> claims, boolean authorised) {
         claims.put("authorised", authorised);
-    }
-    public void updateRole(Map<String, Object> claims, String role) {
-        claims.put("role", role);
     }
     public void updateEmail(Map<String, Object> claims, String email) {
         claims.put("email", email);

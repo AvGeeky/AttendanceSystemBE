@@ -1,13 +1,24 @@
 package com.appbuildersinc.attendance.source.restcontroller;
 
+import com.appbuildersinc.attendance.source.Utilities.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.KeyPairUtil;
+import com.appbuildersinc.attendance.source.Utilities.StudentjwtUtil;
+import com.appbuildersinc.attendance.source.database.StudentDB;
 import com.appbuildersinc.attendance.source.database.UserDB;
-import com.appbuildersinc.attendance.source.Utilities.jwtUtil;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,15 +74,19 @@ public class Controller {
     private final Functions functionsService;
     private final UserDB userdbclass;
     private final KeyPairUtil keyclass;
-    private final jwtUtil jwtclass;
-
-
+    private final FacultyJwtUtil facultyJwtUtil;
+    private final StudentjwtUtil studentjwtUtil;
+    private final StudentDB studentDbClass;
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String googleClientId;
     @Autowired
-    public Controller(Functions functionsService, UserDB userdbutil, jwtUtil jwtutil, KeyPairUtil keyutil) {
+    public Controller(Functions functionsService, UserDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb) {
         this.functionsService = functionsService;
         this.userdbclass = userdbutil;
-        this.jwtclass = jwtutil;
+        this.facultyJwtUtil = jwtutil;
         this.keyclass =keyutil;
+        this.studentjwtUtil = stdjwtutil;
+        this.studentDbClass =studdb;
     }
 
     @PostMapping("/faculty/setEmail")
@@ -80,8 +95,8 @@ public class Controller {
        if (functionsService.isEmailAllowed(email)){
            String enc_otp = functionsService.sendMailReturnOtp(email);
 
-           Map<String, Object> claims = jwtclass.createClaims(email,false,"FACULTY",enc_otp,false,"");
-           String jwt = jwtclass.signJwt(claims);
+           Map<String, Object> claims = facultyJwtUtil.createClaims(email,false,enc_otp,false,"");
+           String jwt = facultyJwtUtil.signJwt(claims);
 
            response.put("status", "S");
            response.put("message", "OTP has been successfully sent!");
@@ -108,7 +123,7 @@ public class Controller {
             HashMap<String, Object> response = new HashMap<>();
 
             String enc_otp = (String) claims.get("enc_otp");
-            if (enc_otp .equals("")){
+            if (enc_otp == null || enc_otp.isEmpty()){
                 response.put("status", "E");
                 response.put("message", "Email ID not set yet. Please set email ID first.");
                 return ResponseEntity.status(401).body(response);
@@ -120,10 +135,10 @@ public class Controller {
                 response.put("status", "S");
                 response.put("message", "OTP has been successfully verified!");
 
-                jwtclass.updateEncOtp(claims, "");
-                jwtclass.updateOtpAuthStatus(claims, true);
+                facultyJwtUtil.updateEncOtp(claims, "");
+                facultyJwtUtil.updateOtpAuthStatus(claims, true);
 
-                jwt = jwtclass.signJwt(claims);
+                jwt = facultyJwtUtil.signJwt(claims);
                 response.put("token", jwt);
 
                 return ResponseEntity.ok(response);
@@ -159,8 +174,8 @@ public class Controller {
                 //OTP is verified, proceed with setting username and password
                 String email = (String) claims.get("email");
                 if (functionsService.hashAndUpdatePassword(email, password)) {
-                    jwtclass.updateOtpAuthStatus(claims, false);
-                    String jwt = jwtclass.signJwt(claims);
+                    facultyJwtUtil.updateOtpAuthStatus(claims, false);
+                    String jwt = facultyJwtUtil.signJwt(claims);
                     response.put("status", "S");
                     response.put("message", "Password has been successfully updated!");
                     response.put("token", jwt);
@@ -189,48 +204,40 @@ public class Controller {
     }
 
     @PostMapping("/faculty/login")
-    public ResponseEntity<Map<String,Object>> login(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
-                                                             @RequestParam String email,
-                                                             @RequestParam String password
+    public ResponseEntity<Map<String,Object>> login(@RequestParam String email,
+                                                    @RequestParam String password
                                                     ) throws Exception {
-        Map<String, Object> claims = functionsService.checkJwtAuthBeforeLogin(authorizationHeader);
-        //Check if the JWT is valid
-        String status = (String) claims.get("status");
-        if (status.equals("S")) {
-            //JWT is valid, proceed with business logic
+
             Map<String, Object> response = new HashMap<>();
-            if (functionsService.attemptLogin(email,password)){
+            if (functionsService.attemptLogin(email,password)) {
+                Map<String, Object> claims = facultyJwtUtil.createClaims(email,true,"",false,"");
+
                 //Login successful
                 response.put("status", "S");
                 response.put("message", "Login successful!");
 
-                jwtclass.updateAuthorised(claims,true);
-                jwtclass.updateEmail(claims,email);
-                jwtclass.updateRole(claims,"FACULTY");
 
                 Map<String, Object> details = userdbclass.getUserDetailsByEmail(email);
 
-                if (details.get("name")== null){
+                if (details.get("name") == null) {
                     response.put("status", "FL"); //first login
                     response.put("message", "First login. Please set your details by calling necessary endpoint.");
-                    response.put("token", jwtclass.signJwt(claims));
+                    response.put("token", facultyJwtUtil.signJwt(claims));
                     return ResponseEntity.ok(response);
                 }
 
                 if (details.get("mentor").equals("True") && details.get("class_advisor").equals("True")) {
-                    jwtclass.updateAddnlRole(claims, "CM");
+                    facultyJwtUtil.updateAddnlRole(claims, "CM");
                     response.put("role", "CM");
-                }
-                else if (details.get("mentor").equals("True")){
-                    jwtclass.updateAddnlRole(claims,"M");
+                } else if (details.get("mentor").equals("True")) {
+                    facultyJwtUtil.updateAddnlRole(claims, "M");
                     response.put("role", "M");
-                }
-                else if (details.get("class_advisor").equals("True")) {
-                    jwtclass.updateAddnlRole(claims, "A");
+                } else if (details.get("class_advisor").equals("True")) {
+                    facultyJwtUtil.updateAddnlRole(claims, "A");
                     response.put("role", "A");
                 }
 
-                String jwt = jwtclass.signJwt(claims);
+                String jwt = facultyJwtUtil.signJwt(claims);
                 response.put("token", jwt);
                 return ResponseEntity.ok(response);
             }
@@ -241,18 +248,14 @@ public class Controller {
                 return ResponseEntity.status(401).body(response);
             }
 
-        }
-        else{
-            //JWT is invalid, return error response
-            return ResponseEntity.status(401).body(claims);
-        }
+
     }
 
 
     @GetMapping("/faculty/getDetails")
     public ResponseEntity<Map<String,Object>> getDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                              String authorizationHeader) throws Exception {
-        Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizationHeader);
+        Map<String, Object> claims = functionsService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
@@ -284,7 +287,7 @@ public class Controller {
     public ResponseEntity<Map<String,Object>> setDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                          String authorizationHeader,
                                                          @RequestBody Map<String, Object> requestBody) throws Exception {
-        Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizationHeader);
+        Map<String, Object> claims = functionsService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
@@ -314,10 +317,127 @@ public class Controller {
             return ResponseEntity.status(401).body(claims);
         }
     }
+    @PostMapping("/api/auth/google")
+    public ResponseEntity<Map<String, Object>> authenticateWithGoogle(@RequestBody Map<String, String> request) throws IOException {
+        Map<String, Object> response = new HashMap<>();
+
+        // ✅ Check if ID token is provided
+        String idToken = request.get("idToken");
+        if (idToken == null || idToken.isBlank()) {
+            response.put("status", "E");
+            response.put("message", "ID token not provided in request body.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response); // 400
+        }
+
+        // ✅ Setup verifier for Google token
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(), new JacksonFactory())
+                .setAudience(Collections.singletonList(googleClientId)) // Replace with your actual client ID
+                .build();
+
+        GoogleIdToken token;
+        try {
+            token = verifier.verify(idToken);
+        } catch (GeneralSecurityException e) {
+            response.put("status", "E");
+            response.put("message", "Security error while verifying token. Please try again later.");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response); // 503
+        } catch (IOException e) {
+            response.put("status", "E");
+            response.put("message", "Network error occurred while verifying token. Please try again.");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response); // 503
+        }
+
+        // ✅ Token verification failed (e.g. expired, tampered, or wrong audience)
+        if (token == null) {
+            response.put("status", "E");
+            response.put("message", "Invalid or expired Google ID token.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // 401
+        }
+
+        // ✅ Token is valid
+        GoogleIdToken.Payload payload = token.getPayload();
+        String email = payload.getEmail();
+
+        // You can optionally validate the email domain or userId here
+
+        // ✅ Generate internal JWT for session
+        Map<String, Object> claims = studentjwtUtil.createClaims(email, true);
+        String jwt = studentjwtUtil.signJwt(claims);
+
+        response.put("status", "S");
+        response.put("message", "Login successful");
+        response.put("token", jwt);
+        return ResponseEntity.ok(response); // 200
+    }
+
+
+
+    @GetMapping("/student/getDetails")
+    public ResponseEntity<Map<String,Object>>getStudentDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                                   String authorizationHeader)throws Exception {
+        System.out.println(authorizationHeader);
+        Map<String, Object> claims = functionsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> details = studentDbClass.getStudentDetailsByEmail((String) claims.get("email"));
+            if (details != null) {
+                response.put("status", "S");
+                response.put("message", "Student details retrieved succesully");
+                details.remove("_id");
+                response.put("details", details);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("status", "E");
+                response.put("message", "Error in retrieving student details or no change between passed and database data. Please try again.");
+                return ResponseEntity.status(503).body(response);
+            }
+
+
+        } else {
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+        @PostMapping("/student/setDetails")
+        public ResponseEntity<Map<String,Object>> setStudentDetails(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+                                                                    @RequestBody Map<String, Object> requestBody) throws Exception{
+            System.out.printf(authorizationHeader);
+        Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
+        String status=(String)claims.get("status");
+        if(status.equals("S")){
+            Map<String,Object> response =new HashMap<>();
+            boolean succ = studentDbClass.updateStudentDocumentsbyemail(
+                    (String) claims.get("email"),
+                    (String) requestBody.get("name"),
+                    (String) requestBody.get("regno"),
+                    (String) requestBody.get("passout")
+            );
+            if (succ) {
+                response.put("status", "S");
+                response.put("message", "Student  details updated successfully!");
+                return ResponseEntity.ok(response);
+
+            } else {
+                //Error in updating user details
+                response.put("status", "E");
+                response.put("message", "No change between database and passed details or Error. Please try again.");
+                return ResponseEntity.status(503).body(response);
+            }
+
+
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+
+        }
+
+        }
+
+
+    }
 
 
 
 
-
-
-}
