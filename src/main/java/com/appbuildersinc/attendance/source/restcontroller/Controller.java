@@ -2,6 +2,7 @@ package com.appbuildersinc.attendance.source.restcontroller;
 
 import com.appbuildersinc.attendance.source.Utilities.KeyPairUtil;
 import com.appbuildersinc.attendance.source.Utilities.StudentjwtUtil;
+import com.appbuildersinc.attendance.source.database.StudentDB;
 import com.appbuildersinc.attendance.source.database.UserDB;
 import com.appbuildersinc.attendance.source.Utilities.jwtUtil;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -76,15 +77,17 @@ public class Controller {
     private final KeyPairUtil keyclass;
     private final jwtUtil jwtclass;
     private final StudentjwtUtil jwtclass2;
+    private final StudentDB studdb;
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
     @Autowired
-    public Controller(Functions functionsService, UserDB userdbutil, jwtUtil jwtutil, KeyPairUtil keyutil,StudentjwtUtil stdjwtutil) {
+    public Controller(Functions functionsService, UserDB userdbutil, jwtUtil jwtutil, KeyPairUtil keyutil,StudentjwtUtil stdjwtutil,StudentDB studdb) {
         this.functionsService = functionsService;
         this.userdbclass = userdbutil;
         this.jwtclass = jwtutil;
         this.keyclass =keyutil;
         this.jwtclass2 = stdjwtutil;
+        this.studdb=studdb;
     }
 
     @PostMapping("/faculty/setEmail")
@@ -327,7 +330,7 @@ public class Controller {
             return ResponseEntity.status(401).body(claims);
         }
     }
-    @PostMapping("/api/auth/google")
+    @GetMapping("/api/auth/google")
     public ResponseEntity<Map<String, Object>> authenticateWithGoogle(@RequestBody Map<String, String> request) throws IOException {
         Map<String, Object> response = new HashMap<>();
 
@@ -368,12 +371,11 @@ public class Controller {
         // ✅ Token is valid
         GoogleIdToken.Payload payload = token.getPayload();
         String email = payload.getEmail();
-        String userId = payload.getSubject(); // Unique Google user ID
 
         // You can optionally validate the email domain or userId here
 
         // ✅ Generate internal JWT for session
-        Map<String, Object> claims = jwtclass2.createClaims(email, userId, true);
+        Map<String, Object> claims = jwtclass2.createClaims(email, true);
         String jwt = jwtclass2.signJwt(claims);
 
         response.put("status", "S");
@@ -389,7 +391,7 @@ public class Controller {
         String status = (String) claims.get("status");
         if (status.equals("S")) {
             Map<String, Object> response = new HashMap<>();
-            Map<String, Object> details = userdbclass.getStudentDetailsByEmail((String) claims.get("email"));
+            Map<String, Object> details = studdb.getStudentDetailsByEmail((String) claims.get("email"));
             if (details != null) {
                 response.put("status", "S");
                 response.put("message", "Student details retrieved succesully");
@@ -414,7 +416,7 @@ public class Controller {
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response =new HashMap<>();
-            boolean succ = userdbclass.updateStudentDocumentsbyemail(
+            boolean succ = studdb.updateStudentDocumentsbyemail(
                     (String) claims.get("email"),
                     (String) requestBody.get("name"),
                     (String) requestBody.get("regno"),
