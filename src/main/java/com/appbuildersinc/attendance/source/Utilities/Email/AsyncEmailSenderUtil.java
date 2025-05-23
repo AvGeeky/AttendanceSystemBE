@@ -53,7 +53,7 @@ public class AsyncEmailSenderUtil {
             mailTransport.connect();
             System.out.println("Successfully connected to email server.");
         } catch (MessagingException e) {
-            e.printStackTrace();
+            org.slf4j.LoggerFactory.getLogger(AsyncEmailSenderUtil.class).error("Failed to connect to email server", e);
         }
     }
     @Async
@@ -69,7 +69,7 @@ public class AsyncEmailSenderUtil {
                     .filename("apiee.env")
                     .load();
             String username = dotenv.get("MAIL_ID");
-            String sender = username;
+            //String sender = username;
 
 
             try {
@@ -79,31 +79,43 @@ public class AsyncEmailSenderUtil {
                 message.setSubject("Your OTP for AttendEz App Login");
 
                 String htmlContent = String.format(
-                        "<div style='background:linear-gradient(135deg,#e0e7ff 0%%,#f7f9fa 100%%);padding:40px 0;font-family:Segoe UI,Arial,sans-serif;'>"
-                                + "<div style='max-width:440px;margin:auto;background:#fff;border-radius:18px;box-shadow:0 4px 24px #0002;padding:40px 32px 32px 32px;'>"
-                                + "<div style='text-align:center;margin-bottom:24px;'>"
-                                + "  <img src='https://img.icons8.com/color/96/000000/lock--v2.png' alt='OTP' style='width:64px;height:64px;margin-bottom:8px;'/>"
-                                + "  <h2 style='color:#2d7ff9;font-size:2rem;margin:0 0 8px 0;'>AttendEz App</h2>"
-                                + "</div>"
-                                + "<p style='font-size:17px;color:#222;text-align:center;margin-bottom:24px;'>"
-                                + "Use the following <b style='color:#2d7ff9;'>One-Time Password (OTP)</b> to continue:</p>"
-                                + "<div style='margin:32px 0;text-align:center;'>"
-                                + "  <span style='display:inline-block;background:linear-gradient(90deg,#e0e7ff,#f0f4f8);padding:22px 44px;font-size:32px;font-weight:800;letter-spacing:8px;color:#2d7ff9;border-radius:10px;box-shadow:0 2px 8px #2d7ff933;'>%s</span>"
-                                + "</div>"
-                                + "<p style='color:#666;font-size:15px;text-align:center;margin-bottom:16px;'>This OTP is valid for one login and should not be shared with anyone.</p>"
-                                + "<hr style='border:none;border-top:1px solid #eee;margin:28px 0;'>"
-                                + "<p style='font-size:13px;color:#aaa;text-align:center;'>"
-                                + "If you did not request this, please ignore this email.<br>"
-                                + "AttendEz App &copy; 2025"
-                                + "</p></div></div>",
+                        """
+                        <div style='background:linear-gradient(135deg,#e0e7ff 0%%,#f7f9fa 100%%);padding:40px 0;font-family:Segoe UI,Arial,sans-serif; background-image: url("data:image/svg+xml,%%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%%3E%%3Ccircle cx='50' cy='50' r='40' fill='%%23E6F4EA' /%%3E%%3C/svg%%3E"); background-repeat: repeat;'>
+                            <div style='max-width:480px;margin:auto;background:#FFFFFF;border-radius:18px;box-shadow:0 4px 24px rgba(0,0,0,0.1);padding:40px 32px;'>
+                                <div style='text-align:center;margin-bottom:24px;'>
+                                    <img src='https://img.icons8.com/color/96/000000/lock--v2.png' alt='OTP' style='width:64px;height:64px;margin-bottom:12px;'/>
+                                    <h2 style='color:#0055A4;font-size:2rem;margin:0 0 8px 0;'>AttendEz App</h2>
+                                </div>
+                                <p style='font-size:17px;color:#222;text-align:center;margin-bottom:24px;'>
+                                    Use the following <strong style='color:#28A745;'>One-Time Password (OTP)</strong> to continue:
+                                </p>
+                                <div style='margin:32px 0;text-align:center;'>
+                                    <span style='display:inline-block;background-color:#E6F4EA;padding:22px 44px;font-size:36px;font-weight:800;letter-spacing:8px;color:#28A745;border-radius:12px;box-shadow:0 2px 12px #28A745AA;'>
+                                        %s
+                                    </span>
+                                </div>
+                                <p style='color:#666666;font-size:15px;text-align:center;margin-bottom:24px;'>
+                                    This OTP is valid for one login and should not be shared with anyone.
+                                </p>
+                                <hr style='border:none;border-top:1px solid #DDDDDD;margin:28px 0;'>
+                                <p style='font-size:13px;color:#999999;text-align:center;'>
+                                    If you did not request this, please ignore this email.<br>
+                                    AttendEz App &copy; 2025
+                                </p>
+                            </div>
+                        </div>
+                        """,
                         otp
                 );
+
+
 
                 message.setContent(htmlContent, "text/html; charset=utf-8");
                 Transport.send(message);
                 break;
             } catch (MessagingException mex) {
-                mex.printStackTrace();
+                org.slf4j.LoggerFactory.getLogger(AsyncEmailSenderUtil.class).error("Failed to send OTP email to {}: {}", recipient, mex.getMessage(), mex);
+
                 try {
                     Thread.sleep((long) (Math.pow(2, i) * 1000));
                 } catch (InterruptedException ie) {
