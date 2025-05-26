@@ -7,10 +7,10 @@ services:
     ports:
       - "6379:6379"
     environment:
-      - REDIS_PASSWORD=yourStrongRedisPassword
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     command: >
       redis-server
-      --requirepass sZJ61IvZBa6G6609fEiiqV71MzvUTW
+      --requirepass 
       --appendonly yes
     volumes:
       - redis_data:/data
