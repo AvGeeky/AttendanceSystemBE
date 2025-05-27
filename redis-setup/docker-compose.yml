@@ -1,8 +1,7 @@
-version: '3.8'
-
 services:
   redis:
-    image: redis:7.4.3-alpine
+    build:
+      context: ./redis
     container_name: redis-secure
     ports:
       - "6379:6379"
@@ -10,11 +9,14 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     command: >
       redis-server
-      --requirepass 
+      --requirepass ${REDIS_PASSWORD}
       --appendonly yes
+      [ "./entrypoint.sh" ]
+    env_file:
+      - .env
     volumes:
       - redis_data:/data
-    restart: always
+    restart: unless-stopped
 
 volumes:
   redis_data:
