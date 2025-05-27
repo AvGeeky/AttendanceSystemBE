@@ -1,0 +1,7 @@
+requirepass [insert your password here]
+bind 0.0.0.0
+protected-mode yes
+appendonly yes
+
+# INSERT YOUR PASSWORD AND RENAME IT AS {redis.conf} in the same directory
+
