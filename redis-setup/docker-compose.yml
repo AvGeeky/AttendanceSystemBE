@@ -1,19 +1,11 @@
+version: '3.8'
+
 services:
   redis:
-    build:
-      context: ./redis
+    build: ./redis  # Points to folder with Dockerfile + redis.conf
     container_name: redis-secure
     ports:
       - "6379:6379"
-    environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-    command: >
-      redis-server
-      --requirepass ${REDIS_PASSWORD}
-      --appendonly yes
-      [ "./entrypoint.sh" ]
-    env_file:
-      - .env
     volumes:
       - redis_data:/data
     restart: unless-stopped
