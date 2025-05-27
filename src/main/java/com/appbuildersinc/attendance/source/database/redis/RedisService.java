@@ -21,10 +21,11 @@ public class RedisService {
     }
 
     public boolean hasKey(String key) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+        return redisTemplate.hasKey(key);
     }
 
-    public void deleteKey(String key) {
+    public boolean deleteKey(String key) {
         redisTemplate.delete(key);
+        return false;
     }
 }
