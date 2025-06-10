@@ -3,6 +3,7 @@ package com.appbuildersinc.attendance.source.restcontroller;
 import com.appbuildersinc.attendance.source.Utilities.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.KeyPairUtil;
 import com.appbuildersinc.attendance.source.Utilities.StudentjwtUtil;
+import com.appbuildersinc.attendance.source.Utilities.SuperAdminjwtUtil;
 import com.appbuildersinc.attendance.source.database.StudentDB;
 import com.appbuildersinc.attendance.source.database.UserDB;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -76,17 +77,19 @@ public class Controller {
     private final KeyPairUtil keyclass;
     private final FacultyJwtUtil facultyJwtUtil;
     private final StudentjwtUtil studentjwtUtil;
+    private final SuperAdminjwtUtil adminjwtUtil;
     private final StudentDB studentDbClass;
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
     @Autowired
-    public Controller(Functions functionsService, UserDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb) {
+    public Controller(Functions functionsService, UserDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb,SuperAdminjwtUtil adminutil) {
         this.functionsService = functionsService;
         this.userdbclass = userdbutil;
         this.facultyJwtUtil = jwtutil;
         this.keyclass =keyutil;
         this.studentjwtUtil = stdjwtutil;
         this.studentDbClass =studdb;
+        this.adminjwtUtil=adminutil;
     }
 
     @PostMapping("/faculty/setEmail")
@@ -434,9 +437,36 @@ public class Controller {
         }
 
         }
+    @GetMapping("/genHash")
+    public String generateHash(@RequestParam String password) throws Exception {
+        return functionsService.hashAndUpdatePassword1(password);
+    }
+    @GetMapping("/SuperAdmin/login")
+    public ResponseEntity<Map<String,Object>> adminlogin(@RequestParam String email,
+                                                    @RequestParam String password
+    ) throws Exception {
+        Map <String,Object> response=new HashMap();
+        if(functionsService.attemptloginadmin(email,password)){
+            response.put("status","S");
+            response.put("message","Login Successful!");
+            String dept=functionsService.getDeptbyEmail(email);
+            Map<String, Object> claims = adminjwtUtil.createClaims(email,dept,true);
+            String jwt=adminjwtUtil.signJwt(claims);
+            response.put("token",jwt);
+            return ResponseEntity.ok(response);
+
+         }
+        else{
+            response.put("status", "E");
+            response.put("message", "Invalid email or password. Please try again.");
+            return ResponseEntity.status(401).body(response);
+        }
+
+
 
 
     }
+}
 
 
 

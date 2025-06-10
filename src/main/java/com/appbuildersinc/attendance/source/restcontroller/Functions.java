@@ -4,13 +4,17 @@ import com.appbuildersinc.attendance.source.Utilities.Email.emailUtil;
 import com.appbuildersinc.attendance.source.Utilities.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.KeyPairUtil;
 import com.appbuildersinc.attendance.source.Utilities.PasswordUtil;
+import com.appbuildersinc.attendance.source.database.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.UserDB;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
+import java.util.Scanner;
 //DATABASE ONLY ACCESSIBLE HERE
 //BUSINESS LOGIC HERE????
 
@@ -20,14 +24,15 @@ public class Functions {
     private emailUtil emailclass;
     private final KeyPairUtil keyclass;
     private final FacultyJwtUtil jwtclass;
-
+    private final SuperAdminDB admindb;
 
     @Autowired
-    public Functions(UserDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil) {
+    public Functions(UserDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil,SuperAdminDB admindb) {
         this.userdb = userdb;
         this.emailclass =emailutil;
         this.keyclass =keyutil;
         this.jwtclass = jwtutil;
+        this.admindb=admindb;
     }
 
     public boolean isEmailAllowed(String email) {
@@ -154,6 +159,7 @@ public class Functions {
 
     public boolean hashAndUpdatePassword(String email, String password) throws Exception {
         String hashedPassword = PasswordUtil.hashPassword(password);
+
         return userdb.updatePasswordByEmail(email,hashedPassword);
     }
 
@@ -164,9 +170,24 @@ public class Functions {
         }
         return PasswordUtil.verifyPassword(password, hashedPassword);
     }
+    public String hashAndUpdatePassword1( String password) throws Exception {
+        String hashedPassword = PasswordUtil.hashPassword(password);
+        return hashedPassword;
+        //return userdb.updatePasswordByEmail(email,hashedPassword);
+    }
+    public boolean attemptloginadmin(String email,String password){
+        String hashedPassword=admindb.getPasswordByEmail(email);
+        System.out.println(hashedPassword);
+        if(hashedPassword==null){
+            return false;
+        }
+        boolean s= PasswordUtil.verifyPassword(password,hashedPassword);
+
+        return s;
+    }
 
 
-
-
-
+    public String getDeptbyEmail(String email) {
+          return SuperAdminDB.getDeptbyEmail(email);
+    }
 }
