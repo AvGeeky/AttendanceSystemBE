@@ -91,10 +91,13 @@ public class UserDB {
         Document query = new Document("faculty_email", email);
         return collection.find(query).first();
     }
-    public List<Map<String,Object>> viewallteachers(String dept){
+
+    public List<Map<String,Object>> viewAllTeachers(String dept){
        Document query=new Document("dept",dept);
        List<Map<String,Object>> teacherlist=new ArrayList<>();
        for(Document doc2:collection.find(query)){
+           doc2.remove("password");
+           doc2.remove("_id");
            teacherlist.add(new HashMap<>(doc2));
        }
        return teacherlist;

@@ -1,9 +1,6 @@
 package com.appbuildersinc.attendance.source.restcontroller;
 
-import com.appbuildersinc.attendance.source.Utilities.FacultyJwtUtil;
-import com.appbuildersinc.attendance.source.Utilities.KeyPairUtil;
-import com.appbuildersinc.attendance.source.Utilities.StudentjwtUtil;
-import com.appbuildersinc.attendance.source.Utilities.SuperAdminjwtUtil;
+import com.appbuildersinc.attendance.source.Utilities.*;
 import com.appbuildersinc.attendance.source.database.LogicalGroupingDB;
 import com.appbuildersinc.attendance.source.database.StudentDB;
 import com.appbuildersinc.attendance.source.database.SuperAdminDB;
@@ -235,7 +232,7 @@ public class Controller {
 
                 if (details.get("mentor").equals("True") && details.get("class_advisor").equals("True")) {
                     facultyJwtUtil.updateAddnlRole(claims, "CM");
-                    response.put("role", "CM");
+                    response.put("role", "MA");
                 } else if (details.get("mentor").equals("True")) {
                     facultyJwtUtil.updateAddnlRole(claims, "M");
                     response.put("role", "M");
@@ -324,7 +321,7 @@ public class Controller {
             return ResponseEntity.status(401).body(claims);
         }
     }
-    @PostMapping("/api/auth/google")
+    @PostMapping("/student/googleAuth")
     public ResponseEntity<Map<String, Object>> authenticateWithGoogle(@RequestBody Map<String, String> request) throws IOException {
         Map<String, Object> response = new HashMap<>();
 
@@ -441,20 +438,23 @@ public class Controller {
         }
 
         }
-    @GetMapping("/genHash")
-    public String generateHash(@RequestParam String password) throws Exception {
-        return functionsService.hashAndUpdatePassword1(password);
+    @GetMapping("/test/genHash")
+    public ResponseEntity<String> generateHash(@RequestParam String password) throws Exception {
+        return ResponseEntity.ok((PasswordUtil.hashPassword(password)));
     }
+
     @GetMapping("/SuperAdmin/login")
     public ResponseEntity<Map<String,Object>> adminlogin(@RequestParam String email,
                                                     @RequestParam String password
-    ) throws Exception {
+                                                        ) throws Exception {
         Map <String,Object> response=new HashMap();
         if(functionsService.attemptloginadmin(email,password)){
             response.put("status","S");
             response.put("message","Login Successful!");
-            String dept=functionsService.getDeptbyEmail(email);
-            Map<String, Object> claims = adminjwtUtil.createClaims(email,dept,true);
+            Map<String,String> namedeptmap=functionsService.getNameDeptbyEmail(email);
+            response.put("dept",namedeptmap.get("Department"));
+            response.put("name",namedeptmap.get("Name"));
+            Map<String, Object> claims = adminjwtUtil.createClaims(email,namedeptmap.get("Department"),true);
             String jwt=adminjwtUtil.signJwt(claims);
             response.put("token",jwt);
             return ResponseEntity.ok(response);
@@ -488,10 +488,6 @@ public class Controller {
                 response.put("message","student details not inserted successfully");
                 return ResponseEntity.status(503).body(response);
             }
-
-
-
-
         }
         else{
             return ResponseEntity.status(401).body(claims);
@@ -526,15 +522,15 @@ public class Controller {
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response=new HashMap<>();
-            boolean done=logicalGroupingDbClass.insertlogicalgrouping(group,(String)claims.get("dept"));
+            boolean done=logicalGroupingDbClass.insertLogicalGrouping(group,(String)claims.get("dept"));
             if(done){
                 response.put("status","S");
-                response.put("message","logical gropuing inserted or updated succesfully!");
+                response.put("message","logical grouping inserted or updated successfully!");
                 return ResponseEntity.ok(response);
             }
             else{
                 response.put("status","E");
-                response.put("message","logical gropuing not inserted or updated succesully!");
+                response.put("message","logical grouping not inserted or updated successfully. Either all class codes are not present in the timetable/no changes made or some other error occurred");
                 return ResponseEntity.status(503).body(response);
             }
 
@@ -551,7 +547,7 @@ public class Controller {
 
 
     }
-    @GetMapping("/SuperAdmin/viewGrouping")
+    @GetMapping("/SuperAdmin/viewAllGroupings")
     public ResponseEntity<Map<String,Object>> viewgrouping(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception {
         Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
         String status=(String)claims.get("status");
@@ -598,14 +594,14 @@ public class Controller {
             return ResponseEntity.status(401).body(claims);
         }
     }
-    @GetMapping("/SuperAdmin/viewTeacher")
-    public ResponseEntity<Map<String,Object>> viewfaculty(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception{
+    @GetMapping("/SuperAdmin/viewAllTeachers")
+    public ResponseEntity<Map<String,Object>> viewAllTeachers(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception{
         Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response=new HashMap<>();
             String dept=(String)claims.get("dept");
-            List<Map<String,Object>> teacherlist= userdbclass.viewallteachers(dept);
+            List<Map<String,Object>> teacherlist= userdbclass.viewAllTeachers(dept);
             response.put("status","S");
             response.put("details",teacherlist);
             response.put("message","Teacher details retrieved succesfully!");
@@ -617,7 +613,7 @@ public class Controller {
         }
     }
    @PostMapping("/SuperAdmin/addOrUpdateTeacher")
-    public ResponseEntity<Map<String,Object>> addorupdatefaculty(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object>faculty) throws Exception {
+    public ResponseEntity<Map<String,Object>> addOrUpdateFaculty(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object>faculty) throws Exception {
        Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
        String status=(String)claims.get("status");
        if(status.equals("S")){
@@ -626,12 +622,12 @@ public class Controller {
            boolean done=userdbclass.addorUpdateTeachers(dept,faculty);
            if(done){
                response.put("Status","S");
-               response.put("Message","Teacher details added or updated succesfully");
+               response.put("Message","Teacher details added or updated successfully");
               return  ResponseEntity.ok(response);
            }
            else{
                response.put("Status","E");
-               response.put("Message","Teacher details not added or updated succesfully");
+               response.put("Message","Teacher details not added or updated successfully");
                return ResponseEntity.status(503).body(response);
 
            }

@@ -8,6 +8,10 @@ import com.mongodb.client.MongoDatabase;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
+
+import java.util.HashMap;
+import java.util.Map;
+
 @Repository
 public class SuperAdminDB {
     static Dotenv dotenv = Dotenv.configure()
@@ -41,6 +45,17 @@ public class SuperAdminDB {
            return admin.getString("department");
        }
        return null;
+    }
+    public static Map<String,String> getNameDeptbyEmail(String email)  {
+        Document doc=new Document("email",email);
+        Document admin=collection.find(doc).first();
+        if(admin!=null){
+            Map m = new HashMap();
+            m.put("Department",admin.getString("department"));
+            m.put("Name",admin.getString("name"));
+            return m;
+        }
+        return null;
     }
 
     public String getPasswordByEmail(String Email){

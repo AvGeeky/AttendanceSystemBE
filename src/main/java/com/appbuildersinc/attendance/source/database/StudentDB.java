@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import static com.appbuildersinc.attendance.source.Utilities.PasswordUtil.generateHmacPasscode;
 
 @Repository
@@ -64,6 +63,7 @@ public class StudentDB {
                    .append("registerNumber", studlist1.get("registerNumber"))
                    .append("department", dept)
                    .append("passout", studlist1.get("passout"))
+                   .append("course", studlist1.get("course"))
                    .append("degree", studlist1.get("degree"))
                    .append("digitalid", studlist1.get("digitalid"))
                    .append("hmacpasscode", generateHmacPasscode(studlist1.get("email")));
@@ -85,7 +85,9 @@ public class StudentDB {
            List <Map<String,Object>> students =new ArrayList<>();
            Document doc1=new Document("department",dept);
            for(Document doc:studentsCollection.find(doc1)){
+               doc.remove("hmacpasscode"); // Remove sensitive information
                students.add(new HashMap<>(doc));
+
            }
            return students;
     }
