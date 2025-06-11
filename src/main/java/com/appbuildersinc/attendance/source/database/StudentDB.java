@@ -5,12 +5,18 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.InsertOneResult;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.appbuildersinc.attendance.source.Utilities.PasswordUtil.generateHmacPasscode;
+
 @Repository
 public class StudentDB {
     static Dotenv dotenv = Dotenv.configure()
@@ -50,8 +56,39 @@ public class StudentDB {
                 query, update, new com.mongodb.client.model.UpdateOptions().upsert(true));
         return result.getModifiedCount() > 0 || result.getUpsertedId() != null;
     }
+    public Boolean insertStudentsByAdmin( List<Map <String,String>> studlist,String dept) throws Exception {
+        List<Document> studentdocs=new ArrayList<>();
+        for(Map<String,String> studlist1:studlist) {
+           Document doc = new Document("email", studlist1.get("email"))
+                   .append("name", studlist1.get("name"))
+                   .append("registerNumber", studlist1.get("registerNumber"))
+                   .append("department", dept)
+                   .append("passout", studlist1.get("passout"))
+                   .append("degree", studlist1.get("degree"))
+                   .append("digitalid", studlist1.get("digitalid"))
+                   .append("hmacpasscode", generateHmacPasscode(studlist1.get("email")));
+           studentdocs.add(doc);
+       }
+       if(!studentdocs.isEmpty()){
+           studentsCollection.insertMany(studentdocs);
+           return true;
+       }
+       else{
+           return false;
+       }
 
 
+
+
+    }
+    public List<Map<String,Object>> getallStudentDetails(String dept){
+           List <Map<String,Object>> students =new ArrayList<>();
+           Document doc1=new Document("department",dept);
+           for(Document doc:studentsCollection.find(doc1)){
+               students.add(new HashMap<>(doc));
+           }
+           return students;
+    }
 
 
 }
