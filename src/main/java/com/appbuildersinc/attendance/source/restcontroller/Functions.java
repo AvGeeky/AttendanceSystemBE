@@ -8,14 +8,10 @@ import com.appbuildersinc.attendance.source.Utilities.SuperAdminjwtUtil;
 import com.appbuildersinc.attendance.source.database.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.UserDB;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 //DATABASE ONLY ACCESSIBLE HERE
 //BUSINESS LOGIC HERE????
 
@@ -172,11 +168,7 @@ public class Functions {
         }
         return PasswordUtil.verifyPassword(password, hashedPassword);
     }
-    public String hashAndUpdatePassword1( String password) throws Exception {
-        String hashedPassword = PasswordUtil.hashPassword(password);
-        return hashedPassword;
-        //return userdb.updatePasswordByEmail(email,hashedPassword);
-    }
+
     public boolean attemptloginadmin(String email,String password){
         String hashedPassword=admindb.getPasswordByEmail(email);
         System.out.println(hashedPassword);
@@ -189,9 +181,13 @@ public class Functions {
     }
 
 
-    public String getDeptbyEmail(String email) {
-          return SuperAdminDB.getDeptbyEmail(email);
+
+    public Map<String, String> getNameDeptbyEmail(String email) {
+        return SuperAdminDB.getNameDeptbyEmail(email);
     }
+
+
+
     public Map<String,Object> checkJwtAuthAfterLoginAdmin(String jwt) throws Exception {
         HashMap<String, Object> response = new HashMap<>();
         // Check if the JWT is null or empty

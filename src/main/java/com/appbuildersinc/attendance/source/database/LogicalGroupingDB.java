@@ -5,7 +5,6 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.result.InsertOneResult;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
@@ -37,69 +36,69 @@ public class LogicalGroupingDB {
         }
     }
 
-    public Boolean insertlogicalgrouping(Map<String, Object> group, String dept) {
+    public Boolean insertLogicalGrouping(Map<String, Object> group, String dept) {
         String section = (String) group.get("section");
         String degree = (String) group.get("degree");
         String passout = (String) group.get("passout");
         String advisor = (String) group.get("advisor");
 
         boolean isElective = (degree == null && advisor == null);
-        System.out.println(isElective);
-        Document query = new Document("passout", passout)
-                .append("section",section);
+        String groupcode = isElective ? dept + section + passout : dept + passout + section;
+
+        Document query = new Document("passout", passout).append("section", section);
         if (!isElective) {
             query.append("degree", degree);
         }
 
         Document existing = collection.find(query).first();
-        System.out.println(existing!=null);
-        // Cast timetable as a Map<String, List<String>>
-        Map<String, List<String>> timetable = (Map<String, List<String>>) group.get("timetable");
-        List<String> classcode = (List<String>) group.get("class-code");
-        int flag = 1;
-        for (List<String> periods : timetable.values()) {
-            for (String classcode1 : periods) {
-                if (!classcode1.equals("_") && classcode.indexOf(classcode1) == -1) {
-                    flag = 0;
-                    break;
+        List<String> classCodes = (List<String>) group.get("class-code");
+        List<String> regNumbers = (List<String>) group.get("registernumbers");
+
+        // Validating and processing timetable
+        Map<String, List<Map<String, Object>>> timetable = (Map<String, List<Map<String, Object>>>) group.get("timetable");
+
+        // Validation 1: Check if every classCode used in timetable is listed
+        int valid = 1;
+        outer:
+        for (List<Map<String, Object>> periods : timetable.values()) {
+            for (Map<String, Object> period : periods) {
+                String code = (String) period.get("classCode");
+                if (!code.equals("_") && !classCodes.contains(code)) {
+                    valid = 0;
+                    break outer;
                 }
             }
-            if (flag == 0) break;
         }
-        if (flag == 0) return false;
-        int flag1=1;
-        for(int i=0;i<classcode.size();i++) {
-            int count = 0;
-            for (List<String> periods : timetable.values()) {
+        if (valid == 0) return false;
 
-                    if (periods.indexOf(classcode.get(i)) != -1) {
-                        count += 1;
+        // Validation 2: Every classCode must appear at least once in the timetable
+        for (String code : classCodes) {
+            boolean found = false;
+            for (List<Map<String, Object>> periods : timetable.values()) {
+                for (Map<String, Object> period : periods) {
+                    if (code.equals(period.get("classCode"))) {
+                        found = true;
+                        break;
                     }
-
+                }
+                if (found) break;
             }
-            if (count == 0) {
-                flag1 = 0;
-                break;
-            }
+            if (!found) return false;
         }
-        if(flag1==0){
-            return false;
-        }
-        String groupcode = isElective ? dept + section : dept + passout + section;
 
         Document doc2 = new Document("section", section)
-                .append("registernumbers", group.get("registernumbers"))
+                .append("registernumbers", regNumbers)
                 .append("timetable", timetable)
-                .append("class-code", classcode)
+                .append("class-code", classCodes)
                 .append("groupcode", groupcode)
-                .append("dept",dept)
+                .append("dept", dept)
                 .append("passout", passout);
+
         if (!isElective) {
-            doc2.append("degree", degree)
-                    .append("advisor", advisor);
-            Document filter=new Document("faculty_email",advisor);
-            Document update =new Document("$set",new Document("advisor-list",group.get("registernumbers")));
-            collection1.updateOne(filter,update);
+            doc2.append("degree", degree).append("advisor", advisor);
+            Document filter = new Document("faculty_email", advisor);
+            Document update = new Document("$set", new Document("advisor-list", regNumbers));
+            collection1.updateOne(filter, update);
         }
 
         if (existing != null) {
@@ -109,6 +108,7 @@ public class LogicalGroupingDB {
             return true;
         }
     }
+
     public List<Map<String,Object>> viewalllogicalgroupings(String dept){
         List<Map<String,Object>> groupings =new ArrayList<>();
         Document doc1=new Document("dept",dept);
