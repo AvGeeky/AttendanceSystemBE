@@ -22,7 +22,7 @@ public class SuperAdminjwtUtil {
     public void updateAuthorised(Map<String,Object> claims,Boolean authorised){
         claims.put("authorised",authorised);
     }
-    public void updateEmailI(Map<String,Object> claims,String email){
+    public void updateEmail(Map<String,Object> claims, String email){
         claims.put("email",email);
     }
     public String signJwt(Map<String,Object> claims){

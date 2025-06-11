@@ -7,6 +7,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
@@ -20,7 +21,7 @@ public class LogicalGroupingDB {
     private static MongoClient mongoClient;
     private static MongoDatabase database;
     private static MongoCollection<Document> collection;
-    private static MongoCollection<Document> collection1;
+
     static {
         try {
             MongoClientSettings settings = MongoClientSettings.builder()
@@ -30,30 +31,46 @@ public class LogicalGroupingDB {
             database = mongoClient.getDatabase("AttendEz");
 
             collection=database.getCollection("Logical Grouping");
-            collection1=database.getCollection("Users");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public Boolean insertLogicalGrouping(Map<String, Object> group, String dept) {
+    private final UserDB userdb;
+    @Autowired
+    public LogicalGroupingDB(UserDB userdb) {
+        this.userdb = userdb;
+    }
+
+    public Boolean insertLogicalGrouping(Map<String, Object> group, String dept, String email) {
         String section = (String) group.get("section");
         String degree = (String) group.get("degree");
         String passout = (String) group.get("passout");
-        String advisor = (String) group.get("advisor");
+        String advisorEmail = (String) group.get("advisorEmail");
+        
+        if (!userdb.isEmailAllowed(advisorEmail)){
+            return false; // Invalid advisor email
+        }
+        boolean isElective = (section == null && advisorEmail == null);
+        
 
-        boolean isElective = (degree == null && advisor == null);
-        String groupcode = isElective ? dept + section + passout : dept + passout + section;
+        Document query = new Document("passout", passout).append("department", dept).append("degree", degree);
 
-        Document query = new Document("passout", passout).append("section", section);
         if (!isElective) {
-            query.append("degree", degree);
+            query.append("section", section);
         }
 
         Document existing = collection.find(query).first();
         List<String> classCodes = (List<String>) group.get("class-code");
         List<String> regNumbers = (List<String>) group.get("registernumbers");
-
+        String electiveName = "";
+        if (isElective){
+            for (String eleccode: (List<String>) group.get("class-code")) {
+                electiveName = electiveName + eleccode;
+            }
+        }
+        String groupcode = isElective ? dept + electiveName + passout : dept + passout + section;
         // Validating and processing timetable
         Map<String, List<Map<String, Object>>> timetable = (Map<String, List<Map<String, Object>>>) group.get("timetable");
 
@@ -86,19 +103,18 @@ public class LogicalGroupingDB {
             if (!found) return false;
         }
 
-        Document doc2 = new Document("section", section)
+        Document doc2 = new Document("degree", degree)
                 .append("registernumbers", regNumbers)
                 .append("timetable", timetable)
                 .append("class-code", classCodes)
                 .append("groupcode", groupcode)
-                .append("dept", dept)
+                .append("department", dept)
                 .append("passout", passout);
 
         if (!isElective) {
-            doc2.append("degree", degree).append("advisor", advisor);
-            Document filter = new Document("faculty_email", advisor);
-            Document update = new Document("$set", new Document("advisor-list", regNumbers));
-            collection1.updateOne(filter, update);
+            doc2.append("section", section).append("advisorEmail", advisorEmail);
+            userdb.updateClassAdvisorListByEmail(advisorEmail,regNumbers);
+
         }
 
         if (existing != null) {
@@ -111,7 +127,7 @@ public class LogicalGroupingDB {
 
     public List<Map<String,Object>> viewalllogicalgroupings(String dept){
         List<Map<String,Object>> groupings =new ArrayList<>();
-        Document doc1=new Document("dept",dept);
+        Document doc1=new Document("department",dept);
         for(Document doc2:collection.find(doc1)){
             groupings.add(new HashMap<>(doc2));
         }
@@ -119,7 +135,7 @@ public class LogicalGroupingDB {
 
     }
     public boolean deletelogicalgroup(String dept,String groupcode){
-        Document doc1=new Document("dept",dept)
+        Document doc1=new Document("department",dept)
                 .append("groupcode",groupcode);
         return  collection.deleteOne(doc1).getDeletedCount()>0;
 

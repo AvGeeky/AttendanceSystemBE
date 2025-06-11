@@ -302,8 +302,7 @@ public class Controller {
                    (String) requestBody.get("name"),
                    (String) requestBody.get("department"),
                    (String) requestBody.get("position"),
-                   (String) requestBody.get("mentor"),
-                   (String) requestBody.get("class_advisor"));
+                   (String) requestBody.get("mentor"));
             if (succ) {
                 response.put("status", "S");
                 response.put("message", "User details updated successfully!");
@@ -321,6 +320,7 @@ public class Controller {
             return ResponseEntity.status(401).body(claims);
         }
     }
+
     @PostMapping("/student/googleAuth")
     public ResponseEntity<Map<String, Object>> authenticateWithGoogle(@RequestBody Map<String, String> request) throws IOException {
         Map<String, Object> response = new HashMap<>();
@@ -522,7 +522,7 @@ public class Controller {
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response=new HashMap<>();
-            boolean done=logicalGroupingDbClass.insertLogicalGrouping(group,(String)claims.get("dept"));
+            boolean done=logicalGroupingDbClass.insertLogicalGrouping(group,(String)claims.get("dept"),(String)claims.get("email"));
             if(done){
                 response.put("status","S");
                 response.put("message","logical grouping inserted or updated successfully!");

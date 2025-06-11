@@ -42,15 +42,34 @@ public class UserDB {
         }
     }
     // Method to add details of a new faculty member
-    public boolean updateUserDocumentByEmail(String emailId, String name, String department, String position, String mentor, String classAdvisor) {
+    public boolean updateUserDocumentByEmail(String emailId, String name, String department, String position, String mentor) {
         Document query = new Document("faculty_email", emailId);
         Document updateFields = new Document()
                 .append("name", name)
                 .append("department", department)
                 .append("position", position)
-                .append("mentor", mentor)
-                .append("class_advisor", classAdvisor);
+                .append("mentor", mentor);
         Document update = new Document("$set", updateFields);
+        return collection.updateOne(query, update).getModifiedCount() > 0;
+    }
+
+    public boolean updateMentorListByEmail(String emailId, List<String> mentorList) {
+        Document query = new Document("faculty_email", emailId);
+        Document user = collection.find(query).first();
+        List<String> existingList = user != null && user.get("mentor_list") != null
+                ? (List<String>) user.get("mentor_list") : new ArrayList<>();
+        existingList.addAll(mentorList);
+        Document update = new Document("$set", new Document("mentor_list", existingList));
+        return collection.updateOne(query, update).getModifiedCount() > 0;
+    }
+
+    public boolean updateClassAdvisorListByEmail(String emailId, List<String> classAdvisorList) {
+        Document query = new Document("faculty_email", emailId);
+        Document user = collection.find(query).first();
+        List<String> existingList = user != null && user.get("class_advisor_list") != null
+                ? (List<String>) user.get("class_advisor_list") : new ArrayList<>();
+        existingList.addAll(classAdvisorList);
+        Document update = new Document("$set", new Document("class_advisor_list", existingList));
         return collection.updateOne(query, update).getModifiedCount() > 0;
     }
 
@@ -77,13 +96,9 @@ public class UserDB {
 
     // Method to check if a given faculty email is allowed
     public boolean isEmailAllowed(String email) {
-        Document query = new Document("doctype", "allowed_emails");
-        Document allowedDoc = collection.find(query).first();
-        if (allowedDoc == null) return false;
-        // Remove the doctype field before searching
-        allowedDoc.remove("doctype");
-        // Check if the email is present as a value
-        return allowedDoc.containsValue(email);
+        Document query = new Document("faculty_email", email);
+        Document result = collection.find(query).first();
+        return result != null;
     }
 
     // Method to get user details by email
