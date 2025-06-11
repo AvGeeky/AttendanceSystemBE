@@ -4,6 +4,7 @@ import com.appbuildersinc.attendance.source.Utilities.Email.emailUtil;
 import com.appbuildersinc.attendance.source.Utilities.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.KeyPairUtil;
 import com.appbuildersinc.attendance.source.Utilities.PasswordUtil;
+import com.appbuildersinc.attendance.source.Utilities.SuperAdminjwtUtil;
 import com.appbuildersinc.attendance.source.database.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.UserDB;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,14 +26,15 @@ public class Functions {
     private final KeyPairUtil keyclass;
     private final FacultyJwtUtil jwtclass;
     private final SuperAdminDB admindb;
-
+    private final SuperAdminjwtUtil adminjwtclass;
     @Autowired
-    public Functions(UserDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil,SuperAdminDB admindb) {
+    public Functions(UserDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass) {
         this.userdb = userdb;
         this.emailclass =emailutil;
         this.keyclass =keyutil;
         this.jwtclass = jwtutil;
         this.admindb=admindb;
+        this.adminjwtclass = adminjwtclass;
     }
 
     public boolean isEmailAllowed(String email) {
@@ -189,5 +191,48 @@ public class Functions {
 
     public String getDeptbyEmail(String email) {
           return SuperAdminDB.getDeptbyEmail(email);
+    }
+    public Map<String,Object> checkJwtAuthAfterLoginAdmin(String jwt) throws Exception {
+        HashMap<String, Object> response = new HashMap<>();
+        // Check if the JWT is null or empty
+        if (jwt == null) {
+            response.put("status", "E");
+            response.put("message", "JWT TOKEN NOT PASSED");
+            return response;
+        }
+
+        Map<String, Object> claims = adminjwtclass.parseJwt(jwt);
+        Object error = claims.get("error");
+
+        // Check if the JWT is expired or invalid
+        if ("Token expired".equals(error)) {
+            response.put("status", "TO");
+            response.put("message", "Login Expired. Please re-login.");
+            return response;
+        }
+        if (!claims.get("role").equals("ADMIN")) {
+            response.put("status", "E");
+            response.put("message", "NOT AUTHORIZED.");
+            return response;
+        }
+
+        if ("Invalid token".equals(error)) {
+            response.put("status", "TO");
+            response.put("message", "Invalid Login Token. Please re-login.");
+            return response;
+        }
+
+        //return the claims if valid
+        if ((boolean)claims.get("authorised")) {
+            claims.put("status", "S");
+
+            return claims;
+        }
+        else{
+            response.put("status", "E");
+            response.put("message", "NOT AUTHORIZED. Please re-login.");
+            return response;
+        }
+
     }
 }

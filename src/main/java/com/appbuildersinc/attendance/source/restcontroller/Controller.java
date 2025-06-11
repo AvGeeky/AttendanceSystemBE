@@ -5,6 +5,7 @@ import com.appbuildersinc.attendance.source.Utilities.KeyPairUtil;
 import com.appbuildersinc.attendance.source.Utilities.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.SuperAdminjwtUtil;
 import com.appbuildersinc.attendance.source.database.StudentDB;
+import com.appbuildersinc.attendance.source.database.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.UserDB;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -19,9 +20,7 @@ import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <b>Standard HTTP Error Response Codes:</b>
@@ -79,10 +78,11 @@ public class Controller {
     private final StudentjwtUtil studentjwtUtil;
     private final SuperAdminjwtUtil adminjwtUtil;
     private final StudentDB studentDbClass;
+    private final SuperAdminDB SuperAdminDbClass;
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
     @Autowired
-    public Controller(Functions functionsService, UserDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb,SuperAdminjwtUtil adminutil) {
+    public Controller(Functions functionsService, UserDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb,SuperAdminjwtUtil adminutil,SuperAdminDB SuperAdminDbClass) {
         this.functionsService = functionsService;
         this.userdbclass = userdbutil;
         this.facultyJwtUtil = jwtutil;
@@ -90,6 +90,7 @@ public class Controller {
         this.studentjwtUtil = stdjwtutil;
         this.studentDbClass =studdb;
         this.adminjwtUtil=adminutil;
+        this.SuperAdminDbClass=SuperAdminDbClass;
     }
 
     @PostMapping("/faculty/setEmail")
@@ -464,6 +465,56 @@ public class Controller {
 
 
 
+
+    }
+    @PostMapping("/SuperAdmin/addStudents")
+    public ResponseEntity<Map<String,Object>> addStudents(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody List<Map<String,String>> studlist) throws Exception {
+        Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
+        String status=(String)claims.get("status");
+        if(status.equals("S")){
+            Map<String,Object> response=new HashMap<>();
+            String dept=(String)claims.get("dept");
+
+            if(studentDbClass.insertStudentsByAdmin(studlist,dept)){
+                response.put("status","S");
+                response.put("message","inserted student details successfully");
+                return ResponseEntity.ok(response);
+            }
+            else{
+                response.put("status","E");
+                response.put("message","student details not inserted successfully");
+                return ResponseEntity.status(503).body(response);
+            }
+
+
+
+
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+        }
+
+    }
+    @GetMapping("/SuperAdmin/viewAllStudents")
+    public ResponseEntity<Map<String,Object>> addStudents(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception {
+        Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
+        String status=(String)claims.get("status");
+
+        if(status.equals("S")){
+            List<Map<String,Object>> list=new ArrayList<>();
+            Map<String,Object> response=new HashMap<>();
+            list=studentDbClass.getallStudentDetails((String)claims.get("dept"));
+            for(Map<String,Object> l:list){
+                l.remove("_id");
+            }
+            response.put("status","S");
+            response.put("details",list);
+            response.put("message","student details retrieved sucessfuly");
+            return ResponseEntity.ok(response);
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+        }
 
     }
 }
