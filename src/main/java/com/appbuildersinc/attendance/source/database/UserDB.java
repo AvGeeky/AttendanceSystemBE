@@ -10,6 +10,8 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -89,7 +91,44 @@ public class UserDB {
         Document query = new Document("faculty_email", email);
         return collection.find(query).first();
     }
+    public List<Map<String,Object>> viewallteachers(String dept){
+       Document query=new Document("dept",dept);
+       List<Map<String,Object>> teacherlist=new ArrayList<>();
+       for(Document doc2:collection.find(query)){
+           teacherlist.add(new HashMap<>(doc2));
+       }
+       return teacherlist;
 
 
+    }
+    public Boolean addorUpdateTeachers(String dept,Map<String,Object> teacher){
+       String email=(String)teacher.get("email");
+       Document doc=new Document("faculty_email",email);
+       Document found=collection.find(doc).first();
+       if(found==null){
+           Document doc2=new Document("dept",dept)
+                   .append("faculty_email",(String)teacher.get("email"))
+                   .append("position",(String)teacher.get("position"))
+                   .append("name",(String)teacher.get("name"))
+                   .append("mentor",(String)teacher.get("mentor"))
+                   .append("class_advisor",(String)teacher.get("advisor"));
+
+            collection.insertOne(doc2);
+           return true;
+
+
+
+       }
+       else{
+
+           Document doc3=new Document("dept",dept)
+                   .append("faculty_email",(String)teacher.get("email"))
+                   .append("position",(String)teacher.get("position"))
+                   .append("name",(String)teacher.get("name"))
+                   .append("mentor",(String)teacher.get("mentor"))
+                   .append("class_advisor",(String)teacher.get("advisor"));
+           return collection.updateOne(doc,new Document("$set", doc3)).getModifiedCount()>0;
+       }
+    }
 
 }

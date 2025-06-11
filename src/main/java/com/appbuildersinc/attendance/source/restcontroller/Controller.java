@@ -4,6 +4,7 @@ import com.appbuildersinc.attendance.source.Utilities.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.KeyPairUtil;
 import com.appbuildersinc.attendance.source.Utilities.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.SuperAdminjwtUtil;
+import com.appbuildersinc.attendance.source.database.LogicalGroupingDB;
 import com.appbuildersinc.attendance.source.database.StudentDB;
 import com.appbuildersinc.attendance.source.database.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.UserDB;
@@ -79,10 +80,11 @@ public class Controller {
     private final SuperAdminjwtUtil adminjwtUtil;
     private final StudentDB studentDbClass;
     private final SuperAdminDB SuperAdminDbClass;
+    private final LogicalGroupingDB logicalGroupingDbClass;
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String googleClientId;
     @Autowired
-    public Controller(Functions functionsService, UserDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb,SuperAdminjwtUtil adminutil,SuperAdminDB SuperAdminDbClass) {
+    public Controller(Functions functionsService, UserDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
         this.functionsService = functionsService;
         this.userdbclass = userdbutil;
         this.facultyJwtUtil = jwtutil;
@@ -91,6 +93,7 @@ public class Controller {
         this.studentDbClass =studdb;
         this.adminjwtUtil=adminutil;
         this.SuperAdminDbClass=SuperAdminDbClass;
+        this.logicalGroupingDbClass = logicalGroupingDbClass;
     }
 
     @PostMapping("/faculty/setEmail")
@@ -517,6 +520,130 @@ public class Controller {
         }
 
     }
+    @PostMapping("/SuperAdmin/createOrEditLogicalGrouping")
+    public ResponseEntity<Map<String,Object>> createoreditgrouping(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> group) throws Exception{
+        Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
+        String status=(String)claims.get("status");
+        if(status.equals("S")){
+            Map<String,Object> response=new HashMap<>();
+            boolean done=logicalGroupingDbClass.insertlogicalgrouping(group,(String)claims.get("dept"));
+            if(done){
+                response.put("status","S");
+                response.put("message","logical gropuing inserted or updated succesfully!");
+                return ResponseEntity.ok(response);
+            }
+            else{
+                response.put("status","E");
+                response.put("message","logical gropuing not inserted or updated succesully!");
+                return ResponseEntity.status(503).body(response);
+            }
+
+
+
+        }
+
+        else{
+
+            return ResponseEntity.status(401).body(claims);
+
+        }
+
+
+
+    }
+    @GetMapping("/SuperAdmin/viewGrouping")
+    public ResponseEntity<Map<String,Object>> viewgrouping(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception {
+        Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
+        String status=(String)claims.get("status");
+        if(status.equals("S")) {
+            String dept=(String)claims.get("dept");
+            List<Map<String,Object>> groupings =new ArrayList<>();
+            Map<String,Object> response=new HashMap<>();
+            groupings=logicalGroupingDbClass.viewalllogicalgroupings(dept);
+            response.put("status","S");
+            response.put("groups",groupings);
+            response.put("message","groupings got succesfully");
+            return ResponseEntity.ok(response);
+
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+    @PostMapping("/SuperAdmin/deleteGrouping")
+    public ResponseEntity<Map<String,Object>> deletegrouping(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> groupid) throws Exception {
+        Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
+        String status=(String)claims.get("status");
+        if(status.equals("S")){
+            Map<String,Object> response=new HashMap<>();
+            Boolean done=logicalGroupingDbClass.deletelogicalgroup((String)claims.get("dept"),(String)groupid.get("groupid"));
+            if(done){
+                response.put("status","S");
+                response.put("message","deleted the grouping succesfully");
+               return ResponseEntity.ok(response);
+            }
+            else{
+                response.put("status","E");
+                response.put("message","no successfull deletion");
+                return ResponseEntity.status(503).body(response);
+
+
+            }
+
+
+
+
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+    @GetMapping("/SuperAdmin/viewTeacher")
+    public ResponseEntity<Map<String,Object>> viewfaculty(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception{
+        Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
+        String status=(String)claims.get("status");
+        if(status.equals("S")){
+            Map<String,Object> response=new HashMap<>();
+            String dept=(String)claims.get("dept");
+            List<Map<String,Object>> teacherlist= userdbclass.viewallteachers(dept);
+            response.put("status","S");
+            response.put("details",teacherlist);
+            response.put("message","Teacher details retrieved succesfully!");
+            return ResponseEntity.ok(response);
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+
+        }
+    }
+   @PostMapping("/SuperAdmin/addOrUpdateTeacher")
+    public ResponseEntity<Map<String,Object>> addorupdatefaculty(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object>faculty) throws Exception {
+       Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
+       String status=(String)claims.get("status");
+       if(status.equals("S")){
+           Map<String,Object> response=new HashMap<>();
+           String dept=(String)claims.get("dept");
+           boolean done=userdbclass.addorUpdateTeachers(dept,faculty);
+           if(done){
+               response.put("Status","S");
+               response.put("Message","Teacher details added or updated succesfully");
+              return  ResponseEntity.ok(response);
+           }
+           else{
+               response.put("Status","E");
+               response.put("Message","Teacher details not added or updated succesfully");
+               return ResponseEntity.status(503).body(response);
+
+           }
+
+
+       }
+       else{
+           return ResponseEntity.status(401).body(claims);
+       }
+
+
+   }
 }
 
 
