@@ -52,14 +52,12 @@ public class LogicalGroupingDB {
         if (!userdb.isEmailAllowed(advisorEmail)){
             return false; // Invalid advisor email
         }
-        boolean isElective = (section == null && advisorEmail == null);
+        boolean isElective = (advisorEmail == null);
         
 
-        Document query = new Document("passout", passout).append("department", dept).append("degree", degree);
+        Document query = new Document("passout", passout).append("department", dept).append("degree", degree).append("section", section);;
 
-        if (!isElective) {
-            query.append("section", section);
-        }
+
 
         Document existing = collection.find(query).first();
         List<String> classCodes = (List<String>) group.get("class-code");
@@ -109,10 +107,11 @@ public class LogicalGroupingDB {
                 .append("class-code", classCodes)
                 .append("groupcode", groupcode)
                 .append("department", dept)
-                .append("passout", passout);
+                .append("passout", passout)
+                .append("section", section);
 
         if (!isElective) {
-            doc2.append("section", section).append("advisorEmail", advisorEmail);
+            doc2.append("advisorEmail", advisorEmail);
             userdb.updateClassAdvisorListByEmail(advisorEmail,regNumbers);
 
         }
