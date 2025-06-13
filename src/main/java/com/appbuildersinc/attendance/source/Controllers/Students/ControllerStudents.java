@@ -145,9 +145,19 @@ public class ControllerStudents {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // 401
         }
 
+
         //  Token is valid
         GoogleIdToken.Payload payload = token.getPayload();
+        String hd = payload.getHostedDomain(); // Get the hosted domain if available
+
+        if (hd == null || !hd.equals("ssn.edu.in")) {
+            //  Check if the email domain matches the expected domain
+            response.put("status", "E");
+            response.put("message", "Unauthorized domain. Please use a valid institutional email.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // 401
+        }
         String email = payload.getEmail();
+
 
         // You can optionally validate the email domain or userId here
 
