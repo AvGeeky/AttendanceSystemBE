@@ -58,7 +58,8 @@ public class LogicalGroupingDB {
         boolean isElective = (advisorEmail == null);
         
 
-        Document query = new Document("passout", passout).append("department", dept).append("degree", degree).append("section", section);;
+        Document query = new Document("passout", passout).append("department", dept).append("degree", degree).append("section", section);
+
 
 
 
@@ -115,7 +116,7 @@ public class LogicalGroupingDB {
 
         if (!isElective) {
             doc2.append("advisorEmail", advisorEmail);
-            userdb.updateClassAdvisorListByEmail(advisorEmail,regNumbers);
+            userdb.updateClassAdvisorListByEmail(advisorEmail,regNumbers,groupcode);
 
         }
 
@@ -134,7 +135,6 @@ public class LogicalGroupingDB {
             groupings.add(new HashMap<>(doc2));
         }
         return groupings;
-
     }
     public boolean deletelogicalgroup(String dept,String groupcode){
         Document query = new Document("department", dept)
@@ -146,7 +146,7 @@ public class LogicalGroupingDB {
         String advisorEmail = group.getString("advisorEmail");
         List<String> regNumbers = (List<String>) group.get("registernumbers");
         if (advisorEmail != null) {
-            userdb.removeClassAdvisorListByEmail(advisorEmail, regNumbers);
+            userdb.removeClassAdvisorListByEmail(advisorEmail, groupcode);
         }
         return collection.deleteOne(query).getDeletedCount() > 0;
     }

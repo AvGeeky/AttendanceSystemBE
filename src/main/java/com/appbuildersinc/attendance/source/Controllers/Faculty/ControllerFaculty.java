@@ -94,7 +94,25 @@ public class ControllerFaculty {
         this.logicalGroupingDbClass = logicalGroupingDbClass;
 
     }
-
+    @GetMapping("/faculty/getAllLogicalGroupings")
+    public ResponseEntity<Map<String,Object>> getAllLogicalGroupings(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                               String authorizationHeader) throws Exception {
+        Map<String, Object> claims = functionsTeachersService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            List<Map<String,Object>> logicalGroupings = functionsTeachersService.getAllLogicalGroupings(claims.get("dept").toString());
+            response.put("status", "S");
+            response.put("message", "Logical groupings retrieved successfully!");
+            response.put("logical_groupings", logicalGroupings);
+            return ResponseEntity.ok(response);
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
     @PostMapping("/faculty/updateMenteeListAndReturnDetails")
     public ResponseEntity<Map<String,Object>> updateMenteeListAndReturnDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                String authorizationHeader,

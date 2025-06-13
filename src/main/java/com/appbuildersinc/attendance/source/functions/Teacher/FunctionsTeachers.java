@@ -6,14 +6,13 @@ import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPai
 import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.PasswordUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
 import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
+import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 //DATABASE ONLY ACCESSIBLE HERE
 //BUSINESS LOGIC HERE????
 
@@ -21,13 +20,14 @@ import java.util.Map;
 public class FunctionsTeachers {
     private final FacultyDB userdb;
     private final StudentDB studentdb;
+    private final LogicalGroupingDB logicalGroupingDB;
     private emailUtil emailclass;
     private final KeyPairUtil keyclass;
     private final FacultyJwtUtil jwtclass;
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
     @Autowired
-    public FunctionsTeachers(StudentDB stu,FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass) {
+    public FunctionsTeachers(StudentDB stu, FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, LogicalGroupingDB logicalGroupingDB) {
         this.userdb = userdb;
         this.studentdb=stu;
         this.emailclass =emailutil;
@@ -35,6 +35,7 @@ public class FunctionsTeachers {
         this.jwtclass = jwtutil;
         this.admindb=admindb;
         this.adminjwtclass = adminjwtclass;
+        this.logicalGroupingDB = logicalGroupingDB;
     }
     public boolean isEmailAllowed(String email)
     {
@@ -151,6 +152,13 @@ public class FunctionsTeachers {
             return null;
         }
         return response;
+    }
+
+    public List<Map<String,Object>> getAllLogicalGroupings(String dept) {
+        Set<Map<String, Object>> deptLG = new HashSet<>();
+        deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings(dept));
+        deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings("FirstYear"));
+        return new ArrayList<>(deptLG);
     }
 
 
