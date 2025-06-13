@@ -108,7 +108,7 @@ public class FacultyDB {
     }
 
     public List<Map<String,Object>> viewAllTeachers(String dept){
-       Document query=new Document("dept",dept);
+       Document query=new Document("department",dept);
        List<Map<String,Object>> teacherlist=new ArrayList<>();
        for(Document doc2:collection.find(query)){
            doc2.remove("password");
@@ -124,7 +124,7 @@ public class FacultyDB {
        Document doc=new Document("faculty_email",email);
        Document found=collection.find(doc).first();
        if(found==null){
-           Document doc2=new Document("dept",dept)
+           Document doc2=new Document("department",dept)
                    .append("faculty_email",(String)teacher.get("email"))
                    .append("position",(String)teacher.get("position"))
                    .append("name",(String)teacher.get("name"))
@@ -139,7 +139,7 @@ public class FacultyDB {
        }
        else{
 
-           Document doc3=new Document("dept",dept)
+           Document doc3=new Document("department",dept)
                    .append("faculty_email",(String)teacher.get("email"))
                    .append("position",(String)teacher.get("position"))
                    .append("name",(String)teacher.get("name"))
