@@ -72,27 +72,30 @@ public class FacultyDB {
         return collection.updateOne(query, update).getModifiedCount() > 0;
     }
 
-    public boolean updateClassAdvisorListByEmail(String emailId, List<String> classAdvisorList) {
+    public boolean updateClassAdvisorListByEmail(String emailId, List<String> classAdvisorList, String groupCode) {
         Document query = new Document("faculty_email", emailId);
         Document user = collection.find(query).first();
-        List<String> existingList = user != null && user.get("class_advisor_list") != null
-                ? new ArrayList<>((List<String>) user.get("class_advisor_list")) : new ArrayList<>();
-        for (String regNo : classAdvisorList) {
-            if (!existingList.contains(regNo)) {
-                existingList.add(regNo);
-            }
-        }
-        Document update = new Document("$set", new Document("class_advisor_list", existingList));
+
+        Map<String, List<String>> classAdvisorMap = user != null && user.get("class_advisor_list") != null
+                ? new HashMap<>((Map<String, List<String>>) user.get("class_advisor_list"))
+                : new HashMap<>();
+
+        classAdvisorMap.put(groupCode, classAdvisorList);
+
+        Document update = new Document("$set", new Document("class_advisor_list", classAdvisorMap));
         return collection.updateOne(query, update).getModifiedCount() > 0;
     }
     // Method to remove register numbers from class_advisor_list by email
-    public boolean removeClassAdvisorListByEmail(String emailId, List<String> regNosToRemove) {
+    public boolean removeClassAdvisorListByEmail(String emailId, String groupCodeToRemove) {
         Document query = new Document("faculty_email", emailId);
         Document user = collection.find(query).first();
-        List<String> existingList = user != null && user.get("class_advisor_list") != null
-                ? new ArrayList<>((List<String>) user.get("class_advisor_list")) : new ArrayList<>();
-        existingList.removeAll(regNosToRemove);
-        Document update = new Document("$set", new Document("class_advisor_list", existingList));
+        Map<String, List<String>> classAdvisorMap = user != null && user.get("class_advisor_list") != null
+                ? new HashMap<>((Map<String, List<String>>) user.get("class_advisor_list"))
+                : new HashMap<>();
+
+        classAdvisorMap.remove(groupCodeToRemove);
+
+        Document update = new Document("$set", new Document("class_advisor_list", classAdvisorMap));
         return collection.updateOne(query, update).getModifiedCount() > 0;
     }
 
