@@ -37,9 +37,12 @@ public class LogicalGroupingDB {
         }
     }
 
+    private final StudentDB studentdb;
     private final FacultyDB userdb;
+
     @Autowired
-    public LogicalGroupingDB(FacultyDB userdb) {
+    public LogicalGroupingDB(StudentDB studentdb, FacultyDB userdb) {
+        this.studentdb = studentdb;
         this.userdb = userdb;
     }
 
@@ -134,11 +137,21 @@ public class LogicalGroupingDB {
 
     }
     public boolean deletelogicalgroup(String dept,String groupcode){
-        Document doc1=new Document("department",dept)
-                .append("groupcode",groupcode);
-        return  collection.deleteOne(doc1).getDeletedCount()>0;
+        Document query = new Document("department", dept)
+                .append("groupcode", groupcode);
+        Document group = collection.find(query).first();
+        if (group == null) {
+            return false;
+        }
+        String advisorEmail = group.getString("advisorEmail");
+        List<String> regNumbers = (List<String>) group.get("registernumbers");
+        if (advisorEmail != null) {
+            userdb.removeClassAdvisorListByEmail(advisorEmail, regNumbers);
+        }
+        return collection.deleteOne(query).getDeletedCount() > 0;
+    }
 
 
     }
 
-}
+
