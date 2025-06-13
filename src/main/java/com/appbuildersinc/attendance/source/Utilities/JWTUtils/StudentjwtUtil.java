@@ -1,4 +1,4 @@
-package com.appbuildersinc.attendance.source.Utilities;
+package com.appbuildersinc.attendance.source.Utilities.JWTUtils;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.*;
 import org.springframework.stereotype.Service;

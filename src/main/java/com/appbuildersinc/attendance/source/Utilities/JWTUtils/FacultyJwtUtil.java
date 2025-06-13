@@ -1,4 +1,4 @@
-package com.appbuildersinc.attendance.source.Utilities;
+package com.appbuildersinc.attendance.source.Utilities.JWTUtils;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.*;
@@ -28,6 +28,7 @@ public class FacultyJwtUtil {
         claims.put("addnl_role", addnl_role);
         return claims;
     }
+    //add dept details in jwt
 
     // Update methods (modify the claims map)
 

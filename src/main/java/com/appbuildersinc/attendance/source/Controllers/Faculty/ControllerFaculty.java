@@ -1,26 +1,21 @@
-package com.appbuildersinc.attendance.source.restcontroller;
+package com.appbuildersinc.attendance.source.Controllers.Faculty;
 
-import com.appbuildersinc.attendance.source.Utilities.FacultyJwtUtil;
-import com.appbuildersinc.attendance.source.Utilities.KeyPairUtil;
-import com.appbuildersinc.attendance.source.Utilities.StudentjwtUtil;
-import com.appbuildersinc.attendance.source.database.StudentDB;
-import com.appbuildersinc.attendance.source.database.UserDB;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPairUtil;
+import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
+import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
+import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
+import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
+import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
+import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
+import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
+import com.appbuildersinc.attendance.source.functions.Miscallaneous.FunctionsMisc;
+import com.appbuildersinc.attendance.source.functions.Teacher.FunctionsTeachers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.HttpStatus;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <b>Standard HTTP Error Response Codes:</b>
@@ -70,30 +65,39 @@ Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizati
 
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
-public class Controller {
-    private final Functions functionsService;
-    private final UserDB userdbclass;
+public class ControllerFaculty {
+    private final FunctionsMisc functionsMiscService;
+    private final FunctionsTeachers functionsTeachersService;
+    private final FacultyDB userdbclass;
     private final KeyPairUtil keyclass;
     private final FacultyJwtUtil facultyJwtUtil;
     private final StudentjwtUtil studentjwtUtil;
+    private final SuperAdminjwtUtil adminjwtUtil;
     private final StudentDB studentDbClass;
-    @Value("${spring.security.oauth2.client.registration.google.client-id}")
-    private String googleClientId;
+    private final SuperAdminDB SuperAdminDbClass;
+    private final LogicalGroupingDB logicalGroupingDbClass;
+
+
     @Autowired
-    public Controller(Functions functionsService, UserDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb) {
-        this.functionsService = functionsService;
+    public ControllerFaculty(FunctionsTeachers fs, FunctionsMisc functionsMiscService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
+        this.functionsMiscService = functionsMiscService;
+        this.functionsTeachersService = fs;
         this.userdbclass = userdbutil;
         this.facultyJwtUtil = jwtutil;
         this.keyclass =keyutil;
         this.studentjwtUtil = stdjwtutil;
         this.studentDbClass =studdb;
+        this.adminjwtUtil=adminutil;
+        this.SuperAdminDbClass=SuperAdminDbClass;
+        this.logicalGroupingDbClass = logicalGroupingDbClass;
+
     }
 
     @PostMapping("/faculty/setEmail")
     public ResponseEntity<Map<String,Object>> setEmail(@RequestParam String email) throws Exception {
         Map<String, Object> response = new HashMap<>();
-       if (functionsService.isEmailAllowed(email)){
-           String enc_otp = functionsService.sendMailReturnOtp(email);
+       if (functionsTeachersService.isEmailAllowed(email)){
+           String enc_otp = functionsTeachersService.sendMailReturnOtp(email);
 
            Map<String, Object> claims = facultyJwtUtil.createClaims(email,false,enc_otp,false,"");
            String jwt = facultyJwtUtil.signJwt(claims);
@@ -113,7 +117,7 @@ public class Controller {
     public ResponseEntity<Map<String,Object>> verifyOtp(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
                                                         @RequestParam String otp) throws Exception {
 
-        Map<String, Object> claims = functionsService.checkJwtAuthBeforeLogin(authorizationHeader);
+        Map<String, Object> claims = functionsTeachersService.checkJwtAuthBeforeLogin(authorizationHeader);
 
         //Check if the JWT is valid
         String status = (String) claims.get("status");
@@ -161,7 +165,7 @@ public class Controller {
     public ResponseEntity<Map<String,Object>> updatePassword(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
                                                         @RequestParam String password) throws Exception {
         //Check if the JWT is valid
-        Map<String, Object> claims = functionsService.checkJwtAuthBeforeLogin(authorizationHeader);
+        Map<String, Object> claims = functionsTeachersService.checkJwtAuthBeforeLogin(authorizationHeader);
 
 
         String status = (String) claims.get("status");
@@ -173,7 +177,7 @@ public class Controller {
             if ((boolean) claims.get("otp_auth")){
                 //OTP is verified, proceed with setting username and password
                 String email = (String) claims.get("email");
-                if (functionsService.hashAndUpdatePassword(email, password)) {
+                if (functionsTeachersService.hashAndUpdatePassword(email, password)) {
                     facultyJwtUtil.updateOtpAuthStatus(claims, false);
                     String jwt = facultyJwtUtil.signJwt(claims);
                     response.put("status", "S");
@@ -209,7 +213,7 @@ public class Controller {
                                                     ) throws Exception {
 
             Map<String, Object> response = new HashMap<>();
-            if (functionsService.attemptLogin(email,password)) {
+            if (functionsTeachersService.attemptLogin(email,password)) {
                 Map<String, Object> claims = facultyJwtUtil.createClaims(email,true,"",false,"");
 
                 //Login successful
@@ -228,7 +232,7 @@ public class Controller {
 
                 if (details.get("mentor").equals("True") && details.get("class_advisor").equals("True")) {
                     facultyJwtUtil.updateAddnlRole(claims, "CM");
-                    response.put("role", "CM");
+                    response.put("role", "MA");
                 } else if (details.get("mentor").equals("True")) {
                     facultyJwtUtil.updateAddnlRole(claims, "M");
                     response.put("role", "M");
@@ -236,6 +240,10 @@ public class Controller {
                     facultyJwtUtil.updateAddnlRole(claims, "A");
                     response.put("role", "A");
                 }
+                response.put("name", details.get("name"));
+                response.put("department", details.get("dept"));
+                response.put("email",details.get("faculty_email"));
+
 
                 String jwt = facultyJwtUtil.signJwt(claims);
                 response.put("token", jwt);
@@ -255,7 +263,7 @@ public class Controller {
     @GetMapping("/faculty/getDetails")
     public ResponseEntity<Map<String,Object>> getDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                              String authorizationHeader) throws Exception {
-        Map<String, Object> claims = functionsService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        Map<String, Object> claims = functionsTeachersService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
@@ -287,7 +295,7 @@ public class Controller {
     public ResponseEntity<Map<String,Object>> setDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                          String authorizationHeader,
                                                          @RequestBody Map<String, Object> requestBody) throws Exception {
-        Map<String, Object> claims = functionsService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        Map<String, Object> claims = functionsTeachersService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
@@ -298,8 +306,7 @@ public class Controller {
                    (String) requestBody.get("name"),
                    (String) requestBody.get("department"),
                    (String) requestBody.get("position"),
-                   (String) requestBody.get("mentor"),
-                   (String) requestBody.get("class_advisor"));
+                   (String) requestBody.get("mentor"));
             if (succ) {
                 response.put("status", "S");
                 response.put("message", "User details updated successfully!");
@@ -317,126 +324,9 @@ public class Controller {
             return ResponseEntity.status(401).body(claims);
         }
     }
-    @PostMapping("/api/auth/google")
-    public ResponseEntity<Map<String, Object>> authenticateWithGoogle(@RequestBody Map<String, String> request) throws IOException {
-        Map<String, Object> response = new HashMap<>();
-
-        // ✅ Check if ID token is provided
-        String idToken = request.get("idToken");
-        if (idToken == null || idToken.isBlank()) {
-            response.put("status", "E");
-            response.put("message", "ID token not provided in request body.");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response); // 400
-        }
-
-        // ✅ Setup verifier for Google token
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                new NetHttpTransport(), new JacksonFactory())
-                .setAudience(Collections.singletonList(googleClientId)) // Replace with your actual client ID
-                .build();
-
-        GoogleIdToken token;
-        try {
-            token = verifier.verify(idToken);
-        } catch (GeneralSecurityException e) {
-            response.put("status", "E");
-            response.put("message", "Security error while verifying token. Please try again later.");
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response); // 503
-        } catch (IOException e) {
-            response.put("status", "E");
-            response.put("message", "Network error occurred while verifying token. Please try again.");
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response); // 503
-        }
-
-        // ✅ Token verification failed (e.g. expired, tampered, or wrong audience)
-        if (token == null) {
-            response.put("status", "E");
-            response.put("message", "Invalid or expired Google ID token.");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // 401
-        }
-
-        // ✅ Token is valid
-        GoogleIdToken.Payload payload = token.getPayload();
-        String email = payload.getEmail();
-
-        // You can optionally validate the email domain or userId here
-
-        // ✅ Generate internal JWT for session
-        Map<String, Object> claims = studentjwtUtil.createClaims(email, true);
-        String jwt = studentjwtUtil.signJwt(claims);
-
-        response.put("status", "S");
-        response.put("message", "Login successful");
-        response.put("token", jwt);
-        return ResponseEntity.ok(response); // 200
-    }
 
 
-
-    @GetMapping("/student/getDetails")
-    public ResponseEntity<Map<String,Object>>getStudentDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
-                                                                   String authorizationHeader)throws Exception {
-
-        Map<String, Object> claims = functionsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
-        //Check if the JWT is valid
-        String status = (String) claims.get("status");
-        if (status.equals("S")) {
-            Map<String, Object> response = new HashMap<>();
-            Map<String, Object> details = studentDbClass.getStudentDetailsByEmail((String) claims.get("email"));
-            if (details != null) {
-                response.put("status", "S");
-                response.put("message", "Student details retrieved succesully");
-                details.remove("_id");
-                response.put("details", details);
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("status", "E");
-                response.put("message", "Error in retrieving student details or no change between passed and database data. Please try again.");
-                return ResponseEntity.status(503).body(response);
-            }
-
-
-        } else {
-            return ResponseEntity.status(401).body(claims);
-        }
-    }
-        @PostMapping("/student/setDetails")
-        public ResponseEntity<Map<String,Object>> setStudentDetails(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
-                                                                    @RequestBody Map<String, Object> requestBody) throws Exception{
-
-        Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
-        String status=(String)claims.get("status");
-        if(status.equals("S")){
-            Map<String,Object> response =new HashMap<>();
-            boolean succ = studentDbClass.updateStudentDocumentsbyemail(
-                    (String) claims.get("email"),
-                    (String) requestBody.get("name"),
-                    (String) requestBody.get("regno"),
-                    (String) requestBody.get("passout")
-            );
-            if (succ) {
-                response.put("status", "S");
-                response.put("message", "Student  details updated successfully!");
-                return ResponseEntity.ok(response);
-
-            } else {
-                //Error in updating user details
-                response.put("status", "E");
-                response.put("message", "No change between database and passed details or Error. Please try again.");
-                return ResponseEntity.status(503).body(response);
-            }
-
-
-        }
-        else{
-            return ResponseEntity.status(401).body(claims);
-
-        }
-
-        }
-
-
-    }
+}
 
 
 

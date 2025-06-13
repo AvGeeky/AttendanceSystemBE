@@ -1,8 +1,7 @@
-package com.appbuildersinc.attendance.source.Utilities;
+package com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils;
 
-import com.appbuildersinc.attendance.source.database.KeypairStore;
+import com.appbuildersinc.attendance.source.database.MongoDB.KeypairStore;
 import io.github.cdimascio.dotenv.Dotenv;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
