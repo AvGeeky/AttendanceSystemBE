@@ -1,6 +1,7 @@
 // src/main/java/com/yourapp/config/RedisConfig.java
 package com.appbuildersinc.attendance.source.database.redis;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.data.redis.connection.*;
@@ -9,15 +10,21 @@ import org.springframework.data.redis.core.*;
 
 @Configuration
 public class RedisConfig {
-
-    @Value("${spring.data.redis.host}")
-    private String host;
-
-    @Value("${spring.data.redis.port}")
-    private int port;
-
-    @Value("${spring.data.redis.password}")
-    private String password;
+    static Dotenv dotenv = Dotenv.configure()
+            .filename("apiee.env")
+            .load();
+    private String host = dotenv.get("REDIS_HOST");
+    private int port = Integer.parseInt(dotenv.get("REDIS_PORT"));
+    private String password = dotenv.get("REDIS_PASSWORD");
+    
+//    @Value("${spring.data.redis.host}")
+//    private String host;
+//
+//    @Value("${spring.data.redis.port}")
+//    private int port;
+//
+//    @Value("${spring.data.redis.password}")
+//    private String password;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
