@@ -43,6 +43,12 @@ public class StudentDB {
         Document query=new Document("email",email);
         return studentsCollection.find(query).first();
     }
+    public Map<String,Object> getStudentDetailsByRegisterNumber(String regno){
+        Document query=new Document("registerNumber",regno);
+        Document ans =  studentsCollection.find(query).first();
+        ans.remove("hmacpasscode"); // Remove sensitive information
+        return ans;
+    }
     public Boolean updateStudentDocumentsbyemail(String email, String name, String regno, String passout) {
         Document query = new Document("email", email);
         Document updateFields = new Document()

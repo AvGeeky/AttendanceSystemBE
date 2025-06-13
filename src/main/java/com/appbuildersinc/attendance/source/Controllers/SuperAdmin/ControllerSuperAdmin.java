@@ -287,7 +287,7 @@ public class ControllerSuperAdmin {
             Boolean done=logicalGroupingDbClass.deletelogicalgroup((String)claims.get("dept"),(String)groupid.get("groupid"));
             if(done){
                 response.put("status","S");
-                response.put("message","deleted the grouping succesfully");
+                response.put("message","deleted the grouping successfully and register nos deleted from class advisor if applicable");
                return ResponseEntity.ok(response);
             }
             else{

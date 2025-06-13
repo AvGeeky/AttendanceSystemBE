@@ -53,13 +53,22 @@ public class FacultyDB {
         return collection.updateOne(query, update).getModifiedCount() > 0;
     }
 
-    public boolean updateMentorListByEmail(String emailId, List<String> mentorList) {
+    public boolean updateMenteeListByEmail(String emailId, List<String> mentorList, String reset) {
         Document query = new Document("faculty_email", emailId);
         Document user = collection.find(query).first();
-        List<String> existingList = user != null && user.get("mentor_list") != null
-                ? (List<String>) user.get("mentor_list") : new ArrayList<>();
-        existingList.addAll(mentorList);
-        Document update = new Document("$set", new Document("mentor_list", existingList));
+        if (reset.equalsIgnoreCase("true")) {
+            // If reset is true, replace the existing list with the new one
+            Document update = new Document("$set", new Document("mentee_list", mentorList));
+            return collection.updateOne(query, update).getModifiedCount() > 0;
+        }
+        List<String> existingList = user != null && user.get("mentee_list") != null
+                ? new ArrayList<>((List<String>) user.get("mentee_list")) : new ArrayList<>();
+        for (String regNo : mentorList) {
+            if (!existingList.contains(regNo)) {
+                existingList.add(regNo);
+            }
+        }
+        Document update = new Document("$set", new Document("mentee_list", existingList));
         return collection.updateOne(query, update).getModifiedCount() > 0;
     }
 
@@ -67,8 +76,22 @@ public class FacultyDB {
         Document query = new Document("faculty_email", emailId);
         Document user = collection.find(query).first();
         List<String> existingList = user != null && user.get("class_advisor_list") != null
-                ? (List<String>) user.get("class_advisor_list") : new ArrayList<>();
-        existingList.addAll(classAdvisorList);
+                ? new ArrayList<>((List<String>) user.get("class_advisor_list")) : new ArrayList<>();
+        for (String regNo : classAdvisorList) {
+            if (!existingList.contains(regNo)) {
+                existingList.add(regNo);
+            }
+        }
+        Document update = new Document("$set", new Document("class_advisor_list", existingList));
+        return collection.updateOne(query, update).getModifiedCount() > 0;
+    }
+    // Method to remove register numbers from class_advisor_list by email
+    public boolean removeClassAdvisorListByEmail(String emailId, List<String> regNosToRemove) {
+        Document query = new Document("faculty_email", emailId);
+        Document user = collection.find(query).first();
+        List<String> existingList = user != null && user.get("class_advisor_list") != null
+                ? new ArrayList<>((List<String>) user.get("class_advisor_list")) : new ArrayList<>();
+        existingList.removeAll(regNosToRemove);
         Document update = new Document("$set", new Document("class_advisor_list", existingList));
         return collection.updateOne(query, update).getModifiedCount() > 0;
     }
@@ -78,6 +101,11 @@ public class FacultyDB {
         Document query = new Document("faculty_email", email);
         Document user = collection.find(query).first();
         return user != null ? user.getString("password") : null;
+    }
+    public List<String> getMenteeList(String email) {
+        Document query = new Document("faculty_email", email);
+        Document user = collection.find(query).first();
+        return user != null ? (List<String>) user.get("mentee_list") : null;
     }
     // Method to update the password for a user given their email
     public boolean updatePasswordByEmail(String email, String newPassword) {
@@ -148,5 +176,6 @@ public class FacultyDB {
            return collection.updateOne(doc,new Document("$set", doc3)).getModifiedCount()>0;
        }
     }
+
 
 }

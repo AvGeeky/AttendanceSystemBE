@@ -6,11 +6,13 @@ import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPai
 import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.PasswordUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
 import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
+import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 //DATABASE ONLY ACCESSIBLE HERE
 //BUSINESS LOGIC HERE????
@@ -18,14 +20,16 @@ import java.util.Map;
 @Service
 public class FunctionsTeachers {
     private final FacultyDB userdb;
+    private final StudentDB studentdb;
     private emailUtil emailclass;
     private final KeyPairUtil keyclass;
     private final FacultyJwtUtil jwtclass;
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
     @Autowired
-    public FunctionsTeachers(FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass) {
+    public FunctionsTeachers(StudentDB stu,FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass) {
         this.userdb = userdb;
+        this.studentdb=stu;
         this.emailclass =emailutil;
         this.keyclass =keyutil;
         this.jwtclass = jwtutil;
@@ -125,6 +129,28 @@ public class FunctionsTeachers {
             return false;
         }
         return PasswordUtil.verifyPassword(password, hashedPassword);
+    }
+
+    public boolean updateMenteeList(String email, List<String> menteeList, String reset) {
+        return userdb.updateMenteeListByEmail(email, menteeList, reset);
+    }
+
+    public Map<String,Object> getMenteeListDetails(String email) {
+        Map<String, Object> response = new HashMap<>();
+        List<String> menteeList = userdb.getMenteeList(email);
+        if (menteeList != null) {
+            for (String mentee : menteeList) {
+                Map<String, Object> menteeDetails = studentdb.getStudentDetailsByRegisterNumber(mentee);
+                if (menteeDetails != null) {
+                    response.put(mentee, menteeDetails);
+                } else {
+                    response.put(mentee, "Mentee details not found");
+                }
+            }
+        } else {
+            return null;
+        }
+        return response;
     }
 
 

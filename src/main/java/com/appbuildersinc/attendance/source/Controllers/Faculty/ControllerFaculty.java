@@ -47,8 +47,10 @@ import java.util.*;
  */
 
 /*
-Error handling template for Muraribranch:
-Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizationHeader);
+public ResponseEntity<Map<String,Object>> updateMenteeList(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                         String authorizationHeader,
+                                                         @RequestBody Map<String, Object> requestBody) throws Exception {
+        Map<String, Object> claims = functionsTeachersService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
@@ -56,11 +58,11 @@ Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizati
             Map<String, Object> response = new HashMap<>();
 
 
-        }
-        else{
+        } else {
             //JWT is invalid, return error response
             return ResponseEntity.status(401).body(claims);
         }
+    }
 */
 
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
@@ -91,6 +93,43 @@ public class ControllerFaculty {
         this.SuperAdminDbClass=SuperAdminDbClass;
         this.logicalGroupingDbClass = logicalGroupingDbClass;
 
+    }
+
+    @PostMapping("/faculty/updateMenteeListAndReturnDetails")
+    public ResponseEntity<Map<String,Object>> updateMenteeListAndReturnDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                               String authorizationHeader,
+                                                               @RequestBody Map<String, Object> requestBody) throws Exception {
+        Map<String, Object> claims = functionsTeachersService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            if (requestBody.get("mentee_list") == null || !(requestBody.get("mentee_list") instanceof List)) {
+                response.put("status", "E");
+                response.put("message", "Invalid mentee list format. Please provide a valid list.");
+                return ResponseEntity.status(400).body(response);
+            }
+            List<String> menteeList = (List<String>) requestBody.get("mentee_list");
+            String email = (String) claims.get("email");
+            String reset = (String) requestBody.get("reset");
+            if (functionsTeachersService.updateMenteeList(email, menteeList, reset)) {
+                response.put("status", "S");
+                response.put("message", "Mentee list updated successfully!");
+                response.put("mentee_list_details", functionsTeachersService.getMenteeListDetails(email));
+                return ResponseEntity.ok(response);
+            } else {
+                //Error in updating mentee list
+                response.put("status", "E");
+                response.put("message", "Error in updating mentee list. Please try again.");
+                return ResponseEntity.status(503).body(response);
+            }
+
+
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
     }
 
     @PostMapping("/faculty/setEmail")
@@ -241,7 +280,7 @@ public class ControllerFaculty {
                     response.put("role", "A");
                 }
                 response.put("name", details.get("name"));
-                response.put("department", details.get("dept"));
+                response.put("department", details.get("department"));
                 response.put("email",details.get("faculty_email"));
 
 
@@ -324,6 +363,11 @@ public class ControllerFaculty {
             return ResponseEntity.status(401).body(claims);
         }
     }
+
+
+
+
+
 
 
 }
