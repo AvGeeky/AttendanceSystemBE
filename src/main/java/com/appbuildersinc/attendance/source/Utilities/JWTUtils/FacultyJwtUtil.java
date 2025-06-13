@@ -18,7 +18,7 @@ public class FacultyJwtUtil {
     // Create initial claims map
     public Map<String, Object> createClaims(String email,
                                                    boolean authorised,  String enc_otp,
-                                                   boolean otp_auth, String addnl_role) {
+                                                   boolean otp_auth, String addnl_role, String dept) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", email);
         claims.put("authorised", authorised);
@@ -26,6 +26,7 @@ public class FacultyJwtUtil {
         claims.put("otp_auth", otp_auth);
         claims.put("role", "FACULTY");
         claims.put("addnl_role", addnl_role);
+        claims.put("dept", dept);
         return claims;
     }
     //add dept details in jwt
