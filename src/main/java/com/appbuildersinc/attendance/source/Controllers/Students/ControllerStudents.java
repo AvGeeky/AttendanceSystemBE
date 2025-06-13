@@ -162,9 +162,10 @@ public class ControllerStudents {
         // You can optionally validate the email domain or userId here
 
         //  Generate internal JWT for session
-        Map<String, Object> claims = studentjwtUtil.createClaims(email, true);
-        String jwt = studentjwtUtil.signJwt(claims);
+
         Map<String,Object> details = studentDbClass.getStudentDetailsByEmail(email);
+        Map<String, Object> claims = studentjwtUtil.createClaims(email, true,details.get("department").toString());
+        String jwt = studentjwtUtil.signJwt(claims);
         String hmacPasscode = (String) details.get("hmacpasscode");
         response.put("status", "S");
         response.put("email", email);

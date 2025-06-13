@@ -138,7 +138,7 @@ public class ControllerFaculty {
        if (functionsTeachersService.isEmailAllowed(email)){
            String enc_otp = functionsTeachersService.sendMailReturnOtp(email);
 
-           Map<String, Object> claims = facultyJwtUtil.createClaims(email,false,enc_otp,false,"");
+           Map<String, Object> claims = facultyJwtUtil.createClaims(email,false,enc_otp,false,"","");
            String jwt = facultyJwtUtil.signJwt(claims);
 
            response.put("status", "S");
@@ -253,7 +253,7 @@ public class ControllerFaculty {
 
             Map<String, Object> response = new HashMap<>();
             if (functionsTeachersService.attemptLogin(email,password)) {
-                Map<String, Object> claims = facultyJwtUtil.createClaims(email,true,"",false,"");
+
 
                 //Login successful
                 response.put("status", "S");
@@ -261,6 +261,7 @@ public class ControllerFaculty {
 
 
                 Map<String, Object> details = userdbclass.getUserDetailsByEmail(email);
+                Map<String, Object> claims = facultyJwtUtil.createClaims(email,true,"",false,"",details.get("department").toString());
 
                 if (details.get("name") == null) {
                     response.put("status", "FL"); //first login
