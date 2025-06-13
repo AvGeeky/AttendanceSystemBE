@@ -19,12 +19,10 @@ We kindly ask that you **do not fork this repository** at this stage. To reinfor
 
 ## 🔒 License
 
-This project is licensed under the **Business Source License 1.1 (BSL-1.1)**.
+This repository is provided for internal development purposes only.  
+**All rights reserved.** No license is granted to use, copy, modify, or distribute any part of this codebase.
 
-### Key points:
-- You are **not allowed to use, modify, or redistribute** the code **for production or public forks** until the change license date.
-- The license will convert to a more permissive one (like MIT or Apache 2.0) in the future.
-- Read more about [BSL-1.1 here](https://mariadb.com/bsl11/).
+GitHub’s forking, redistribution, or reuse features should not be used with this repository.
 
 ---
 
