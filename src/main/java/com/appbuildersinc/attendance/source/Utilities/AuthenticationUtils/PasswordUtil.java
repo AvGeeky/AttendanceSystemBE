@@ -1,4 +1,4 @@
-package com.appbuildersinc.attendance.source.Utilities;
+package com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKeyFactory;
@@ -10,7 +10,6 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 import io.github.cdimascio.dotenv.Dotenv;
-import static javax.crypto.Cipher.SECRET_KEY;
 
 public class PasswordUtil {
 

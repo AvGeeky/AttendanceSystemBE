@@ -1,4 +1,4 @@
-package com.appbuildersinc.attendance.source.database;
+package com.appbuildersinc.attendance.source.database.MongoDB;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
@@ -37,9 +37,9 @@ public class LogicalGroupingDB {
         }
     }
 
-    private final UserDB userdb;
+    private final FacultyDB userdb;
     @Autowired
-    public LogicalGroupingDB(UserDB userdb) {
+    public LogicalGroupingDB(FacultyDB userdb) {
         this.userdb = userdb;
     }
 

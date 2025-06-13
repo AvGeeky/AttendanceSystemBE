@@ -1,4 +1,4 @@
-package com.appbuildersinc.attendance.source.database;
+package com.appbuildersinc.attendance.source.database.MongoDB;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
@@ -15,9 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//UserDB is a repository class that handles database operations related to user management.
+//FacultyDB is a repository class that handles database operations related to user management.
 @Repository
-public class UserDB {
+public class FacultyDB {
     static Dotenv dotenv = Dotenv.configure()
             .filename("apiee.env")
             .load();

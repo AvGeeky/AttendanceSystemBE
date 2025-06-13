@@ -1,11 +1,10 @@
-package com.appbuildersinc.attendance.source.database;
+package com.appbuildersinc.attendance.source.database.MongoDB;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.result.InsertOneResult;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
@@ -14,7 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static com.appbuildersinc.attendance.source.Utilities.PasswordUtil.generateHmacPasscode;
+import static com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.PasswordUtil.generateHmacPasscode;
 
 @Repository
 public class StudentDB {
@@ -81,13 +80,11 @@ public class StudentDB {
 
 
     }
-    public List<Map<String,Object>> getallStudentDetails(String dept){
+    public List<Map<String,Object>> getListOfAllStudentDetails(String dept){
            List <Map<String,Object>> students =new ArrayList<>();
            Document doc1=new Document("department",dept);
            for(Document doc:studentsCollection.find(doc1)){
-               doc.remove("hmacpasscode"); // Remove sensitive information
                students.add(new HashMap<>(doc));
-
            }
            return students;
     }
