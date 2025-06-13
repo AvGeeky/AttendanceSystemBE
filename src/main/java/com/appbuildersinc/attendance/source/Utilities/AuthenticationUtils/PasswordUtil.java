@@ -1,11 +1,15 @@
-package com.appbuildersinc.attendance.source.Utilities;
+package com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils;
 
+import javax.crypto.Mac;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
+import io.github.cdimascio.dotenv.Dotenv;
 
 public class PasswordUtil {
 
@@ -71,6 +75,20 @@ public class PasswordUtil {
         }
         return result == 0;
     }
+    public static String generateHmacPasscode(String randomText) throws Exception {
+        Dotenv dotenv = Dotenv.configure().filename("apiee.env").load();  // Load dotenv here in static context
+        String HMAC_SECRET = dotenv.get("JWT_HMAC_SECRET");
+
+        Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
+        SecretKeySpec secretKeySpec = new SecretKeySpec(HMAC_SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        sha256_HMAC.init(secretKeySpec);
+
+        byte[] hmacBytes = sha256_HMAC.doFinal(randomText.getBytes(StandardCharsets.UTF_8));
+
+        String base64 = Base64.getUrlEncoder().withoutPadding().encodeToString(hmacBytes);
+        return base64;
+    }
+
 
     // Test the functions
     public static void main(String[] args) {

@@ -11,11 +11,10 @@ import org.bson.Document;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
-// ServerDBFns is a service class that handles database operations related to allowed emails.
+// ServerDB is a service class that handles database operations related to allowed emails.
 @Service
-public class ServerDBFns {
+public class ServerDB {
     static Dotenv dotenv = Dotenv.configure()
             .filename("apiee.env")
             .load();
@@ -37,27 +36,5 @@ public class ServerDBFns {
             e.printStackTrace();
         }
     }
-
-    public static void setAllowedEmails(List<String> allowedEmails) {
-        // Remove old allowed_emails document
-        collection.deleteOne(new Document("doctype", "allowed_emails"));
-
-        // Create new document with each email as a separate field
-        Document doc = new Document("doctype", "allowed_emails");
-        for (int i = 0; i < allowedEmails.size(); i++) {
-            doc.append("email" + i, allowedEmails.get(i));
-        }
-        collection.insertOne(doc);
-    }
-
-    public static void main(String[] args) {
-        List<String> sampleEmails = List.of(
-                "saipranav2310324@ssn.edu.in",
-                "murari2310237@ssn.edu.in"
-        );
-        setAllowedEmails(sampleEmails);
-
-    }
-
 
 }
