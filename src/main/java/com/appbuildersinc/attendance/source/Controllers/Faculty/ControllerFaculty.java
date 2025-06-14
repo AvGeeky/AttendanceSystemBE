@@ -95,7 +95,7 @@ public class ControllerFaculty {
 
     }
 
-    @PostMapping("/faculty/createClass")
+    @PostMapping("/faculty/createOrUpdateClass")
     public ResponseEntity<Map<String,Object>> createClass(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                String authorizationHeader,
                                                                @RequestBody Map<String, Object> requestBody) throws Exception {
@@ -108,8 +108,8 @@ public class ControllerFaculty {
             Map<String, Object> response = new HashMap<>();
             String name = (String) requestBody.get("name");
             String dept = (String) claims.get("dept");
-            String classCode = (String) requestBody.get("subject_code");
-            String logicalGroupingCode = (String) requestBody.get("logical_grouping_code");
+            String classCode = (String) requestBody.get("classCode");
+            String logicalGroupingCode = (String) requestBody.get("groupCode");
             String credits = (String) requestBody.get("credits");
             if (name == null || name.isEmpty() || classCode == null || classCode.isEmpty() || logicalGroupingCode == null || logicalGroupingCode.isEmpty()) {
                 response.put("status", "E");
@@ -130,7 +130,7 @@ public class ControllerFaculty {
             } else {
                 //Error in creating class
                 response.put("status", "E");
-                response.put("message", "Error in creating class. Please try again.");
+                response.put("message", "Error in creating class. Make sure you are not creating a duplicate class already taken by another teacher.");
                 return ResponseEntity.status(503).body(response);
             }
 
@@ -139,6 +139,10 @@ public class ControllerFaculty {
             return ResponseEntity.status(401).body(claims);
         }
     }
+
+
+
+
 
 
     @GetMapping("/faculty/getAllLogicalGroupings")
@@ -160,6 +164,7 @@ public class ControllerFaculty {
             return ResponseEntity.status(401).body(claims);
         }
     }
+
     @PostMapping("/faculty/updateMenteeListAndReturnDetails")
     public ResponseEntity<Map<String,Object>> updateMenteeListAndReturnDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                String authorizationHeader,

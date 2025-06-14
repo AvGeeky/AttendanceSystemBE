@@ -9,10 +9,8 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import static com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.PasswordUtil.generateHmacPasscode;
 
 @Repository
@@ -24,7 +22,7 @@ public class StudentDB {
 
     private static MongoClient mongoClient;
     private static MongoDatabase database;
-    private static MongoCollection<Document> studentsCollection;
+    private static MongoCollection<Document> collection;
     static {
         try {
             MongoClientSettings settings = MongoClientSettings.builder()
@@ -33,7 +31,7 @@ public class StudentDB {
             mongoClient = MongoClients.create(settings);
             database = mongoClient.getDatabase("AttendEz");
 
-            studentsCollection=database.getCollection("Students");
+            collection =database.getCollection("Students");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -41,11 +39,11 @@ public class StudentDB {
 
     public Map<String,Object> getStudentDetailsByEmail(String email){
         Document query=new Document("email",email);
-        return studentsCollection.find(query).first();
+        return collection.find(query).first();
     }
     public Map<String,Object> getStudentDetailsByRegisterNumber(String regno){
         Document query=new Document("registerNumber",regno);
-        Document ans =  studentsCollection.find(query).first();
+        Document ans =  collection.find(query).first();
         ans.remove("hmacpasscode"); // Remove sensitive information
         return ans;
     }
@@ -56,7 +54,7 @@ public class StudentDB {
                 .append("registerNumber", regno)
                 .append("passout", passout);
         Document update = new Document("$set", updateFields);
-        com.mongodb.client.result.UpdateResult result = studentsCollection.updateOne(
+        com.mongodb.client.result.UpdateResult result = collection.updateOne(
                 query, update, new com.mongodb.client.model.UpdateOptions().upsert(true));
         return result.getModifiedCount() > 0 || result.getUpsertedId() != null;
     }
@@ -75,24 +73,36 @@ public class StudentDB {
            studentdocs.add(doc);
        }
        if(!studentdocs.isEmpty()){
-           studentsCollection.insertMany(studentdocs);
+           collection.insertMany(studentdocs);
            return true;
        }
        else{
            return false;
        }
-
-
-
-
     }
     public List<Map<String,Object>> getListOfAllStudentDetails(String dept){
            List <Map<String,Object>> students =new ArrayList<>();
            Document doc1=new Document("department",dept);
-           for(Document doc:studentsCollection.find(doc1)){
+           for(Document doc: collection.find(doc1)){
                students.add(new HashMap<>(doc));
            }
            return students;
+    }
+    public boolean addClassToRegisteredClasses(String regno, String className) {
+        Document query = new Document("registerNumber", regno);
+        Document student = collection.find(query).first();
+        if (student == null) {
+            return false;
+        }
+        List<String> registeredClasses = (List<String>) student.getOrDefault("registeredClasses", new ArrayList<String>());
+        Set<String> registeredClassesSet = new HashSet<>(registeredClasses);
+        if (!registeredClassesSet.add(className)) {
+            return false;
+        }
+        registeredClasses.add(className);
+        Document update = new Document("$set", new Document("registeredClasses", registeredClasses));
+        collection.updateOne(query, update);
+        return true;
     }
 
 

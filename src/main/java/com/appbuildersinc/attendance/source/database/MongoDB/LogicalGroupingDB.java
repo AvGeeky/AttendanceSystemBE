@@ -21,7 +21,8 @@ public class LogicalGroupingDB {
     private static MongoClient mongoClient;
     private static MongoDatabase database;
     private static MongoCollection<Document> collection;
-
+    @Autowired
+    ClassDB classDB;
     static {
         try {
             MongoClientSettings settings = MongoClientSettings.builder()
@@ -119,6 +120,13 @@ public class LogicalGroupingDB {
         }
 
         if (existing != null) {
+            // Update existing group
+            for (String classCode : classCodes) {
+                // Assuming you have a registered class, update its timetable
+                if (classDB.classExists(classCode)) {
+                    classDB.refreshClassTimetable(groupcode,classCode);
+                }
+            }
             return collection.updateOne(query, new Document("$set", doc2)).getModifiedCount() > 0;
         } else {
             collection.insertOne(doc2);

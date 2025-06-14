@@ -10,10 +10,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 //FacultyDB is a repository class that handles database operations related to user management.
 @Repository
@@ -26,7 +23,7 @@ public class FacultyDB {
     private static MongoClient mongoClient;
     private static MongoDatabase database;
     private static MongoCollection<Document> collection;
-    private static MongoCollection<Document> studentsCollection;
+
 
     static {
         try {
@@ -187,6 +184,22 @@ public class FacultyDB {
             return new HashMap<>(faculty);
         }
         return null;
+    }
+    public boolean addClassToFacultyClasses(String facultyEmail, String className) {
+        Document query = new Document("faculty_email", facultyEmail);
+        Document faculty = collection.find(query).first();
+        if (faculty == null) {
+            return false;
+        }
+        List<String> facultyClasses = (List<String>) faculty.getOrDefault("facultyClasses", new ArrayList<String>());
+        Set<String> facultyClassesSet = new HashSet<>(facultyClasses);
+        if (!facultyClassesSet.add(className)) {
+            return false;
+        }
+        facultyClasses.add(className);
+        Document update = new Document("$set", new Document("facultyClasses", facultyClasses));
+        collection.updateOne(query, update);
+        return true;
     }
 
 
