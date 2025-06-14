@@ -30,7 +30,7 @@ public class LogicalGroupingDB {
             mongoClient = MongoClients.create(settings);
             database = mongoClient.getDatabase("AttendEz");
 
-            collection=database.getCollection("Logical Grouping");
+            collection = database.getCollection("Logical Grouping");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -51,24 +51,22 @@ public class LogicalGroupingDB {
         String degree = (String) group.get("degree");
         String passout = (String) group.get("passout");
         String advisorEmail = (String) group.get("advisorEmail");
-        
-        if (!userdb.isEmailAllowed(advisorEmail)){
+
+        if (!userdb.isEmailAllowed(advisorEmail)) {
             return false; // Invalid advisor email
         }
         boolean isElective = (advisorEmail == null);
-        
+
 
         Document query = new Document("passout", passout).append("department", dept).append("degree", degree).append("section", section);
-
-
 
 
         Document existing = collection.find(query).first();
         List<String> classCodes = (List<String>) group.get("class-code");
         List<String> regNumbers = (List<String>) group.get("registernumbers");
         String electiveName = "";
-        if (isElective){
-            for (String eleccode: (List<String>) group.get("class-code")) {
+        if (isElective) {
+            for (String eleccode : (List<String>) group.get("class-code")) {
                 electiveName = electiveName + eleccode;
             }
         }
@@ -116,7 +114,7 @@ public class LogicalGroupingDB {
 
         if (!isElective) {
             doc2.append("advisorEmail", advisorEmail);
-            userdb.updateClassAdvisorListByEmail(advisorEmail,regNumbers,groupcode);
+            userdb.updateClassAdvisorListByEmail(advisorEmail, regNumbers, groupcode);
 
         }
 
@@ -128,15 +126,16 @@ public class LogicalGroupingDB {
         }
     }
 
-    public List<Map<String,Object>> viewalllogicalgroupings(String dept){
-        List<Map<String,Object>> groupings =new ArrayList<>();
-        Document doc1=new Document("department",dept);
-        for(Document doc2:collection.find(doc1)){
+    public List<Map<String, Object>> viewalllogicalgroupings(String dept) {
+        List<Map<String, Object>> groupings = new ArrayList<>();
+        Document doc1 = new Document("department", dept);
+        for (Document doc2 : collection.find(doc1)) {
             groupings.add(new HashMap<>(doc2));
         }
         return groupings;
     }
-    public boolean deletelogicalgroup(String dept,String groupcode){
+
+    public boolean deletelogicalgroup(String dept, String groupcode) {
         Document query = new Document("department", dept)
                 .append("groupcode", groupcode);
         Document group = collection.find(query).first();
@@ -151,7 +150,15 @@ public class LogicalGroupingDB {
         return collection.deleteOne(query).getDeletedCount() > 0;
     }
 
-
+    public Map<String, Object> getLogicalGroupingByCode(String groupcode) {
+        Document query = new Document("groupcode", groupcode);
+        Document group = collection.find(query).first();
+        if (group != null) {
+            return new HashMap<>(group);
+        } else {
+            return null; // Group not found
+        }
     }
+}
 
 

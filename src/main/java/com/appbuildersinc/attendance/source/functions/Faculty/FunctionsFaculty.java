@@ -1,4 +1,4 @@
-package com.appbuildersinc.attendance.source.functions.Teacher;
+package com.appbuildersinc.attendance.source.functions.Faculty;
 
 import com.appbuildersinc.attendance.source.Utilities.Email.emailUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
@@ -17,7 +17,7 @@ import java.util.*;
 //BUSINESS LOGIC HERE????
 
 @Service
-public class FunctionsTeachers {
+public class FunctionsFaculty {
     private final FacultyDB userdb;
     private final StudentDB studentdb;
     private final LogicalGroupingDB logicalGroupingDB;
@@ -27,7 +27,7 @@ public class FunctionsTeachers {
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
     @Autowired
-    public FunctionsTeachers(StudentDB stu, FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, LogicalGroupingDB logicalGroupingDB) {
+    public FunctionsFaculty(StudentDB stu, FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, LogicalGroupingDB logicalGroupingDB) {
         this.userdb = userdb;
         this.studentdb=stu;
         this.emailclass =emailutil;
@@ -159,6 +159,47 @@ public class FunctionsTeachers {
         deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings(dept));
         deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings("FirstYear"));
         return new ArrayList<>(deptLG);
+    }
+    public boolean createNewClass( String groupCode, String classCode, String className, String dept, String facultyEmail,
+    String credits)
+    {
+
+        Map<String, Object> logicalGrouping = logicalGroupingDB.getLogicalGroupingByCode(groupCode);
+
+        String passoutYear = (String) logicalGrouping.get("passout");
+
+        Map<String,Object> facultyDetails = userdb.getFacultyDetailsByEmail(facultyEmail);
+        String facultyName = (String) facultyDetails.get("name");
+
+        List<String> regNumbers = (List<String>) logicalGrouping.get("registernumbers");
+
+        String noOfStudents = Integer.toString(regNumbers.size());
+
+        //Timetable
+        Map<String, List<Map<String, Object>>> timetable = (Map<String, List<Map<String, Object>>>) logicalGrouping.get("timetable");
+        Map<String, List<Map<String, Object>>> newTimetable = new HashMap<>();
+        for (String day : timetable.keySet()) {
+            List<Map<String, Object>> slots = timetable.get(day);
+            if (slots == null) continue;
+
+            for (Map<String, Object> slot : slots) {
+                if (slot == null || slot.get("classCode") == null) continue;
+
+                if (slot.get("classCode").equals(classCode)) {
+                    newTimetable.computeIfAbsent(day, k -> new ArrayList<>()).add(slot);
+                }
+            }
+        }
+
+        boolean success = classDB.createNewClass(
+                groupCode, classCode, dept,className, facultyName,passoutYear, facultyEmail, credits, newTimetable, regNumbers,
+                , noOfStudents
+        );
+        if (success) return true;
+        else {
+            return false;
+        }
+
     }
 
 
