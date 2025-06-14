@@ -9,7 +9,7 @@ import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
 import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
-import com.appbuildersinc.attendance.source.functions.Miscallaneous.FunctionsMisc;
+import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -68,7 +68,7 @@ public ResponseEntity<Map<String,Object>> updateMenteeList(@RequestHeader(HttpHe
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
 public class ControllerFaculty {
-    private final FunctionsMisc functionsMiscService;
+    private final FunctionsClass functionsMiscService;
     private final FunctionsFaculty functionsFacultyService;
     private final FacultyDB userdbclass;
     private final KeyPairUtil keyclass;
@@ -81,7 +81,7 @@ public class ControllerFaculty {
 
 
     @Autowired
-    public ControllerFaculty(FunctionsFaculty fs, FunctionsMisc functionsMiscService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
+    public ControllerFaculty(FunctionsFaculty fs, FunctionsClass functionsMiscService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
         this.functionsMiscService = functionsMiscService;
         this.functionsFacultyService = fs;
         this.userdbclass = userdbutil;

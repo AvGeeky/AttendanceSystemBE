@@ -8,7 +8,7 @@ import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
-import com.appbuildersinc.attendance.source.functions.Miscallaneous.FunctionsMisc;
+import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import com.appbuildersinc.attendance.source.functions.Students.FunctionsStudents;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -73,7 +73,7 @@ Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizati
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
 public class ControllerStudents {
-    private final FunctionsMisc functionsMiscService;
+    private final FunctionsClass functionsMiscService;
     private final FunctionsStudents functionsStudentsService;
     private final FacultyDB userdbclass;
     private final KeyPairUtil keyclass;
@@ -85,7 +85,7 @@ public class ControllerStudents {
     private final LogicalGroupingDB logicalGroupingDbClass;
 
     @Autowired
-    public ControllerStudents(FunctionsStudents fsu, FunctionsMisc functionsService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
+    public ControllerStudents(FunctionsStudents fsu, FunctionsClass functionsService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
         this.functionsMiscService = functionsService;
         this.functionsStudentsService = fsu;
         this.userdbclass = userdbutil;

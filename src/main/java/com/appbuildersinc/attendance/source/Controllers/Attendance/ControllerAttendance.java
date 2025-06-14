@@ -9,7 +9,7 @@ import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 import com.appbuildersinc.attendance.source.functions.Attendance.FunctionsAttendance;
-import com.appbuildersinc.attendance.source.functions.Miscallaneous.FunctionsMisc;
+import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,7 +62,7 @@ Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizati
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
 public class ControllerAttendance {
-    private final FunctionsMisc functionsMiscService;
+    private final FunctionsClass functionsMiscService;
     private final FunctionsAttendance functionsAttendanceService;
     private final FacultyDB userdbclass;
     private final KeyPairUtil keyclass;
@@ -76,7 +76,7 @@ public class ControllerAttendance {
 
 
     @Autowired
-    public ControllerAttendance(FunctionsMisc fm, FunctionsAttendance fa, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
+    public ControllerAttendance(FunctionsClass fm, FunctionsAttendance fa, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
         this.functionsAttendanceService=fa;
         this.functionsMiscService = fm;
         this.userdbclass = userdbutil;
