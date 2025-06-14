@@ -8,8 +8,8 @@ import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
+import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
 import com.appbuildersinc.attendance.source.functions.Miscallaneous.FunctionsMisc;
-import com.appbuildersinc.attendance.source.functions.Teacher.FunctionsTeachers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +50,7 @@ import java.util.*;
 public ResponseEntity<Map<String,Object>> updateMenteeList(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                          String authorizationHeader,
                                                          @RequestBody Map<String, Object> requestBody) throws Exception {
-        Map<String, Object> claims = functionsTeachersService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
@@ -69,7 +69,7 @@ public ResponseEntity<Map<String,Object>> updateMenteeList(@RequestHeader(HttpHe
 @RestController
 public class ControllerFaculty {
     private final FunctionsMisc functionsMiscService;
-    private final FunctionsTeachers functionsTeachersService;
+    private final FunctionsFaculty functionsFacultyService;
     private final FacultyDB userdbclass;
     private final KeyPairUtil keyclass;
     private final FacultyJwtUtil facultyJwtUtil;
@@ -81,9 +81,9 @@ public class ControllerFaculty {
 
 
     @Autowired
-    public ControllerFaculty(FunctionsTeachers fs, FunctionsMisc functionsMiscService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
+    public ControllerFaculty(FunctionsFaculty fs, FunctionsMisc functionsMiscService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
         this.functionsMiscService = functionsMiscService;
-        this.functionsTeachersService = fs;
+        this.functionsFacultyService = fs;
         this.userdbclass = userdbutil;
         this.facultyJwtUtil = jwtutil;
         this.keyclass =keyutil;
@@ -94,16 +94,63 @@ public class ControllerFaculty {
         this.logicalGroupingDbClass = logicalGroupingDbClass;
 
     }
-    @GetMapping("/faculty/getAllLogicalGroupings")
-    public ResponseEntity<Map<String,Object>> getAllLogicalGroupings(@RequestHeader(HttpHeaders.AUTHORIZATION)
-                                                               String authorizationHeader) throws Exception {
-        Map<String, Object> claims = functionsTeachersService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+
+    @PostMapping("/faculty/createClass")
+    public ResponseEntity<Map<String,Object>> createClass(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                               String authorizationHeader,
+                                                               @RequestBody Map<String, Object> requestBody) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
-            List<Map<String,Object>> logicalGroupings = functionsTeachersService.getAllLogicalGroupings(claims.get("dept").toString());
+            String name = (String) requestBody.get("name");
+            String dept = (String) claims.get("dept");
+            String classCode = (String) requestBody.get("subject_code");
+            String logicalGroupingCode = (String) requestBody.get("logical_grouping_code");
+            String credits = (String) requestBody.get("credits");
+            if (name == null || name.isEmpty() || classCode == null || classCode.isEmpty() || logicalGroupingCode == null || logicalGroupingCode.isEmpty()) {
+                response.put("status", "E");
+                response.put("message", "Invalid request body. Please provide valid class details.");
+                return ResponseEntity.status(400).body(response);
+            }
+            boolean succ = functionsFacultyService.createNewClass(
+                    logicalGroupingCode,
+                    classCode,
+                    name,
+                    dept,
+                    claims.get("email").toString(),
+                    credits);
+            if (succ) {
+                response.put("status", "S");
+                response.put("message", "Class created successfully!");
+                return ResponseEntity.ok(response);
+            } else {
+                //Error in creating class
+                response.put("status", "E");
+                response.put("message", "Error in creating class. Please try again.");
+                return ResponseEntity.status(503).body(response);
+            }
+
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+
+    @GetMapping("/faculty/getAllLogicalGroupings")
+    public ResponseEntity<Map<String,Object>> getAllLogicalGroupings(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                               String authorizationHeader) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            List<Map<String,Object>> logicalGroupings = functionsFacultyService.getAllLogicalGroupings(claims.get("dept").toString());
             response.put("status", "S");
             response.put("message", "Logical groupings retrieved successfully!");
             response.put("logical_groupings", logicalGroupings);
@@ -117,7 +164,7 @@ public class ControllerFaculty {
     public ResponseEntity<Map<String,Object>> updateMenteeListAndReturnDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                String authorizationHeader,
                                                                @RequestBody Map<String, Object> requestBody) throws Exception {
-        Map<String, Object> claims = functionsTeachersService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
@@ -131,10 +178,10 @@ public class ControllerFaculty {
             List<String> menteeList = (List<String>) requestBody.get("mentee_list");
             String email = (String) claims.get("email");
             String reset = (String) requestBody.get("reset");
-            if (functionsTeachersService.updateMenteeList(email, menteeList, reset)) {
+            if (functionsFacultyService.updateMenteeList(email, menteeList, reset)) {
                 response.put("status", "S");
                 response.put("message", "Mentee list updated successfully!");
-                response.put("mentee_list_details", functionsTeachersService.getMenteeListDetails(email));
+                response.put("mentee_list_details", functionsFacultyService.getMenteeListDetails(email));
                 return ResponseEntity.ok(response);
             } else {
                 //Error in updating mentee list
@@ -153,8 +200,8 @@ public class ControllerFaculty {
     @PostMapping("/faculty/setEmail")
     public ResponseEntity<Map<String,Object>> setEmail(@RequestParam String email) throws Exception {
         Map<String, Object> response = new HashMap<>();
-       if (functionsTeachersService.isEmailAllowed(email)){
-           String enc_otp = functionsTeachersService.sendMailReturnOtp(email);
+       if (functionsFacultyService.isEmailAllowed(email)){
+           String enc_otp = functionsFacultyService.sendMailReturnOtp(email);
 
            Map<String, Object> claims = facultyJwtUtil.createClaims(email,false,enc_otp,false,"","");
            String jwt = facultyJwtUtil.signJwt(claims);
@@ -174,7 +221,7 @@ public class ControllerFaculty {
     public ResponseEntity<Map<String,Object>> verifyOtp(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
                                                         @RequestParam String otp) throws Exception {
 
-        Map<String, Object> claims = functionsTeachersService.checkJwtAuthBeforeLogin(authorizationHeader);
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthBeforeLogin(authorizationHeader);
 
         //Check if the JWT is valid
         String status = (String) claims.get("status");
@@ -222,7 +269,7 @@ public class ControllerFaculty {
     public ResponseEntity<Map<String,Object>> updatePassword(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
                                                         @RequestParam String password) throws Exception {
         //Check if the JWT is valid
-        Map<String, Object> claims = functionsTeachersService.checkJwtAuthBeforeLogin(authorizationHeader);
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthBeforeLogin(authorizationHeader);
 
 
         String status = (String) claims.get("status");
@@ -234,7 +281,7 @@ public class ControllerFaculty {
             if ((boolean) claims.get("otp_auth")){
                 //OTP is verified, proceed with setting username and password
                 String email = (String) claims.get("email");
-                if (functionsTeachersService.hashAndUpdatePassword(email, password)) {
+                if (functionsFacultyService.hashAndUpdatePassword(email, password)) {
                     facultyJwtUtil.updateOtpAuthStatus(claims, false);
                     String jwt = facultyJwtUtil.signJwt(claims);
                     response.put("status", "S");
@@ -270,7 +317,7 @@ public class ControllerFaculty {
                                                     ) throws Exception {
 
             Map<String, Object> response = new HashMap<>();
-            if (functionsTeachersService.attemptLogin(email,password)) {
+            if (functionsFacultyService.attemptLogin(email,password)) {
 
 
                 //Login successful
@@ -321,7 +368,7 @@ public class ControllerFaculty {
     @GetMapping("/faculty/getDetails")
     public ResponseEntity<Map<String,Object>> getDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                              String authorizationHeader) throws Exception {
-        Map<String, Object> claims = functionsTeachersService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
@@ -353,7 +400,7 @@ public class ControllerFaculty {
     public ResponseEntity<Map<String,Object>> setDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                          String authorizationHeader,
                                                          @RequestBody Map<String, Object> requestBody) throws Exception {
-        Map<String, Object> claims = functionsTeachersService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {

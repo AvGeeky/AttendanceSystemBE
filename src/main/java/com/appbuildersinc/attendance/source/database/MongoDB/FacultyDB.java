@@ -179,6 +179,15 @@ public class FacultyDB {
            return collection.updateOne(doc,new Document("$set", doc3)).getModifiedCount()>0;
        }
     }
+    public Map<String, Object> getFacultyDetailsByEmail(String email) {
+        Document query = new Document("faculty_email", email);
+        Document faculty = collection.find(query).first();
+        if (faculty != null) {
+            faculty.remove("password");// Remove sensitive information
+            return new HashMap<>(faculty);
+        }
+        return null;
+    }
 
 
 }
