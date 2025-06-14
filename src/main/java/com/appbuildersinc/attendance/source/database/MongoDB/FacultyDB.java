@@ -203,4 +203,21 @@ public class FacultyDB {
     }
 
 
+    public boolean removeClassFromFacultyClasses(String facultyEmail, String classCode) {
+        Document query = new Document("faculty_email", facultyEmail);
+        Document faculty = collection.find(query).first();
+        if (faculty == null) {
+            return false;
+        }
+        List<String> facultyClasses = (List<String>) faculty.getOrDefault("facultyClasses", new ArrayList<String>());
+        if (!facultyClasses.remove(classCode)) {
+            return false;
+        }
+        Document update = new Document("$set", new Document("facultyClasses", facultyClasses));
+        collection.updateOne(query, update);
+        return true;
+    }
+
+
+
 }
