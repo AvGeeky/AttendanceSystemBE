@@ -5,10 +5,7 @@ import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPairUtil;
 import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.PasswordUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
-import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
-import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
-import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
-import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
+import com.appbuildersinc.attendance.source.database.MongoDB.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,8 +15,9 @@ import java.util.*;
 
 @Service
 public class FunctionsFaculty {
-    private final FacultyDB userdb;
+    private final FacultyDB facultyDB;
     private final StudentDB studentdb;
+    private final ClassDB classDB;
     private final LogicalGroupingDB logicalGroupingDB;
     private emailUtil emailclass;
     private final KeyPairUtil keyclass;
@@ -27,8 +25,9 @@ public class FunctionsFaculty {
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
     @Autowired
-    public FunctionsFaculty(StudentDB stu, FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, LogicalGroupingDB logicalGroupingDB) {
-        this.userdb = userdb;
+    public FunctionsFaculty(ClassDB cldb, StudentDB stu, FacultyDB facultyDB, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, LogicalGroupingDB logicalGroupingDB) {
+        this.facultyDB = facultyDB;
+        this.classDB = cldb;
         this.studentdb=stu;
         this.emailclass =emailutil;
         this.keyclass =keyutil;
@@ -39,7 +38,7 @@ public class FunctionsFaculty {
     }
     public boolean isEmailAllowed(String email)
     {
-        return userdb.isEmailAllowed(email);
+        return facultyDB.isEmailAllowed(email);
     }
 
     public String sendMailReturnOtp(String email) throws Exception {
@@ -121,11 +120,11 @@ public class FunctionsFaculty {
     public boolean hashAndUpdatePassword(String email, String password) throws Exception {
         String hashedPassword = PasswordUtil.hashPassword(password);
 
-        return userdb.updatePasswordByEmail(email,hashedPassword);
+        return facultyDB.updatePasswordByEmail(email,hashedPassword);
     }
 
     public boolean attemptLogin(String email, String password) throws Exception {
-        String hashedPassword = userdb.getPasswordByEmail(email);
+        String hashedPassword = facultyDB.getPasswordByEmail(email);
         if (hashedPassword == null) {
             return false;
         }
@@ -133,12 +132,12 @@ public class FunctionsFaculty {
     }
 
     public boolean updateMenteeList(String email, List<String> menteeList, String reset) {
-        return userdb.updateMenteeListByEmail(email, menteeList, reset);
+        return facultyDB.updateMenteeListByEmail(email, menteeList, reset);
     }
 
     public Map<String,Object> getMenteeListDetails(String email) {
         Map<String, Object> response = new HashMap<>();
-        List<String> menteeList = userdb.getMenteeList(email);
+        List<String> menteeList = facultyDB.getMenteeList(email);
         if (menteeList != null) {
             for (String mentee : menteeList) {
                 Map<String, Object> menteeDetails = studentdb.getStudentDetailsByRegisterNumber(mentee);
@@ -160,6 +159,7 @@ public class FunctionsFaculty {
         deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings("FirstYear"));
         return new ArrayList<>(deptLG);
     }
+
     public boolean createNewClass( String groupCode, String classCode, String className, String dept, String facultyEmail,
     String credits)
     {
@@ -168,7 +168,7 @@ public class FunctionsFaculty {
 
         String passoutYear = (String) logicalGrouping.get("passout");
 
-        Map<String,Object> facultyDetails = userdb.getFacultyDetailsByEmail(facultyEmail);
+        Map<String,Object> facultyDetails = facultyDB.getFacultyDetailsByEmail(facultyEmail);
         String facultyName = (String) facultyDetails.get("name");
 
         List<String> regNumbers = (List<String>) logicalGrouping.get("registernumbers");
@@ -192,15 +192,23 @@ public class FunctionsFaculty {
         }
 
         boolean success = classDB.createNewClass(
-                groupCode, classCode, dept,className, facultyName,passoutYear, facultyEmail, credits, newTimetable, regNumbers,
+                groupCode, classCode, dept,className, facultyName,passoutYear, facultyEmail, credits, newTimetable, regNumbers
                 , noOfStudents
         );
-        if (success) return true;
+        if (success) {
+            for (String regNumber : regNumbers) {
+                studentdb.addClassToRegisteredClasses(regNumber, classCode);
+            }
+            facultyDB.addClassToFacultyClasses(facultyEmail, classCode);
+            return true;
+        }
         else {
             return false;
         }
 
     }
+
+
 
 
 }

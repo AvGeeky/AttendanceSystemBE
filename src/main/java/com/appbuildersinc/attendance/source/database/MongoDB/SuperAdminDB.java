@@ -22,7 +22,7 @@ public class SuperAdminDB {
     private static MongoClient mongoClient;
     private static MongoDatabase database;
     private static MongoCollection<Document> collection;
-    private static MongoCollection<Document> studentsCollection;
+
 
     static {
         try {
@@ -40,7 +40,7 @@ public class SuperAdminDB {
 
     public static String getDeptbyEmail(String email) {
        Document doc=new Document("email",email);
-       Document admin=collection.find(doc).first();
+       Document admin= collection.find(doc).first();
        if(admin!=null){
            return admin.getString("department");
        }
@@ -48,7 +48,7 @@ public class SuperAdminDB {
     }
     public static Map<String,String> getNameDeptbyEmail(String email)  {
         Document doc=new Document("email",email);
-        Document admin=collection.find(doc).first();
+        Document admin= collection.find(doc).first();
         if(admin!=null){
             Map m = new HashMap();
             m.put("Department",admin.getString("department"));
@@ -60,7 +60,7 @@ public class SuperAdminDB {
 
     public String getPasswordByEmail(String Email){
         Document doc=new Document("email",Email);
-        Document admin=collection.find(doc).first();
+        Document admin= collection.find(doc).first();
         if(admin!=null){
             return admin.getString("password");
 
