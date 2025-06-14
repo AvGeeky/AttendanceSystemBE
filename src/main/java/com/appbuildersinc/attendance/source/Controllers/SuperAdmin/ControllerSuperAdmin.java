@@ -9,7 +9,8 @@ import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
-import com.appbuildersinc.attendance.source.functions.Miscallaneous.FunctionsMisc;
+import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
+import com.appbuildersinc.attendance.source.functions.LogicalGrouping.FunctionsLogicalGrouping;
 import com.appbuildersinc.attendance.source.functions.SuperAdmin.FunctionsSuperAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -67,7 +68,8 @@ Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizati
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
 public class ControllerSuperAdmin {
-    private final FunctionsMisc functionsMiscService;
+    private final FunctionsClass functionsClassService;
+    private final FunctionsLogicalGrouping functionsLogicalGroupingService;
     private final FunctionsSuperAdmin functionsSuperAdminService;
     private final FacultyDB userdbclass;
     private final KeyPairUtil keyclass;
@@ -79,8 +81,9 @@ public class ControllerSuperAdmin {
     private final LogicalGroupingDB logicalGroupingDbClass;
 
     @Autowired
-    public ControllerSuperAdmin(FunctionsSuperAdmin fsa, FunctionsMisc functionsMiscService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
-        this.functionsMiscService = functionsMiscService;
+    public ControllerSuperAdmin(FunctionsLogicalGrouping functionsLogicalGroupingService, FunctionsSuperAdmin fsa, FunctionsClass functionsClassService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
+        this.functionsClassService = functionsClassService;
+        this.functionsLogicalGroupingService= functionsLogicalGroupingService;
         this.functionsSuperAdminService = fsa;
         this.userdbclass = userdbutil;
         this.facultyJwtUtil = jwtutil;
@@ -225,7 +228,7 @@ public class ControllerSuperAdmin {
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response=new HashMap<>();
-            boolean done=logicalGroupingDbClass.insertLogicalGrouping(group,(String)claims.get("dept"),(String)claims.get("email"));
+            boolean done=functionsLogicalGroupingService.insertLogicalGrouping(group,(String)claims.get("dept"),(String)claims.get("email"));
             if(done){
                 response.put("status","S");
                 response.put("message","logical grouping inserted or updated successfully!");
@@ -284,7 +287,7 @@ public class ControllerSuperAdmin {
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response=new HashMap<>();
-            Boolean done=logicalGroupingDbClass.deletelogicalgroup((String)claims.get("dept"),(String)groupid.get("groupid"));
+            Boolean done=functionsLogicalGroupingService.deleteLogicalGroup((String)claims.get("dept"),(String)groupid.get("groupid"));
             if(done){
                 response.put("status","S");
                 response.put("message","deleted the grouping successfully and register nos deleted from class advisor if applicable");

@@ -1,4 +1,5 @@
 package com.appbuildersinc.attendance.source.database.MongoDB;
+import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
@@ -7,10 +8,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,8 +38,6 @@ public class ClassDB {
             e.printStackTrace();
         }
     }
-    @Autowired
-    LogicalGroupingDB logicalGroupingDB;
 
     public boolean createNewClass(
             String groupCode, String classCode, String dept,
@@ -92,31 +89,12 @@ public class ClassDB {
         }
     }
 
-    public boolean refreshClassTimetable(String groupCode, String classCode) {
+    public boolean saveRefreshedClassTimetable(String groupCode, String classCode, Map<String, List<Map<String, Object>>> newTimetable) {
         try {
             Document query = new Document("groupCode", groupCode)
                     .append("classCode", classCode);
             Document oldDoc = collection.find(query).first();
             if (oldDoc == null) return false;
-
-            Map<String, Object> logicalGrouping = logicalGroupingDB.getLogicalGroupingByCode(groupCode);
-
-
-
-            Map<String, List<Map<String, Object>>> timetable =
-                    (Map<String, List<Map<String, Object>>>) logicalGrouping.get("timetable");
-
-            Map<String, List<Map<String, Object>>> newTimetable = new HashMap<>();
-            for (String day : timetable.keySet()) {
-                List<Map<String, Object>> slots = timetable.get(day);
-                if (slots == null) continue;
-                for (Map<String, Object> slot : slots) {
-                    if (slot == null || slot.get("classCode") == null) continue;
-                    if (slot.get("classCode").equals(classCode)) {
-                        newTimetable.computeIfAbsent(day, k -> new java.util.ArrayList<>()).add(slot);
-                    }
-                }
-            }
 
             collection.updateOne(query, new Document("$set", new Document("timetable", newTimetable)));
             return true;
