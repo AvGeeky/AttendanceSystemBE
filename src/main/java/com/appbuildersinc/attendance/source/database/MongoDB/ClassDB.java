@@ -104,4 +104,21 @@ public class ClassDB {
         }
     }
 
+    public Map<String, Object> deleteClassAndReturnInfo( String classCode, String groupCode) {
+        Map<String, Object> result = new java.util.HashMap<>();
+        try {
+            Document query = new Document("groupCode", groupCode)
+                    .append("classCode", classCode);
+            Document doc = collection.find(query).first();
+            if (doc == null) return null;
+            result.put("regNumbers", doc.get("regNumbers"));
+            result.put("facultyEmail", doc.getString("facultyEmail"));
+            collection.deleteOne(query);
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }

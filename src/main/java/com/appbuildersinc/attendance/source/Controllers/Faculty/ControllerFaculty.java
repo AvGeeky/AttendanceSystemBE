@@ -78,10 +78,11 @@ public class ControllerFaculty {
     private final StudentDB studentDbClass;
     private final SuperAdminDB SuperAdminDbClass;
     private final LogicalGroupingDB logicalGroupingDbClass;
+    private final FunctionsClass functionsClassService;
 
 
     @Autowired
-    public ControllerFaculty(FunctionsFaculty fs, FunctionsClass functionsMiscService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
+    public ControllerFaculty(FunctionsFaculty fs, FunctionsClass functionsMiscService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService) {
         this.functionsMiscService = functionsMiscService;
         this.functionsFacultyService = fs;
         this.userdbclass = userdbutil;
@@ -92,7 +93,7 @@ public class ControllerFaculty {
         this.adminjwtUtil=adminutil;
         this.SuperAdminDbClass=SuperAdminDbClass;
         this.logicalGroupingDbClass = logicalGroupingDbClass;
-
+        this.functionsClassService = functionsClassService;
     }
 
     @PostMapping("/faculty/createOrUpdateClass")
@@ -116,7 +117,7 @@ public class ControllerFaculty {
                 response.put("message", "Invalid request body. Please provide valid class details.");
                 return ResponseEntity.status(400).body(response);
             }
-            boolean succ = functionsFacultyService.createNewClass(
+            boolean succ = functionsClassService.createNewClass(
                     logicalGroupingCode,
                     classCode,
                     name,
@@ -125,12 +126,50 @@ public class ControllerFaculty {
                     credits);
             if (succ) {
                 response.put("status", "S");
-                response.put("message", "Class created successfully!");
+                response.put("message", "Class created / updated successfully!");
                 return ResponseEntity.ok(response);
             } else {
                 //Error in creating class
                 response.put("status", "E");
-                response.put("message", "Error in creating class. Make sure you are not creating a duplicate class already taken by another teacher.");
+                response.put("message", "Error in creating / updating class. Make sure you are not creating a duplicate class already taken by another teacher.");
+                return ResponseEntity.status(503).body(response);
+            }
+
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+    @PostMapping("/faculty/dropClass")
+    public ResponseEntity<Map<String,Object>> dropClass(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                          String authorizationHeader,
+                                                          @RequestBody Map<String, Object> requestBody) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+
+            String classCode = (String) requestBody.get("classCode");
+            String logicalGroupingCode = (String) requestBody.get("groupCode");
+            if (classCode == null || classCode.isEmpty() || logicalGroupingCode == null || logicalGroupingCode.isEmpty()) {
+                response.put("status", "E");
+                response.put("message", "Invalid request body. Please provide valid class details.");
+                return ResponseEntity.status(400).body(response);
+            }
+
+            boolean succ = functionsClassService.dropClass(classCode,logicalGroupingCode);
+            if (succ) {
+                response.put("status", "S");
+                response.put("message", "Class dropped successfully!");
+                return ResponseEntity.ok(response);
+            } else {
+                //Error in creating class
+                response.put("status", "E");
+                response.put("message", "Error in dropping. Try again later.");
                 return ResponseEntity.status(503).body(response);
             }
 

@@ -105,5 +105,20 @@ public class StudentDB {
         return true;
     }
 
+    public boolean removeClassFromRegisteredClasses(String regno, String classCode) {
+        Document query = new Document("registerNumber", regno);
+        Document student = collection.find(query).first();
+        if (student == null) {
+            return false;
+        }
+        List<String> registeredClasses = (List<String>) student.getOrDefault("registeredClasses", new ArrayList<String>());
+        if (!registeredClasses.remove(classCode)) {
+            return false;
+        }
+        Document update = new Document("$set", new Document("registeredClasses", registeredClasses));
+        collection.updateOne(query, update);
+        return true;
+    }
+
 
 }

@@ -160,53 +160,6 @@ public class FunctionsFaculty {
         return new ArrayList<>(deptLG);
     }
 
-    public boolean createNewClass( String groupCode, String classCode, String className, String dept, String facultyEmail,
-    String credits)
-    {
-
-        Map<String, Object> logicalGrouping = logicalGroupingDB.getLogicalGroupingByCode(groupCode);
-
-        String passoutYear = (String) logicalGrouping.get("passout");
-
-        Map<String,Object> facultyDetails = facultyDB.getFacultyDetailsByEmail(facultyEmail);
-        String facultyName = (String) facultyDetails.get("name");
-
-        List<String> regNumbers = (List<String>) logicalGrouping.get("registernumbers");
-
-        String noOfStudents = Integer.toString(regNumbers.size());
-
-        //Timetable
-        Map<String, List<Map<String, Object>>> timetable = (Map<String, List<Map<String, Object>>>) logicalGrouping.get("timetable");
-        Map<String, List<Map<String, Object>>> newTimetable = new HashMap<>();
-        for (String day : timetable.keySet()) {
-            List<Map<String, Object>> slots = timetable.get(day);
-            if (slots == null) continue;
-
-            for (Map<String, Object> slot : slots) {
-                if (slot == null || slot.get("classCode") == null) continue;
-
-                if (slot.get("classCode").equals(classCode)) {
-                    newTimetable.computeIfAbsent(day, k -> new ArrayList<>()).add(slot);
-                }
-            }
-        }
-
-        boolean success = classDB.createNewClass(
-                groupCode, classCode, dept,className, facultyName,passoutYear, facultyEmail, credits, newTimetable, regNumbers
-                , noOfStudents
-        );
-        if (success) {
-            for (String regNumber : regNumbers) {
-                studentdb.addClassToRegisteredClasses(regNumber, classCode);
-            }
-            facultyDB.addClassToFacultyClasses(facultyEmail, classCode);
-            return true;
-        }
-        else {
-            return false;
-        }
-
-    }
 
 
 
