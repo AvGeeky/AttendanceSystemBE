@@ -44,12 +44,18 @@ public class FunctionsLogicalGrouping {
         String passout = (String) group.get("passout");
         String advisorEmail = (String) group.get("advisorEmail");
 
+
         if (advisorEmail != null && !userdb.isEmailAllowed(advisorEmail)) {
             return false; // Invalid advisor email
         }
 
         boolean isElective = (advisorEmail == null);
+
         List<String> classCodes = (List<String>) group.get("class-code");
+        for (int i = 0; i < classCodes.size(); i++) {
+            classCodes.set(i, classCodes.get(i) + section);
+        }
+
         List<String> regNumbers = (List<String>) group.get("registernumbers");
 
         // Build groupcode
@@ -66,7 +72,16 @@ public class FunctionsLogicalGrouping {
         // Timetable validation
         Map<String, List<Map<String, Object>>> timetable = (Map<String, List<Map<String, Object>>>) group.get("timetable");
 
-        // Validation 1
+        for (List<Map<String, Object>> periods : timetable.values()) {
+            for (Map<String, Object> period : periods) {
+                String code = (String) period.get("classCode");
+                if (code != null && !code.equals("_")) {
+                    period.put("classCode", code + section);
+                }
+            }
+        }
+
+        // Validation 1 Are there any foreign classCodes?
         for (List<Map<String, Object>> periods : timetable.values()) {
             for (Map<String, Object> period : periods) {
                 String code = (String) period.get("classCode");
@@ -76,7 +91,7 @@ public class FunctionsLogicalGrouping {
             }
         }
 
-        // Validation 2
+        // Validation 2 Are all registered classes present at least once?
         for (String code : classCodes) {
             boolean found = false;
             for (List<Map<String, Object>> periods : timetable.values()) {
