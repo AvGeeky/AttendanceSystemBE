@@ -180,6 +180,74 @@ public class FunctionsFaculty {
     }
 
 
+    public Map<String, Object> getMergedTimetable(String facEmail) {
+        // Step 1: Fetch all class codes for the student
+        List<String> classCodes = facultyDB.getFacultyRegisteredClasses(facEmail);
+        List<Map<String, List<Map<String, Object>>>> listOfTimetables = new ArrayList<>();
+
+        // Step 2: Collect individual timetables
+        for (String classCode : classCodes) {
+            listOfTimetables.add(classDB.getClassTimetable(classCode));
+        }
+
+        // Step 3: Merge timetables
+        Map<String, List<Map<String, Object>>> mergedTimetable = mergeTimetables(listOfTimetables);
+
+        // Step 4: Validate merged timetable — only classCodes student is actually registered for
+        for (List<Map<String, Object>> periods : mergedTimetable.values()) {
+            for (Map<String, Object> period : periods) {
+                String code = (String) period.get("classCode");
+                if (!code.equals("_") && !classCodes.contains(code)) {
+                    return null;
+                }
+            }
+        }
+
+        // Step 5: Ensure every registered class appears at least once
+        for (String code : classCodes) {
+            boolean found = false;
+            for (List<Map<String, Object>> periods : mergedTimetable.values()) {
+                for (Map<String, Object> period : periods) {
+                    if (code.equals(period.get("classCode"))) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+            if (!found) return null;
+        }
+
+        // Step 6: Fetch unique class details separately
+        Map<String, Object> classDetailsMap = new HashMap<>();
+        for (String classCode : classCodes) {
+            classDetailsMap.put(classCode, classDB.getClassDetailsWithoutAttendance(classCode));
+        }
+
+        // Step 7: Return final structured response
+        Map<String, Object> result = new HashMap<>();
+        result.put("timetable", mergedTimetable);
+        result.put("classDetails", classDetailsMap);
+
+        return result;
+    }
+
+    public static Map<String, List<Map<String, Object>>> mergeTimetables(List<Map<String, List<Map<String, Object>>>> timetables) {
+        Map<String, List<Map<String, Object>>> merged = new HashMap<>();
+
+        for (Map<String, List<Map<String, Object>>> timetable : timetables) {
+            for (Map.Entry<String, List<Map<String, Object>>> entry : timetable.entrySet()) {
+                String day = entry.getKey();
+                List<Map<String, Object>> periods = entry.getValue();
+
+                merged.computeIfAbsent(day, k -> new ArrayList<>()).addAll(periods);
+            }
+        }
+
+        return merged;
+    }
+
+
 
 
 

@@ -224,6 +224,15 @@ public class FacultyDB {
         return true;
     }
 
+    public List<String> getFacultyRegisteredClasses(String email){
+        Document query = new Document("faculty_email", email);
+        Document fac = collection.find(query).first();
+        if (fac == null) {
+            return new ArrayList<>();
+        }
+        return (List<String>) fac.getOrDefault("facultyClasses", new ArrayList<String>());
+    }
+
 
 
 }
