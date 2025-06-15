@@ -238,7 +238,7 @@ public class ControllerFaculty {
                 return ResponseEntity.status(400).body(response);
             }
 
-            Map<String, Object> details= classDB.getClassDetails(classCode,logicalGroupingCode);
+            Map<String, Object> details= classDB.getAllClassDetails(classCode,logicalGroupingCode);
             if (details != null) {
                 response.put("status", "S");
                 response.put("message", "Class fetched successfully!");

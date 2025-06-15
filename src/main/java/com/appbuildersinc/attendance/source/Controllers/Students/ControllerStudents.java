@@ -54,20 +54,22 @@ import java.util.*;
  */
 
 /*
-Error handling template for Muraribranch:
-Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizationHeader);
+Error handling template:
+public ResponseEntity<Map<String,Object>>refreshTimetable(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                               String authorizationHeader)throws Exception {
+
+        Map<String, Object> claims = functionsStudentsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
-            //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
 
 
-        }
-        else{
-            //JWT is invalid, return error response
+
+        } else {
             return ResponseEntity.status(401).body(claims);
         }
+    }
 */
 
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
@@ -97,6 +99,34 @@ public class ControllerStudents {
         this.SuperAdminDbClass=SuperAdminDbClass;
         this.logicalGroupingDbClass = logicalGroupingDbClass;
     }
+
+
+    @GetMapping("/student/refreshTimetable")
+    public ResponseEntity<Map<String,Object>>refreshTimetable(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                               String authorizationHeader)throws Exception {
+
+        Map<String, Object> claims = functionsStudentsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> timetable = functionsStudentsService.getMergedTimetable((String) claims.get("email"));
+            if (timetable == null || timetable.isEmpty()) {
+                response.put("status", "E");
+                response.put("message", "Error in fetching timetable. Please try again later.");
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
+            }
+            response.put("timetable",timetable);
+            response.put("status", "S");
+            response.put("message", "Timetable refreshed successfully");
+            return ResponseEntity.ok(response);
+
+        } else {
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+
 
 
     /**
