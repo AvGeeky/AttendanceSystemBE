@@ -121,4 +121,19 @@ public class ClassDB {
         }
     }
 
+    public boolean updateRegisterNumbers(String classCode, String groupCode, List<String> regNumbers){
+        try {
+            Document query = new Document("groupCode", groupCode)
+                    .append("classCode", classCode);
+            Document doc = collection.find(query).first();
+            if (doc == null) return false;
+            collection.updateOne(doc, new Document("$set", new Document("regNumbers", regNumbers)));
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+    }
+
 }
