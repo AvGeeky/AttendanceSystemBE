@@ -1,5 +1,4 @@
 package com.appbuildersinc.attendance.source.database.MongoDB;
-import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
@@ -87,13 +86,56 @@ public class ClassDB {
             return false;
         }
     }
-    public Map<String,Object> getClassDetails(String classCode, String groupCode) {
+    public Map<String,Object> getAllClassDetails(String classCode, String groupCode) {
+        if (groupCode == null || groupCode.isEmpty()) {
+            return getAllClassDetails(classCode);
+        }
         try {
             Document query = new Document("classCode", classCode).append("groupCode",groupCode);
             Document existing = collection.find(query).first();
             return existing;
         } catch (Exception e) {
 
+            return null;
+        }
+    }
+    public Map<String,Object> getAllClassDetails(String classCode) {
+        try {
+            Document query = new Document("classCode", classCode);
+            Document existing = collection.find(query).first();
+            return existing;
+        } catch (Exception e) {
+
+            return null;
+        }
+    }
+
+    public Map<String,Object> getClassDetailsWithoutAttendanceAndTimetable(String classCode) {
+        try {
+            Document query = new Document("classCode", classCode);
+            Document existing = collection.find(query).first();
+            Map<String,Object> classDetails = new java.util.HashMap<>();
+            classDetails.put("classCode", existing.getString("classCode"));
+            classDetails.put("groupCode", existing.getString("groupCode"));
+            classDetails.put("department", existing.getString("dept"));
+            classDetails.put("className", existing.getString("className"));
+            classDetails.put("facultyName", existing.getString("facultyName"));
+            classDetails.put("facultyEmail", existing.getString("facultyEmail"));
+            classDetails.put("credits", existing.getString("credits"));
+            classDetails.put("passoutYear", existing.getString("passoutYear"));
+            return classDetails;
+        } catch (Exception e) {
+
+            return null;
+        }
+    }
+
+    public Map<String, List<Map<String, Object>>> getClassTimetable(String classCode) {
+        try {
+            Document query = new Document("classCode", classCode);
+            Document existing = collection.find(query).first();
+            return (Map<String, List<Map<String, Object>>>) existing.get("timetable");
+        } catch (Exception e) {
             return null;
         }
     }

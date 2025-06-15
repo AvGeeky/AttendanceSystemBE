@@ -120,5 +120,16 @@ public class StudentDB {
         return true;
     }
 
+    public List<String> getStudentRegisteredClasses(String email){
+        Document query = new Document("email", email);
+        Document student = collection.find(query).first();
+        if (student == null) {
+            return new ArrayList<>();
+        }
+        return (List<String>) student.getOrDefault("registeredClasses", new ArrayList<String>());
+    }
+
+    
+
 
 }

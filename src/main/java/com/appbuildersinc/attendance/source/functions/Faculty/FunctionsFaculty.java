@@ -173,7 +173,7 @@ public class FunctionsFaculty {
             return false;
         }
 
-        emailclass.sendClassTransferMail(newFacEmail,classDB.getClassDetails(classCode,groupCode));
+        emailclass.sendClassTransferMail(newFacEmail,classDB.getAllClassDetails(classCode,groupCode));
         return true;
 
 
