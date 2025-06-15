@@ -160,6 +160,25 @@ public class FunctionsFaculty {
         return new ArrayList<>(deptLG);
     }
 
+    public boolean transferClass (String classCode, String groupCode, String newFacEmail){
+        String oldFacEmail = classDB.getFacultyEmailFromClass(classCode,groupCode);
+        String newFacName = facultyDB.getUserNameByEmail(newFacEmail);
+        if (!facultyDB.removeClassFromFacultyClasses(oldFacEmail,classCode)){
+            return false;
+        }
+        if (!facultyDB.addClassToFacultyClasses(newFacEmail,classCode)){
+            return false;
+        }
+        if (!classDB.updateClassFacultyDetails(groupCode,classCode,newFacEmail,newFacName)){
+            return false;
+        }
+
+        emailclass.sendClassTransferMail(newFacEmail,classDB.getClassDetails(classCode,groupCode));
+        return true;
+
+
+    }
+
 
 
 

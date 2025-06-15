@@ -135,6 +135,12 @@ public class FacultyDB {
         return collection.find(query).first();
     }
 
+    // Method to get user name by email
+    public String getUserNameByEmail(String email) {
+        Document query = new Document("faculty_email", email);
+        return collection.find(query).first().getString("name");
+    }
+
     public List<Map<String,Object>> viewAllTeachers(String dept){
        Document query=new Document("department",dept);
        List<Map<String,Object>> teacherlist=new ArrayList<>();

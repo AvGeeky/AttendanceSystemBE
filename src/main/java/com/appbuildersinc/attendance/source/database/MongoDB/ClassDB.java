@@ -57,8 +57,7 @@ public class ClassDB {
                 .append("facultyEmail", facultyEmail)
                 .append("credits", credits)
                 .append("timetable", newTimetable)
-                .append("regNumbers", regNumbers)
-                .append("noOfStudents", noOfStudents);
+                .append("regNumbers", regNumbers);
 
         try {
             Document existing = collection.find(query).first();
@@ -78,14 +77,35 @@ public class ClassDB {
         }
     }
 
-    public boolean classExists(String classCode) {
+    public boolean classExists(String classCode, String groupCode) {
         try {
-            Document query = new Document("classCode", classCode);
+            Document query = new Document("classCode", classCode).append("groupCode",groupCode);
             Document existing = collection.find(query).first();
             return existing != null;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+    public Map<String,Object> getClassDetails(String classCode, String groupCode) {
+        try {
+            Document query = new Document("classCode", classCode).append("groupCode",groupCode);
+            Document existing = collection.find(query).first();
+            return existing;
+        } catch (Exception e) {
+
+            return null;
+        }
+    }
+
+    public String getFacultyEmailFromClass(String classCode, String groupCode) {
+        try {
+            Document query = new Document("classCode", classCode).append("groupCode",groupCode);
+            Document existing = collection.find(query).first();
+            return (String) existing.get("facultyEmail");
+        } catch (Exception e) {
+
+            return null;
         }
     }
 
@@ -134,6 +154,23 @@ public class ClassDB {
             return false;
         }
 
+    }
+
+    public boolean updateClassFacultyDetails(String groupCode, String classCode, String newFacEmail, String newFacName) {
+        try {
+            Document query = new Document("groupCode", groupCode)
+                    .append("classCode", classCode);
+            Document oldDoc = collection.find(query).first();
+            if (oldDoc == null) return false;
+
+            collection.updateOne(query, new Document("$set", new Document("facultyEmail", newFacEmail)));
+            collection.updateOne(query, new Document("$set", new Document("facultyName", newFacName)));
+
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
 }

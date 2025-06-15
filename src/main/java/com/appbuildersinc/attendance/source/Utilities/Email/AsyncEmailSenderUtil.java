@@ -5,10 +5,14 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
 import java.util.Properties;
 
 // AsyncEmailSenderUtil is a functions class for sending emails asynchronously
@@ -107,6 +111,141 @@ public class AsyncEmailSenderUtil {
                         """,
                         otp
                 );
+
+
+
+                message.setContent(htmlContent, "text/html; charset=utf-8");
+                Transport.send(message);
+                break;
+            } catch (MessagingException mex) {
+                org.slf4j.LoggerFactory.getLogger(AsyncEmailSenderUtil.class).error("Failed to send OTP email to {}: {}", recipient, mex.getMessage(), mex);
+
+                try {
+                    Thread.sleep((long) (Math.pow(2, i) * 1000));
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public static String addMinutes(String startTime, int duration) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+        LocalTime start = LocalTime.parse(startTime, formatter);
+        LocalTime end = start.plusMinutes(duration);
+        return end.format(formatter);
+    }
+
+    @SuppressWarnings("unchecked")
+    public String generateClassDetailsHtml(Map<String, Object> details) {
+        Map<String, List<Map<String, Object>>> timetable = (Map<String, List<Map<String, Object>>>) details.get("timetable");
+        List<String> regNumbers = (List<String>) details.get("regNumbers");
+
+        // Build timetable HTML dynamically
+        StringBuilder timetableHtml = new StringBuilder();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        for (Map.Entry<String, List<Map<String, Object>>> entry : timetable.entrySet()) {
+            String day = entry.getKey();
+            List<Map<String, Object>> slots = entry.getValue();
+
+            timetableHtml.append("<li><strong>").append(day).append(":</strong> ");
+
+            List<String> timeSlots = new ArrayList<>();
+            for (Map<String, Object> slot : slots) {
+                String startTime = slot.get("startTime").toString();
+                int duration = (int) slot.get("durationMinutes");
+
+                LocalTime start = LocalTime.parse(startTime, formatter);
+                LocalTime end = start.plusMinutes(duration);
+
+                timeSlots.add(start.format(formatter) + "–" + end.format(formatter));
+            }
+            timetableHtml.append(String.join(", ", timeSlots)).append("</li>");
+        }
+
+        // Build registered students list
+        StringBuilder regListBuilder = new StringBuilder();
+        for (String reg : regNumbers) {
+            regListBuilder.append(reg).append("<br>");
+        }
+
+        return String.format("""
+        <div style='background:linear-gradient(135deg,#e0e7ff 0%%,#f7f9fa 100%%);padding:40px 0;font-family:Segoe UI,Arial,sans-serif; background-image: url("data:image/svg+xml,%%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%%3E%%3Ccircle cx='50' cy='50' r='40' fill='%%23E6F4EA' /%%3E%%3C/svg%%3E"); background-repeat: repeat;'>
+            <div style='max-width:540px;margin:auto;background:#FFFFFF;border-radius:18px;box-shadow:0 4px 24px rgba(0,0,0,0.1);padding:40px 32px;'>
+                <div style='text-align:center;margin-bottom:24px;'>
+                    <h3 style='color:#0055A4;font-size:2rem;margin:0 0 8px 0;'>A Class has been transferred to you.</h3>
+                    <h2 style='color:#0055A4;font-size:2rem;margin:0 0 8px 0;'>Class Details - %s</h2>
+                </div>
+                <p style='font-size:16px;color:#333;margin-bottom:20px;'>
+                    <strong>Subject:</strong> %s<br>
+                    <strong>Class Code:</strong> %s<br>
+                    <strong>Department:</strong> %s<br>
+                    <strong>Faculty:</strong> %s<br>
+                    <strong>Email:</strong> %s<br>
+                    <strong>Credits:</strong> %s<br>
+                    <strong>Passout Year:</strong> %s<br>
+                    <strong>Total Students:</strong> %s
+                </p>
+                <hr style='border:none;border-top:1px solid #DDDDDD;margin:24px 0;'>
+                <h3 style='color:#0055A4;font-size:1.2rem;margin-bottom:12px;'>Timetable</h3>
+                <ul style='list-style:none;padding:0;color:#444;font-size:15px;line-height:1.6;'>
+                    %s
+                </ul>
+                <hr style='border:none;border-top:1px solid #DDDDDD;margin:24px 0;'>
+                <h3 style='color:#0055A4;font-size:1.2rem;margin-bottom:12px;'>Registered Students</h3>
+                <div style='background-color:#F4F6F8;padding:16px;border-radius:10px;font-size:14px;color:#222;'>
+                    %s
+                </div>
+                <p style='color:#999;font-size:12px;text-align:center;margin-top:30px;'>
+                    Sent by AttendEz App &copy; 2025. Please do not reply directly to this email.
+                </p>
+            </div>
+        </div>
+        """,
+                details.get("groupCode"),
+                details.get("className"),
+                details.get("classCode"),
+                details.get("dept"),
+                details.get("facultyName"),
+                details.get("facultyEmail"),
+                details.get("credits"),
+                details.get("passoutYear"),
+                details.get("noOfStudents"),
+                timetableHtml.toString(),
+                regListBuilder.toString()
+        );
+    }
+
+
+
+    @Async
+    public void ClassTransferEmail(String recipient, Map<String,Object> details) {
+
+
+        for (int i = 0; i < MAX_ATTEMPTS; i++) {
+            if (mailTransport == null || !mailTransport.isConnected()) {
+                initEmailProperties();
+            }
+
+            Dotenv dotenv = Dotenv.configure()
+                    .filename("apiee.env")
+                    .load();
+            String username = dotenv.get("MAIL_ID");
+            //String sender = username;
+
+
+            try {
+                MimeMessage message = new MimeMessage(session);
+                message.setFrom(new InternetAddress(username, "Attendez App"));
+                message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
+                message.setSubject("A class has been transferred to you.");
+
+                String htmlContent = generateClassDetailsHtml(details);
+// use it in your mail sender as HTML content
+
 
 
 

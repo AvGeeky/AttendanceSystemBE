@@ -62,11 +62,6 @@ public class LogicalGroupingDB {
         }
         return groupings;
     }
-    public Map<String, Object> getLogicalGroupByDeptAndCode(String dept, String groupcode) {
-        Document query = new Document("department", dept).append("groupcode", groupcode);
-        Document result = collection.find(query).first();
-        return result != null ? result : null;
-    }
 
     public boolean deleteLogicalGroupByDeptAndCode(String dept, String groupcode) {
         Document query = new Document("department", dept).append("groupcode", groupcode);

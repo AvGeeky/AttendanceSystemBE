@@ -3,7 +3,8 @@ package com.appbuildersinc.attendance.source.Utilities.Email;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import java.util.*;
+import java.util.Map;
 import java.util.Random;
 
 // emailUtil is a utility class for sending emails asynchronously
@@ -19,4 +20,11 @@ public class emailUtil {
         asyncEmailSender.sendOtpEmail(mail, String.valueOf(otp));
         return otp;
     }
+
+    public void sendClassTransferMail(String mail, Map<String, Object> details) {
+
+        asyncEmailSender.ClassTransferEmail(mail, details);
+
+    }
+
 }
