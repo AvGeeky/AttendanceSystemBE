@@ -60,6 +60,8 @@ public class FunctionsLogicalGrouping {
             }
         }
         String groupcode = isElective ? dept + electiveName + passout : dept + passout + section;
+        Map<String, Object> oldLG = logicalGroupingDB.getLogicalGroupingByCode(groupcode);
+        boolean isNew = oldLG == null;
 
         // Timetable validation
         Map<String, List<Map<String, Object>>> timetable = (Map<String, List<Map<String, Object>>>) group.get("timetable");
@@ -89,49 +91,112 @@ public class FunctionsLogicalGrouping {
             if (!found) return false;
         }
 
+        // Flags for changes
+        boolean timetableChanged = isNew || !Objects.equals(oldLG.get("timetable"), timetable);
+        boolean registerNumbersChanged = isNew || !Objects.equals(oldLG.get("registernumbers"), regNumbers);
+
         // Build document
         Document doc = new Document("degree", degree)
-                .append("registernumbers", regNumbers)
-                .append("timetable", timetable)
                 .append("class-code", classCodes)
                 .append("groupcode", groupcode)
                 .append("department", dept)
                 .append("passout", passout)
                 .append("section", section);
 
-        if (!isElective) {
-            doc.append("advisorEmail", advisorEmail);
-            userdb.updateClassAdvisorListByEmail(advisorEmail, regNumbers, groupcode);
+        if (registerNumbersChanged) {
+            doc.append("registernumbers", regNumbers);
         }
+
+        if (timetableChanged) {
+            doc.append("timetable", timetable);
+        }
+
+        if (!isElective) {
+            String oldAdvisorEmail = isNew ? null : (String) oldLG.get("advisorEmail");
+            if (isNew || !Objects.equals(oldAdvisorEmail, advisorEmail)) {
+                if (oldAdvisorEmail != null) {
+                    userdb.removeClassAdvisorListByEmail(oldAdvisorEmail, groupcode);
+                }
+                doc.append("advisorEmail", advisorEmail);
+                userdb.updateClassAdvisorListByEmail(advisorEmail, regNumbers, groupcode);
+            }
+        }
+
         // Delegate insert/update to DB layer
-        boolean updated = logicalGroupingDB.insertOrUpdateLogicalGroupingToDB(doc, degree, dept, passout, section, classCodes, groupcode);
+        boolean updated = logicalGroupingDB.insertOrUpdateLogicalGroupingToDB(
+                doc, degree, dept, passout, section, classCodes, groupcode);
+
         List<String> existingClassCodes = new ArrayList<>();
         for (String classCode : classCodes) {
-            if (classDB.classExists(classCode)) {
+            if (classDB.classExists(classCode, groupcode)) {
                 existingClassCodes.add(classCode);
-                functionsClass.refreshTimeTable(classCode,groupcode);
-                classDB.updateRegisterNumbers(classCode,groupcode,regNumbers);
-            }
-        }
-        for (String regNo:regNumbers) {
-            for (String className:existingClassCodes){
-                studentdb.addClassToRegisteredClasses(regNo, className);
+                if (timetableChanged) {
+                    functionsClass.refreshTimeTable(classCode, groupcode);
+                }
+                if (registerNumbersChanged) {
+                    classDB.updateRegisterNumbers(classCode, groupcode, regNumbers);
+                }
             }
         }
 
+        // If register numbers changed, update student mappings
+        if (!isNew && registerNumbersChanged) {
+            List<String> oldList = (List<String>) oldLG.get("registernumbers");
+            List<String> newList = regNumbers;
 
-            return updated;
+            Set<String> oldSet = new HashSet<>(oldList);
+            Set<String> newSet = new HashSet<>(newList);
+
+            Set<String> removed = new HashSet<>(oldSet);
+            removed.removeAll(newSet); // Removed students
+            Set<String> added = new HashSet<>(newSet);
+            added.removeAll(oldSet); // New students
+
+            for (String regNo : removed) {
+                for (String className : existingClassCodes) {
+                    studentdb.removeClassFromRegisteredClasses(regNo, className);
+                }
+            }
+
+            for (String regNo : added) {
+                for (String className : existingClassCodes) {
+                    studentdb.addClassToRegisteredClasses(regNo, className);
+                }
+            }
+        }
+
+        return updated;
     }
 
+
     public boolean deleteLogicalGroup(String dept, String groupcode) {
-        Map<String, Object> group = logicalGroupingDB.getLogicalGroupByDeptAndCode(dept, groupcode);
+        Map<String, Object> group = logicalGroupingDB.getLogicalGroupingByCode(groupcode);
+
         if (group == null) return false;
 
         String advisorEmail = (String) group.get("advisorEmail");
-        List<String> regNumbers = (List<String>) group.get("registernumbers");
+
+
 
         if (advisorEmail != null) {
             userdb.removeClassAdvisorListByEmail(advisorEmail, groupcode);
+        }
+
+        List<String> classCodes = (List<String>) group.get("class-code");
+        List<String> oldList = (List<String>) group.get("registernumbers");
+
+
+        Set<String> oldSet = new HashSet<>(oldList);
+
+        for (String regNo : oldSet) {
+            for (String className : classCodes) {
+                studentdb.removeClassFromRegisteredClasses(regNo, className);
+            }
+        }
+        for (String className : classCodes) {
+            String facultyEmail = classDB.getFacultyEmailFromClass(className,groupcode);
+            userdb.removeClassFromFacultyClasses(facultyEmail, className);
+            classDB.deleteClassAndReturnInfo(className,groupcode);
         }
 
         return logicalGroupingDB.deleteLogicalGroupByDeptAndCode(dept, groupcode);

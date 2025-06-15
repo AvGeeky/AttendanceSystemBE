@@ -295,7 +295,7 @@ public class ControllerSuperAdmin {
             }
             else{
                 response.put("status","E");
-                response.put("message","no successfull deletion");
+                response.put("message","no successful deletion");
                 return ResponseEntity.status(503).body(response);
 
 

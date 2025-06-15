@@ -4,10 +4,7 @@ import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPai
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
-import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
-import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
-import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
-import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
+import com.appbuildersinc.attendance.source.database.MongoDB.*;
 import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
 import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +68,7 @@ public class ControllerFaculty {
     private final FunctionsClass functionsMiscService;
     private final FunctionsFaculty functionsFacultyService;
     private final FacultyDB userdbclass;
+    private final ClassDB classDB;
     private final KeyPairUtil keyclass;
     private final FacultyJwtUtil facultyJwtUtil;
     private final StudentjwtUtil studentjwtUtil;
@@ -82,10 +80,11 @@ public class ControllerFaculty {
 
 
     @Autowired
-    public ControllerFaculty(FunctionsFaculty fs, FunctionsClass functionsMiscService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService) {
+    public ControllerFaculty(FunctionsFaculty fs, FunctionsClass functionsMiscService, FacultyDB userdbutil, ClassDB classDB, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService) {
         this.functionsMiscService = functionsMiscService;
         this.functionsFacultyService = fs;
         this.userdbclass = userdbutil;
+        this.classDB = classDB;
         this.facultyJwtUtil = jwtutil;
         this.keyclass =keyutil;
         this.studentjwtUtil = stdjwtutil;
@@ -170,6 +169,85 @@ public class ControllerFaculty {
                 //Error in creating class
                 response.put("status", "E");
                 response.put("message", "Error in dropping. Try again later.");
+                return ResponseEntity.status(503).body(response);
+            }
+
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+    @PostMapping("/faculty/transferClass")
+    public ResponseEntity<Map<String,Object>> transferClass(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                        String authorizationHeader,
+                                                        @RequestBody Map<String, Object> requestBody) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+
+            String classCode = (String) requestBody.get("classCode");
+            String logicalGroupingCode = (String) requestBody.get("groupCode");
+            String newFacultyEmail = (String) requestBody.get("newFacEmail");
+            if (classCode == null || classCode.isEmpty() || logicalGroupingCode == null || logicalGroupingCode.isEmpty() || newFacultyEmail == null || newFacultyEmail.isEmpty()) {
+                response.put("status", "E");
+                response.put("message", "Invalid request body. Please provide valid class details.");
+                return ResponseEntity.status(400).body(response);
+            }
+
+
+            boolean succ = functionsFacultyService.transferClass(classCode,logicalGroupingCode, newFacultyEmail);
+            if (succ) {
+                response.put("status", "S");
+                response.put("message", "Class transferred successfully!");
+                return ResponseEntity.ok(response);
+            } else {
+                //Error in creating class
+                response.put("status", "E");
+                response.put("message", "Error in transferring. Try again later.");
+                return ResponseEntity.status(503).body(response);
+            }
+
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+    @GetMapping("/faculty/getClassDetails")
+    public ResponseEntity<Map<String,Object>> getClassDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                        String authorizationHeader,
+                                                        @RequestBody Map<String, Object> requestBody) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+
+            String classCode = (String) requestBody.get("classCode");
+            String logicalGroupingCode = (String) requestBody.get("groupCode");
+            if (classCode == null || classCode.isEmpty() || logicalGroupingCode == null || logicalGroupingCode.isEmpty()) {
+                response.put("status", "E");
+                response.put("message", "Invalid request body. Please provide valid class details.");
+                return ResponseEntity.status(400).body(response);
+            }
+
+            Map<String, Object> details= classDB.getClassDetails(classCode,logicalGroupingCode);
+            if (details != null) {
+                response.put("status", "S");
+                response.put("message", "Class fetched successfully!");
+                response.put("details",details);
+                return ResponseEntity.ok(response);
+            } else {
+                //Error in creating class
+                response.put("status", "E");
+                response.put("message", "Error in fetching. Try again later.");
                 return ResponseEntity.status(503).body(response);
             }
 
