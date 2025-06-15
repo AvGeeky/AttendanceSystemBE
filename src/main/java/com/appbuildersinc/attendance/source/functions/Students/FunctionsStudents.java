@@ -128,7 +128,7 @@ public class FunctionsStudents {
         // Step 6: Fetch unique class details separately
         Map<String, Object> classDetailsMap = new HashMap<>();
         for (String classCode : classCodes) {
-            classDetailsMap.put(classCode, classDB.getClassDetailsWithoutAttendanceAndTimetable(classCode));
+            classDetailsMap.put(classCode, classDB.getClassDetailsWithoutAttendanceAndRegNo(classCode));
         }
 
         // Step 7: Return final structured response

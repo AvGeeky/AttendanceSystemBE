@@ -110,7 +110,7 @@ public class ClassDB {
         }
     }
 
-    public Map<String,Object> getClassDetailsWithoutAttendanceAndTimetable(String classCode) {
+    public Map<String,Object> getClassDetailsWithoutAttendanceAndRegNo(String classCode) {
         try {
             Document query = new Document("classCode", classCode);
             Document existing = collection.find(query).first();
@@ -123,6 +123,27 @@ public class ClassDB {
             classDetails.put("facultyEmail", existing.getString("facultyEmail"));
             classDetails.put("credits", existing.getString("credits"));
             classDetails.put("passoutYear", existing.getString("passoutYear"));
+            return classDetails;
+        } catch (Exception e) {
+
+            return null;
+        }
+    }
+
+    public Map<String,Object> getClassDetailsWithoutAttendance(String classCode) {
+        try {
+            Document query = new Document("classCode", classCode);
+            Document existing = collection.find(query).first();
+            Map<String,Object> classDetails = new java.util.HashMap<>();
+            classDetails.put("classCode", existing.getString("classCode"));
+            classDetails.put("groupCode", existing.getString("groupCode"));
+            classDetails.put("department", existing.getString("dept"));
+            classDetails.put("className", existing.getString("className"));
+            classDetails.put("facultyName", existing.getString("facultyName"));
+            classDetails.put("facultyEmail", existing.getString("facultyEmail"));
+            classDetails.put("credits", existing.getString("credits"));
+            classDetails.put("passoutYear", existing.getString("passoutYear"));
+            classDetails.put("regNumbers", existing.getList("regNumbers", String.class));
             return classDetails;
         } catch (Exception e) {
 

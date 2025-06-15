@@ -9,6 +9,7 @@ import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
 import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -94,6 +95,37 @@ public class ControllerFaculty {
         this.logicalGroupingDbClass = logicalGroupingDbClass;
         this.functionsClassService = functionsClassService;
     }
+
+
+    @GetMapping("/faculty/refreshTimetable")
+    public ResponseEntity<Map<String,Object>> updateMenteeList(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                               String authorizationHeader,
+                                                               @RequestBody Map<String, Object> requestBody) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> timetable = functionsFacultyService.getMergedTimetable((String) claims.get("email"));
+            if (timetable == null || timetable.isEmpty()) {
+                response.put("status", "E");
+                response.put("message", "Error in fetching timetable. Please try again later.");
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
+            }
+            response.put("timetable",timetable);
+            response.put("status", "S");
+            response.put("message", "Timetable refreshed successfully");
+            return ResponseEntity.ok(response);
+
+
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+
+
 
     @PostMapping("/faculty/createOrUpdateClass")
     public ResponseEntity<Map<String,Object>> createClass(@RequestHeader(HttpHeaders.AUTHORIZATION)
