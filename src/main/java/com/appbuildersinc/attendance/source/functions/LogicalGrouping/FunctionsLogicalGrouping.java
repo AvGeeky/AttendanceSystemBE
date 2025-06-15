@@ -105,10 +105,17 @@ public class FunctionsLogicalGrouping {
         }
         // Delegate insert/update to DB layer
         boolean updated = logicalGroupingDB.insertOrUpdateLogicalGroupingToDB(doc, degree, dept, passout, section, classCodes, groupcode);
-
+        List<String> existingClassCodes = new ArrayList<>();
         for (String classCode : classCodes) {
             if (classDB.classExists(classCode)) {
-                functionsClass.refreshTimeTable(classCode,groupcode );
+                existingClassCodes.add(classCode);
+                functionsClass.refreshTimeTable(classCode,groupcode);
+                classDB.updateRegisterNumbers(classCode,groupcode,regNumbers);
+            }
+        }
+        for (String regNo:regNumbers) {
+            for (String className:existingClassCodes){
+                studentdb.addClassToRegisteredClasses(regNo, className);
             }
         }
 
