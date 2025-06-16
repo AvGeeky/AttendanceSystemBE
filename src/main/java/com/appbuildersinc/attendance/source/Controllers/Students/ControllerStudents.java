@@ -194,7 +194,7 @@ public class ControllerStudents {
         //  Generate internal JWT for session
 
         Map<String,Object> details = studentDbClass.getStudentDetailsByEmail(email);
-        Map<String, Object> claims = studentjwtUtil.createClaims(email, true,details.get("department").toString());
+        Map<String, Object> claims = studentjwtUtil.createClaims(email, true,details.get("department").toString(),details.get("registerNumber").toString());
         String jwt = studentjwtUtil.signJwt(claims);
         String hmacPasscode = (String) details.get("hmacpasscode");
         response.put("status", "S");

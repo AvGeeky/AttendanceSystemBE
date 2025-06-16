@@ -130,6 +130,12 @@ public class FunctionsAttendance {
         return codes;
     }
 
+    public String generateSingleAttendanceCode(String classCode) {
+            String randomPart = generateRandomString(CODE_LENGTH);
+            String fullCode = randomPart + DELIMITER + classCode;
+            return fullCode;
+    }
+
     public String extractClassCode(String fullCode) {
         return fullCode.split("~")[1];
     }
@@ -143,6 +149,18 @@ public class FunctionsAttendance {
         redisService.initializeAttendanceTracking(classCode);
 
         return classCodes;
+
+    }
+
+    public String initialiseSingleCodeAttendanceAndReturnCode(String classCode){
+
+        String singleAttendanceCode = generateSingleAttendanceCode(classCode);
+
+        redisService.storeHmacKeys(classCode,classDB.getClassRegNoHmacMapping(classCode));
+
+        redisService.initializeAttendanceTracking(classCode);
+
+        return singleAttendanceCode;
 
     }
 

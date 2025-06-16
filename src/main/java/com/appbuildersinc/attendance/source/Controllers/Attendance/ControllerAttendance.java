@@ -185,6 +185,13 @@ public class ControllerAttendance {
                 response.put("message", "Unauthorized access. Invalid substitution code or email.");
                 return ResponseEntity.status(403).body(response);
             }
+
+            if (redisService.isAttendanceTrackingActive(classCode)){
+                response.put("status", "NA");
+                response.put("message", "Attendance tracking is already active for this class.");
+                response.put("codes", redisService.getThreeQRCodes(classCode));
+                return ResponseEntity.ok(response);
+            }
             //generate QR codes for attendance and initialise redis databases
             List<String> codesForQr = functionsAttendanceService.initialiseQRAttendanceAndReturnCodes(classCode);
 
@@ -207,14 +214,14 @@ public class ControllerAttendance {
     public ResponseEntity<Map<String,Object>> sendCode(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                              String authorizationHeader,
                                                              @RequestParam String digest,
-                                                             @RequestParam String qrCode,
-                                                            @RequestParam String registerNumber
+                                                             @RequestParam String qrCode
                                                        ) throws Exception {
         Map<String, Object> claims = functionsStudentsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
             //JWT is valid, proceed with business logic
+            String registerNumber = claims.get("registerNumber").toString();
             Map<String, Object> response = new HashMap<>();
             String classCode = functionsAttendanceService.extractClassCode(qrCode);
             if (!redisService.isQRAttendanceCodeValid(classCode,qrCode)) {
@@ -225,6 +232,89 @@ public class ControllerAttendance {
             if (!functionsAttendanceService.verifyDigest(qrCode,
                                                         digest,
                                                         redisService.getHmacKey(classCode, registerNumber))){
+                response.put("status", "E");
+                response.put("message", "HMAC verification failed. Invalid passcode.");
+                return ResponseEntity.status(403).body(response);
+            }
+            redisService.markStudentVerified(classCode,registerNumber);
+            redisService.bumpVersionDebounced(classCode);
+            response.put("status", "S");
+            response.put("message", "Attendance verified and marked for class-"+classCode);
+            return ResponseEntity.ok(response);
+
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+    @PostMapping("/faculty/passcode/generateCode")
+    public ResponseEntity<Map<String,Object>> generateCode(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                             String authorizationHeader,
+                                                             @RequestParam(required = false) String subCode,
+                                                             @RequestParam String classCode) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            if (!classDB.classExists(classCode)) {
+                response.put("status", "E");
+                response.put("message", "Class code does not exist.");
+                return ResponseEntity.status(404).body(response);
+            }
+            if (!functionsAttendanceService.isAuthorizedViaSubcodeOrEmail(classCode, (String) claims.get("email"), subCode)) {
+                response.put("status", "E");
+                response.put("message", "Unauthorized access. Invalid substitution code or email.");
+                return ResponseEntity.status(403).body(response);
+            }
+            if (redisService.isAttendanceTrackingActive(classCode)){
+                response.put("status", "NA");
+                response.put("message", "Attendance tracking is already active for this class.");
+                response.put("codes", redisService.getSingleAttendanceCodes(classCode));
+                return ResponseEntity.ok(response);
+            }
+            //generate codes for attendance and initialise redis databases
+            String passcode = functionsAttendanceService.initialiseSingleCodeAttendanceAndReturnCode(classCode);
+
+            response.put("status","S");
+            response.put("message", "Passcode generated successfully.");
+            response.put("codes", passcode);
+
+            redisService.storeSingleAttendanceCode(classCode, passcode);
+
+            return ResponseEntity.ok(response);
+
+
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+    @PostMapping("/student/passcode/sendCode")
+    public ResponseEntity<Map<String,Object>> sendPasscode(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                       String authorizationHeader,
+                                                       @RequestParam String digest,
+                                                       @RequestParam String passcode
+    ) throws Exception {
+        Map<String, Object> claims = functionsStudentsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            String registerNumber = claims.get("registerNumber").toString();
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            String classCode = functionsAttendanceService.extractClassCode(passcode);
+            if (!redisService.isSingleAttendanceCodeValid(classCode,passcode)) {
+                response.put("status", "E");
+                response.put("message", "Invalid passcode code or class code.");
+                return ResponseEntity.status(404).body(response);
+            }
+            if (!functionsAttendanceService.verifyDigest(passcode,
+                    digest,
+                    redisService.getHmacKey(classCode, registerNumber))){
                 response.put("status", "E");
                 response.put("message", "HMAC verification failed. Invalid passcode.");
                 return ResponseEntity.status(403).body(response);
@@ -256,12 +346,12 @@ public class ControllerAttendance {
             if (!redisService.isAttendanceTrackingActive(classCode)){
                 response.put("status", "NA");
                 response.put("message", "Attendance tracking is not active for this class.");
-                return ResponseEntity.status(503).build();
+                return ResponseEntity.ok(response);
             }
             if (version!=null && version.equals(currentVersion)){
-                response.put("status", "S");
+                response.put("status", "NA");
                 response.put("message", "No new attendance updates.");
-                return ResponseEntity.status(503).build(); // 304
+                return ResponseEntity.ok(response);
             }
             Set<String> attendanceRecord = redisService.getVerifiedStudents(classCode);
             long getVerifiedCount = redisService.getVerifiedStudentCount(classCode);
@@ -303,6 +393,7 @@ public class ControllerAttendance {
             redisService.deleteActiveClassCodes(classCode);
             redisService.deleteVerifiedStudents(classCode);
             redisService.deleteStudentHMACMappings(classCode);
+            redisService.deleteActiveSingleClassCode(classCode);
 
             response.put("status", "S");
             response.put("message", "Attendance Saved and Closed.");
