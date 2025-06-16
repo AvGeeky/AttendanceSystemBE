@@ -93,10 +93,11 @@ public class FunctionsClass {
                 }
             }
         }
+        HashMap<String,Object> regnosHMAC = new HashMap<>(studentdb.getHMACPasscodes(regNumbers));
 
         boolean success = classDB.createNewClass(
                 groupCode, classCode, dept,className, facultyName,passoutYear, facultyEmail, credits, newTimetable, regNumbers
-                , noOfStudents
+                , noOfStudents, regnosHMAC
         );
         if (success) {
             for (String regNumber : regNumbers) {

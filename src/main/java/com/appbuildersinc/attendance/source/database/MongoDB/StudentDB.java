@@ -129,6 +129,19 @@ public class StudentDB {
         return (List<String>) student.getOrDefault("registeredClasses", new ArrayList<String>());
     }
 
+    public HashMap<String,Object> getHMACPasscodes(List<String> regnos){
+        HashMap<String,Object> hmacPasscodes = new HashMap<>();
+        for (String regno : regnos) {
+            Document query = new Document("registerNumber", regno);
+            Document student = collection.find(query).first();
+            if (student == null) {
+                continue;
+            }
+            hmacPasscodes.put(regno, student.get("hmacpasscode").toString());
+        }
+        return hmacPasscodes;
+    }
+
     
 
 
