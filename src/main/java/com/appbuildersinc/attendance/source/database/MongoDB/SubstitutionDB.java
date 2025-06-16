@@ -9,11 +9,13 @@ import com.mongodb.client.MongoDatabase;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
 import com.mongodb.client.model.IndexOptions;
+import org.springframework.stereotype.Repository;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+@Repository
 public class SubstitutionDB {
     static Dotenv dotenv = Dotenv.configure()
             .filename("apiee.env")
@@ -65,7 +67,7 @@ public class SubstitutionDB {
     }
 
     // Method 2: Fetch substitution code if not expired
-    public static String fetchSubstitutionCode(String code) {
+    public static String fetchClassCodeFromSubstitutionCode(String code) {
         try {
             Document query = new Document("code", code);
             Document doc = collection.find(query).first();
@@ -86,7 +88,7 @@ public class SubstitutionDB {
 
                 if (dateOfUse.compareTo(todayStart.getTime()) >= 0 &&
                         dateOfUse.compareTo(todayEnd.getTime()) < 0) {
-                    return code; // valid today
+                    return doc.get("classCode").toString(); // valid today
                 }
             }
 
