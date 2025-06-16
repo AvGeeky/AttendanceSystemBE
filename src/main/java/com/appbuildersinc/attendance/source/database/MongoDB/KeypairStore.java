@@ -42,7 +42,7 @@ public class KeypairStore {
                     .build();
             mongoClient = MongoClients.create(settings);
             database = mongoClient.getDatabase("AttendEz");
-            collection = database.getCollection("Users");
+            collection = database.getCollection("Misc");
         } catch (Exception e) {
             e.printStackTrace();
         }

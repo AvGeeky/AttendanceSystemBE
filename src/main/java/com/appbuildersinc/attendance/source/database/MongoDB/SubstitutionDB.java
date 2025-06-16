@@ -1,0 +1,101 @@
+package com.appbuildersinc.attendance.source.database.MongoDB;
+
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import io.github.cdimascio.dotenv.Dotenv;
+import org.bson.Document;
+import com.mongodb.client.model.IndexOptions;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
+public class SubstitutionDB {
+    static Dotenv dotenv = Dotenv.configure()
+            .filename("apiee.env")
+            .load();
+    static String uri = dotenv.get("API_KEY");
+
+    private static MongoClient mongoClient;
+    private static MongoDatabase database;
+    private static MongoCollection<Document> collection;
+
+    static {
+        try {
+            MongoClientSettings settings = MongoClientSettings.builder()
+                    .applyConnectionString(new ConnectionString(uri + "/?serverSelectionTimeoutMS=60000"))
+                    .build();
+            mongoClient = MongoClients.create(settings);
+            database = mongoClient.getDatabase("AttendEz");
+            collection = database.getCollection("Sub");
+
+            // Ensure TTL index exists (only runs once per app start)
+            collection.createIndex(new Document("expiresAt", 1),
+                    new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method 1: Store substitution code with TTL
+    public static void storeSubstitutionCode(String code, String classCode, Date dateOfUse) {
+        try {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(dateOfUse);
+            cal.set(Calendar.HOUR_OF_DAY, 23);
+            cal.set(Calendar.MINUTE, 59);
+            cal.set(Calendar.SECOND, 59);
+            cal.set(Calendar.MILLISECOND, 999);
+            Date expiresAt = cal.getTime();
+
+            Document doc = new Document("code", code)
+                    .append("classCode", classCode)
+                    .append("timeOfUse", dateOfUse)
+                    .append("expiresAt", expiresAt);
+
+            collection.insertOne(doc);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method 2: Fetch substitution code if not expired
+    public static String fetchSubstitutionCode(String code) {
+        try {
+            Document query = new Document("code", code);
+            Document doc = collection.find(query).first();
+
+            if (doc != null && doc.containsKey("timeOfUse")) {
+                Date dateOfUse = doc.getDate("timeOfUse");
+
+                // Get start of today
+                Calendar todayStart = Calendar.getInstance();
+                todayStart.set(Calendar.HOUR_OF_DAY, 0);
+                todayStart.set(Calendar.MINUTE, 0);
+                todayStart.set(Calendar.SECOND, 0);
+                todayStart.set(Calendar.MILLISECOND, 0);
+
+                // Get start of tomorrow
+                Calendar todayEnd = (Calendar) todayStart.clone();
+                todayEnd.add(Calendar.DAY_OF_MONTH, 1);
+
+                if (dateOfUse.compareTo(todayStart.getTime()) >= 0 &&
+                        dateOfUse.compareTo(todayEnd.getTime()) < 0) {
+                    return code; // valid today
+                }
+            }
+
+            return null; // not found or not today's code
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+}

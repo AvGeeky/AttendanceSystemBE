@@ -60,7 +60,7 @@ public class FunctionsClass {
                 }
             }
         }
-        return classDB.saveRefreshedClassTimetable(groupCode,classCode,newTimetable);
+        return classDB.saveRefreshedClassTimetable(classCode,newTimetable);
     }
 
     public boolean createNewClass( String groupCode, String classCode, String className, String dept, String facultyEmail,
@@ -111,8 +111,8 @@ public class FunctionsClass {
 
     }
 
-    public boolean dropClass(String classCode, String groupCode) {
-        Map<String,Object> info = classDB.deleteClassAndReturnInfo(classCode, groupCode);
+    public boolean dropClass(String classCode) {
+        Map<String,Object> info = classDB.deleteClassAndReturnInfo(classCode);
         if (info == null) {
             return false; // Class not found or deletion failed
         }

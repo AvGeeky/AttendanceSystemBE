@@ -4,12 +4,11 @@ import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPai
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
-import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
-import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
-import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
-import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
+import com.appbuildersinc.attendance.source.database.MongoDB.*;
 import com.appbuildersinc.attendance.source.functions.Attendance.FunctionsAttendance;
 import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
+import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
+import com.appbuildersinc.attendance.source.functions.Students.FunctionsStudents;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,43 +41,37 @@ import org.springframework.web.bind.annotation.*;
  * </p>
  */
 
-/*
-Error handling template for Muraribranch:
-Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizationHeader);
-        //Check if the JWT is valid
-        String status = (String) claims.get("status");
-        if (status.equals("S")) {
-            //JWT is valid, proceed with business logic
-            Map<String, Object> response = new HashMap<>();
 
-
-        }
-        else{
-            //JWT is invalid, return error response
-            return ResponseEntity.status(401).body(claims);
-        }
-*/
 
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
 public class ControllerAttendance {
-    private final FunctionsClass functionsMiscService;
+    private final FunctionsClass functionsClassService;
     private final FunctionsAttendance functionsAttendanceService;
+    private final FunctionsFaculty functionsFacultyService;
+    private final FunctionsStudents functionsStudentsService;
+
     private final FacultyDB userdbclass;
-    private final KeyPairUtil keyclass;
-    private final FacultyJwtUtil facultyJwtUtil;
-    private final StudentjwtUtil studentjwtUtil;
-    private final SuperAdminjwtUtil adminjwtUtil;
+    private final ClassDB classDB;
     private final StudentDB studentDbClass;
     private final SuperAdminDB SuperAdminDbClass;
     private final LogicalGroupingDB logicalGroupingDbClass;
 
+    private final KeyPairUtil keyclass;
+    private final FacultyJwtUtil facultyJwtUtil;
+    private final StudentjwtUtil studentjwtUtil;
+    private final SuperAdminjwtUtil adminjwtUtil;
+
+
+
 
 
     @Autowired
-    public ControllerAttendance(FunctionsClass fm, FunctionsAttendance fa, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
+    public ControllerAttendance(FunctionsAttendance fa, FunctionsFaculty functionsFacultyService, FacultyDB userdbutil, ClassDB classDB, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService, FunctionsStudents functionsStudentsService) {
+        this.functionsFacultyService = functionsFacultyService;
+        this.classDB = classDB;
+        this.functionsClassService = functionsClassService;
         this.functionsAttendanceService=fa;
-        this.functionsMiscService = fm;
         this.userdbclass = userdbutil;
         this.facultyJwtUtil = jwtutil;
         this.keyclass =keyutil;
@@ -87,6 +80,7 @@ public class ControllerAttendance {
         this.adminjwtUtil=adminutil;
         this.SuperAdminDbClass=SuperAdminDbClass;
         this.logicalGroupingDbClass = logicalGroupingDbClass;
+        this.functionsStudentsService = functionsStudentsService;
     }
 
 
