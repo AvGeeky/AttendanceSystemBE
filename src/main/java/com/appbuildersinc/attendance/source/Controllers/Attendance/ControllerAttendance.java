@@ -5,12 +5,15 @@ import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
 import com.appbuildersinc.attendance.source.database.MongoDB.*;
+import com.appbuildersinc.attendance.source.database.redis.RedisService;
 import com.appbuildersinc.attendance.source.functions.Attendance.FunctionsAttendance;
 import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
 import com.appbuildersinc.attendance.source.functions.Students.FunctionsStudents;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.DefaultLifecycleProcessor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -83,13 +86,11 @@ public class ControllerAttendance {
     private final FacultyJwtUtil facultyJwtUtil;
     private final StudentjwtUtil studentjwtUtil;
     private final SuperAdminjwtUtil adminjwtUtil;
-
-
-
+    private final RedisService redisService;
 
 
     @Autowired
-    public ControllerAttendance(FunctionsAttendance fa, FunctionsFaculty functionsFacultyService, FacultyDB userdbutil, ClassDB classDB, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService, FunctionsStudents functionsStudentsService, SubstitutionDB substitutionDBclass) {
+    public ControllerAttendance(FunctionsAttendance fa, FunctionsFaculty functionsFacultyService, FacultyDB userdbutil, ClassDB classDB, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService, FunctionsStudents functionsStudentsService, SubstitutionDB substitutionDBclass, RedisService redisService) {
         this.functionsFacultyService = functionsFacultyService;
         this.classDB = classDB;
         this.functionsClassService = functionsClassService;
@@ -104,6 +105,7 @@ public class ControllerAttendance {
         this.logicalGroupingDbClass = logicalGroupingDbClass;
         this.functionsStudentsService = functionsStudentsService;
         this.substitutionDBclass = substitutionDBclass;
+        this.redisService = redisService;
     }
 
     @PostMapping("/faculty/createSubstitutionCode")
@@ -161,6 +163,176 @@ public class ControllerAttendance {
             return ResponseEntity.status(401).body(claims);
         }
     }
+
+    @PostMapping("/faculty/qr/generateQRCode")
+    public ResponseEntity<Map<String,Object>> generateQRCode(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                               String authorizationHeader,
+                                                               @RequestParam(required = false) String subCode,
+                                                               @RequestParam String classCode) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            if (!classDB.classExists(classCode)) {
+                response.put("status", "E");
+                response.put("message", "Class code does not exist.");
+                return ResponseEntity.status(404).body(response);
+            }
+            if (!functionsAttendanceService.isAuthorizedViaSubcodeOrEmail(classCode, (String) claims.get("email"), subCode)) {
+                response.put("status", "E");
+                response.put("message", "Unauthorized access. Invalid substitution code or email.");
+                return ResponseEntity.status(403).body(response);
+            }
+            //generate QR codes for attendance and initialise redis databases
+            List<String> codesForQr = functionsAttendanceService.initialiseQRAttendanceAndReturnCodes(classCode);
+
+            response.put("status","S");
+            response.put("message", "QR codes generated successfully.");
+            response.put("codes", codesForQr);
+
+            redisService.storeQRAttendanceCodesWithWindow(classCode, codesForQr);
+
+            return ResponseEntity.ok(response);
+
+
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+    @PostMapping("/student/qr/sendCode")
+    public ResponseEntity<Map<String,Object>> sendCode(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                             String authorizationHeader,
+                                                             @RequestParam String digest,
+                                                             @RequestParam String qrCode,
+                                                            @RequestParam String registerNumber
+                                                       ) throws Exception {
+        Map<String, Object> claims = functionsStudentsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            String classCode = functionsAttendanceService.extractClassCode(qrCode);
+            if (!redisService.isQRAttendanceCodeValid(classCode,qrCode)) {
+                response.put("status", "E");
+                response.put("message", "Invalid QR code or class code.");
+                return ResponseEntity.status(404).body(response);
+            }
+            if (!functionsAttendanceService.verifyDigest(qrCode,
+                                                        digest,
+                                                        redisService.getHmacKey(classCode, registerNumber))){
+                response.put("status", "E");
+                response.put("message", "HMAC verification failed. Invalid passcode.");
+                return ResponseEntity.status(403).body(response);
+            }
+            redisService.markStudentVerified(classCode,registerNumber);
+            redisService.bumpVersionDebounced(classCode);
+            response.put("status", "S");
+            response.put("message", "Attendance verified and marked for class-"+classCode);
+            return ResponseEntity.ok(response);
+
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+    @GetMapping("/faculty/liveAttendanceViewWithVersion")
+    public ResponseEntity<Map<String,Object>> liveAttendanceWebhook(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                             String authorizationHeader,
+                                                             @RequestParam String classCode,
+                                                                    @RequestParam(required = false) String version ) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            String currentVersion = redisService.getVersion(classCode);
+            if (!redisService.isAttendanceTrackingActive(classCode)){
+                response.put("status", "NA");
+                response.put("message", "Attendance tracking is not active for this class.");
+                return ResponseEntity.status(503).build();
+            }
+            if (version!=null && version.equals(currentVersion)){
+                response.put("status", "S");
+                response.put("message", "No new attendance updates.");
+                return ResponseEntity.status(503).build(); // 304
+            }
+            Set<String> attendanceRecord = redisService.getVerifiedStudents(classCode);
+            long getVerifiedCount = redisService.getVerifiedStudentCount(classCode);
+            response.put("status", "S");
+            response.put("version", currentVersion);
+            response.put("verifiedCount", getVerifiedCount);
+            response.put("attendanceRecord", attendanceRecord);
+            response.put("message", "Live attendance data fetched successfully.");
+            return ResponseEntity.ok(response);
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+    @PostMapping("/faculty/qrpasscode/confirmAttendanceClose")
+    public ResponseEntity<Map<String,Object>> confirmAttendanceClose(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                                    String authorizationHeader,
+                                                                    @RequestParam String classCode) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            String currentVersion = redisService.getVersion(classCode);
+
+            if (!redisService.isAttendanceTrackingActive(classCode)) {
+                response.put("status", "NA");
+                response.put("message", "No new attendance updates.");
+                return ResponseEntity.ok(response); // 304
+            }
+
+            Map<String, Integer> lectureRecord = functionsAttendanceService.generateLectureRecord(
+                    redisService.getHmacKeyMapForClass(classCode),
+                    redisService.getVerifiedStudents(classCode)
+            );
+            classDB.addAttendanceRecord(classCode,lectureRecord);
+            redisService.deleteActiveClassCodes(classCode);
+            redisService.deleteVerifiedStudents(classCode);
+            redisService.deleteStudentHMACMappings(classCode);
+
+            response.put("status", "S");
+            response.put("message", "Attendance Saved and Closed.");
+            return ResponseEntity.ok(response);
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+    //ONLY FOR TESTING PURPOSES
+    @GetMapping("/generateDigest")
+    public ResponseEntity<Map<String,Object>> generateDigest(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                                    String authorizationHeader,
+                                                                    @RequestParam String reg,
+                                                                    @RequestParam String code) throws Exception {
+
+
+            String hmacpasscode = studentDbClass.getHMACPasscode(reg);
+            Map<String, Object> response = new HashMap<>();
+            response.put("hmacpasscode", hmacpasscode);
+            response.put("digest", functionsAttendanceService.createDigest(code, hmacpasscode));
+            return ResponseEntity.ok(response);
+
+    }
+
+
+
+
+
 
 
 
