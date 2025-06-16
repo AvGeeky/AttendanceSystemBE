@@ -141,6 +141,12 @@ public class StudentDB {
         }
         return hmacPasscodes;
     }
+    public String getHMACPasscode(String regno){
+        HashMap<String,Object> hmacPasscodes = new HashMap<>();
+        Document query = new Document("registerNumber", regno);
+        Document student = collection.find(query).first();
+        return student.get("hmacpasscode").toString();
+    }
 
     
 

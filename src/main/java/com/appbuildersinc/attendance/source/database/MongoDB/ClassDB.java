@@ -225,7 +225,6 @@ public class ClassDB {
             Document query = new Document("classCode", classCode);
             Document oldDoc = collection.find(query).first();
             if (oldDoc == null) return false;
-
             collection.updateOne(query, new Document("$set", new Document("regnoHMACMap", regnoHMACMap)));
 
             return true;
@@ -234,5 +233,54 @@ public class ClassDB {
             return false;
         }
     }
+
+    public Map<String,Object> getClassRegNoHmacMapping(String classCode) {
+        try {
+            Document query = new Document("classCode", classCode);
+            Document oldDoc = collection.find(query).first();
+            if (oldDoc == null) return null;
+
+            Document regnoHmacDoc = (Document) oldDoc.get("regnoHMACMap");
+            if (regnoHmacDoc == null) return null;
+
+            return new HashMap<>(regnoHmacDoc); // Convert Document to HashMap
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void addAttendanceRecord(String classId, Map<String, Integer> lectureRecord) {
+        try {
+            Document query = new Document("classCode", classId);
+            Document existing = collection.find(query).first();
+            if (existing == null) return;
+
+            Map<String,Map<String, Integer>> attendance = (Map<String, Map<String, Integer>>) existing.get("attendance");
+            if (attendance == null) {
+                attendance = new HashMap<>();
+            }
+
+            int nextLectureNumber = 1;
+
+            if (!attendance.isEmpty()) {
+                nextLectureNumber = attendance.keySet().stream()
+                        .map(key -> key.replace("lecture.", ""))   // Remove prefix
+                        .mapToInt(Integer::parseInt)               // Parse number part
+                        .max()
+                        .orElse(0) + 1;
+
+            }
+
+            // Update using dot notation to add lecture record
+            String lectureKey = "lecture." + nextLectureNumber;
+            attendance.put(lectureKey, lectureRecord);
+            collection.updateOne(query, new Document("$set", new Document("attendance", attendance)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
 }
