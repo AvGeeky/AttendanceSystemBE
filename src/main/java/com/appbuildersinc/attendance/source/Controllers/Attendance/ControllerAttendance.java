@@ -370,19 +370,29 @@ public class ControllerAttendance {
     @PostMapping("/faculty/qrpasscode/confirmAttendanceClose")
     public ResponseEntity<Map<String,Object>> confirmAttendanceClose(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                     String authorizationHeader,
-                                                                    @RequestParam String classCode) throws Exception {
+                                                                    @RequestParam String classCode,
+                                                                     @RequestParam (required = false) String subCode) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
-            String currentVersion = redisService.getVersion(classCode);
+
+            if (!functionsAttendanceService.isAuthorizedViaSubcodeOrEmail(classCode, (String) claims.get("email"), subCode)) {
+                response.put("status", "E");
+                response.put("message", "Unauthorized access. Invalid substitution code or email.");
+                return ResponseEntity.status(403).body(response);
+            }
 
             if (!redisService.isAttendanceTrackingActive(classCode)) {
                 response.put("status", "NA");
                 response.put("message", "No new attendance updates.");
                 return ResponseEntity.ok(response); // 304
+            }
+
+            if (subCode != null) {
+                substitutionDBclass.deleteSubstitutionCode(subCode);
             }
 
             Map<String, Integer> lectureRecord = functionsAttendanceService.generateLectureRecord(

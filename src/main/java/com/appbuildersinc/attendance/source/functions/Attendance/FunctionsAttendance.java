@@ -202,9 +202,8 @@ public class FunctionsAttendance {
         int dateInt = Integer.parseInt(LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE));
         // e.g., 20250616
 
-        // Time formatted as HHmmss
-        int timeInt = Integer.parseInt(LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss")));
-        // e.g., 143705
+        // Time formatted as HHmm
+        int timeInt = Integer.parseInt(LocalTime.now().format(DateTimeFormatter.ofPattern("HHmm")));
 
         // Store the date and time in the lecture record
         lectureRecord.put("date", dateInt);
