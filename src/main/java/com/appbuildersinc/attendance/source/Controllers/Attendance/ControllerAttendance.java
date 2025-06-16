@@ -10,7 +10,12 @@ import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
 import com.appbuildersinc.attendance.source.functions.Students.FunctionsStudents;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.*;
 
 /**
  * <b>Standard HTTP Error Response Codes:</b>
@@ -41,7 +46,24 @@ import org.springframework.web.bind.annotation.*;
  * </p>
  */
 
+/*
+public ResponseEntity<Map<String,Object>> updateMenteeList(@RequestHeader(HttpHeaders.AUTHORIZATION)
+                                                         String authorizationHeader,
+                                                         @RequestBody Map<String, Object> requestBody) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
 
+
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+*/
 
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
@@ -56,7 +78,7 @@ public class ControllerAttendance {
     private final StudentDB studentDbClass;
     private final SuperAdminDB SuperAdminDbClass;
     private final LogicalGroupingDB logicalGroupingDbClass;
-
+    private final SubstitutionDB substitutionDBclass;
     private final KeyPairUtil keyclass;
     private final FacultyJwtUtil facultyJwtUtil;
     private final StudentjwtUtil studentjwtUtil;
@@ -67,7 +89,7 @@ public class ControllerAttendance {
 
 
     @Autowired
-    public ControllerAttendance(FunctionsAttendance fa, FunctionsFaculty functionsFacultyService, FacultyDB userdbutil, ClassDB classDB, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService, FunctionsStudents functionsStudentsService) {
+    public ControllerAttendance(FunctionsAttendance fa, FunctionsFaculty functionsFacultyService, FacultyDB userdbutil, ClassDB classDB, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService, FunctionsStudents functionsStudentsService, SubstitutionDB substitutionDBclass) {
         this.functionsFacultyService = functionsFacultyService;
         this.classDB = classDB;
         this.functionsClassService = functionsClassService;
@@ -81,7 +103,64 @@ public class ControllerAttendance {
         this.SuperAdminDbClass=SuperAdminDbClass;
         this.logicalGroupingDbClass = logicalGroupingDbClass;
         this.functionsStudentsService = functionsStudentsService;
+        this.substitutionDBclass = substitutionDBclass;
     }
+
+    @PostMapping("/faculty/createSubstitutionCode")
+    public ResponseEntity<Map<String,Object>> createSubstitutionCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+                                                                     @RequestParam String classCode,
+                                                                     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date dateOfUse // Accepts only yyyy-MM-dd
+                                                                        ) throws Exception {
+            Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+            //Check if the JWT is valid
+            String status = (String) claims.get("status");
+            if (status.equals("S")) {
+                //JWT is valid, proceed with business logic
+                Map<String, Object> response = new HashMap<>();
+                if (!classDB.classExists(classCode)){
+                    response.put("status", "E");
+                    response.put("message", "Class code does not exist.");
+                    return ResponseEntity.status(404).body(response);
+                }
+                String subCode = functionsAttendanceService.generateSubstitutionCode(classCode,dateOfUse);
+                Date cleanDate = functionsAttendanceService.createCleanDate(dateOfUse);
+                SubstitutionDB.storeSubstitutionCode(subCode, classCode, cleanDate);
+                response.put("status", "S");
+                response.put("substitutionCode", subCode);
+                response.put("message", "Substitution code created successfully.");
+                return ResponseEntity.ok(response);
+            } else {
+                //JWT is invalid, return error response
+                return ResponseEntity.status(401).body(claims);
+            }
+    }
+
+    @GetMapping("/faculty/fetchClassCodeFromSubstitutionCode")
+    public ResponseEntity<Map<String,Object>> fetchClassCodeFromSubstitutionCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+                                                                     @RequestParam String substitutionCode
+    ) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            String classCode = SubstitutionDB.fetchClassCodeFromSubstitutionCode(substitutionCode);
+            if (classCode == null) {
+                response.put("status", "E");
+                response.put("message", "Substitution code not found / date of use not arrived yet / expired.");
+                return ResponseEntity.status(404).body(response);
+            }
+            response.put("status", "S");
+            response.put("classCode", classCode);
+            response.put("message", "Class code fetched successfully.");
+            return ResponseEntity.ok(response);
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
 
 
 }
