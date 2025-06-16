@@ -142,4 +142,15 @@ public class SubstitutionDB {
         }
     }
 
+    // Method 4: Delete substitution code by code value
+    public boolean deleteSubstitutionCode(String code) {
+        try {
+            Document query = new Document("code", code);
+            return collection.deleteOne(query).getDeletedCount() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }
