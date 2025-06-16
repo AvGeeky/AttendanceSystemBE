@@ -143,13 +143,13 @@ public class FunctionsLogicalGrouping {
 
         List<String> existingClassCodes = new ArrayList<>();
         for (String classCode : classCodes) {
-            if (classDB.classExists(classCode, groupcode)) {
+            if (classDB.classExists(classCode)) {
                 existingClassCodes.add(classCode);
                 if (timetableChanged) {
                     functionsClass.refreshTimeTable(classCode, groupcode);
                 }
                 if (registerNumbersChanged) {
-                    classDB.updateRegisterNumbers(classCode, groupcode, regNumbers);
+                    classDB.updateRegisterNumbers(classCode, regNumbers);
                 }
             }
         }
@@ -209,9 +209,9 @@ public class FunctionsLogicalGrouping {
             }
         }
         for (String className : classCodes) {
-            String facultyEmail = classDB.getFacultyEmailFromClass(className,groupcode);
+            String facultyEmail = classDB.getFacultyEmailFromClass(className);
             userdb.removeClassFromFacultyClasses(facultyEmail, className);
-            classDB.deleteClassAndReturnInfo(className,groupcode);
+            classDB.deleteClassAndReturnInfo(className);
         }
 
         return logicalGroupingDB.deleteLogicalGroupByDeptAndCode(dept, groupcode);

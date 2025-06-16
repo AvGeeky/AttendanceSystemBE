@@ -161,7 +161,7 @@ public class FunctionsFaculty {
     }
 
     public boolean transferClass (String classCode, String groupCode, String newFacEmail){
-        String oldFacEmail = classDB.getFacultyEmailFromClass(classCode,groupCode);
+        String oldFacEmail = classDB.getFacultyEmailFromClass(classCode);
         String newFacName = facultyDB.getUserNameByEmail(newFacEmail);
         if (!facultyDB.removeClassFromFacultyClasses(oldFacEmail,classCode)){
             return false;
@@ -169,11 +169,11 @@ public class FunctionsFaculty {
         if (!facultyDB.addClassToFacultyClasses(newFacEmail,classCode)){
             return false;
         }
-        if (!classDB.updateClassFacultyDetails(groupCode,classCode,newFacEmail,newFacName)){
+        if (!classDB.updateClassFacultyDetails(classCode,newFacEmail,newFacName)){
             return false;
         }
 
-        emailclass.sendClassTransferMail(newFacEmail,classDB.getAllClassDetails(classCode,groupCode));
+        emailclass.sendClassTransferMail(newFacEmail,classDB.getAllClassDetails(classCode));
         return true;
 
 

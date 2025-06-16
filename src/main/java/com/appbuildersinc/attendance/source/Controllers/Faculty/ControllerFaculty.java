@@ -192,7 +192,7 @@ public class ControllerFaculty {
                 return ResponseEntity.status(400).body(response);
             }
 
-            boolean succ = functionsClassService.dropClass(classCode,logicalGroupingCode);
+            boolean succ = functionsClassService.dropClass(classCode);
             if (succ) {
                 response.put("status", "S");
                 response.put("message", "Class dropped successfully!");
@@ -270,7 +270,7 @@ public class ControllerFaculty {
                 return ResponseEntity.status(400).body(response);
             }
 
-            Map<String, Object> details= classDB.getAllClassDetails(classCode,logicalGroupingCode);
+            Map<String, Object> details= classDB.getAllClassDetails(classCode);
             if (details != null) {
                 response.put("status", "S");
                 response.put("message", "Class fetched successfully!");

@@ -44,9 +44,7 @@ public class ClassDB {
             String credits, Map<String, List<Map<String, Object>>> newTimetable, List<String> regNumbers,
             String noOfStudents
     ) {
-        Document query = new Document("groupCode", groupCode)
-                .append("classCode", classCode);
-
+        Document query = new Document("classCode", classCode);
         Document classDoc = new Document("groupCode", groupCode)
                 .append("classCode", classCode)
                 .append("dept", dept)
@@ -76,9 +74,9 @@ public class ClassDB {
         }
     }
 
-    public boolean classExists(String classCode, String groupCode) {
+    public boolean classExists(String classCode) {
         try {
-            Document query = new Document("classCode", classCode).append("groupCode",groupCode);
+            Document query = new Document("classCode", classCode);
             Document existing = collection.find(query).first();
             return existing != null;
         } catch (Exception e) {
@@ -86,19 +84,7 @@ public class ClassDB {
             return false;
         }
     }
-    public Map<String,Object> getAllClassDetails(String classCode, String groupCode) {
-        if (groupCode == null || groupCode.isEmpty()) {
-            return getAllClassDetails(classCode);
-        }
-        try {
-            Document query = new Document("classCode", classCode).append("groupCode",groupCode);
-            Document existing = collection.find(query).first();
-            return existing;
-        } catch (Exception e) {
 
-            return null;
-        }
-    }
     public Map<String,Object> getAllClassDetails(String classCode) {
         try {
             Document query = new Document("classCode", classCode);
@@ -161,9 +147,9 @@ public class ClassDB {
         }
     }
 
-    public String getFacultyEmailFromClass(String classCode, String groupCode) {
+    public String getFacultyEmailFromClass(String classCode) {
         try {
-            Document query = new Document("classCode", classCode).append("groupCode",groupCode);
+            Document query = new Document("classCode", classCode);
             Document existing = collection.find(query).first();
             return (String) existing.get("facultyEmail");
         } catch (Exception e) {
@@ -172,10 +158,9 @@ public class ClassDB {
         }
     }
 
-    public boolean saveRefreshedClassTimetable(String groupCode, String classCode, Map<String, List<Map<String, Object>>> newTimetable) {
+    public boolean saveRefreshedClassTimetable(String classCode, Map<String, List<Map<String, Object>>> newTimetable) {
         try {
-            Document query = new Document("groupCode", groupCode)
-                    .append("classCode", classCode);
+            Document query = new Document("classCode", classCode);
             Document oldDoc = collection.find(query).first();
             if (oldDoc == null) return false;
 
@@ -187,11 +172,10 @@ public class ClassDB {
         }
     }
 
-    public Map<String, Object> deleteClassAndReturnInfo( String classCode, String groupCode) {
+    public Map<String, Object> deleteClassAndReturnInfo( String classCode) {
         Map<String, Object> result = new java.util.HashMap<>();
         try {
-            Document query = new Document("groupCode", groupCode)
-                    .append("classCode", classCode);
+            Document query = new Document("classCode", classCode);
             Document doc = collection.find(query).first();
             if (doc == null) return null;
             result.put("regNumbers", doc.get("regNumbers"));
@@ -204,10 +188,9 @@ public class ClassDB {
         }
     }
 
-    public boolean updateRegisterNumbers(String classCode, String groupCode, List<String> regNumbers){
+    public boolean updateRegisterNumbers(String classCode, List<String> regNumbers){
         try {
-            Document query = new Document("groupCode", groupCode)
-                    .append("classCode", classCode);
+            Document query = new Document("classCode", classCode);
             Document doc = collection.find(query).first();
             if (doc == null) return false;
             collection.updateOne(doc, new Document("$set", new Document("regNumbers", regNumbers)));
@@ -219,10 +202,9 @@ public class ClassDB {
 
     }
 
-    public boolean updateClassFacultyDetails(String groupCode, String classCode, String newFacEmail, String newFacName) {
+    public boolean updateClassFacultyDetails(String classCode, String newFacEmail, String newFacName) {
         try {
-            Document query = new Document("groupCode", groupCode)
-                    .append("classCode", classCode);
+            Document query = new Document("classCode", classCode);
             Document oldDoc = collection.find(query).first();
             if (oldDoc == null) return false;
 
