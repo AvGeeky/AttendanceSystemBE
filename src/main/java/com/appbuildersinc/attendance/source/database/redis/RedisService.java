@@ -109,7 +109,11 @@ public class RedisService {
 
     public boolean isAttendanceTrackingActive(String classId) {
         String markedKey = "attendance:marked:" + classId;
-        return redisTemplate.hasKey(markedKey);
+        String singleKey = "attendance:scodes:" + classId;
+        String qrKey = "attendance:codes:" + classId;
+        return redisTemplate.hasKey(markedKey) ||
+               redisTemplate.hasKey(singleKey) ||
+               redisTemplate.hasKey(qrKey);
     }
 
     public void markStudentVerified(String classId, String registerNumber) {
@@ -133,6 +137,21 @@ public class RedisService {
         Long count = redisTemplate.opsForSet().size(markedKey);
         return count != null ? count : 0;
     }
+
+    public Set<Object> getThreeQRCodes(String classCode) {
+        String redisKey = "attendance:codes:" + classCode;
+        // Fetch all elements in the list (0 to -1 => full list)
+        return redisTemplate.opsForHash().keys(redisKey);
+    }
+    public Set<Object> getSingleAttendanceCodes(String classCode) {
+        String redisKey = "attendance:scodes:" + classCode;
+
+        // Return all field keys (i.e., attendance codes) stored in the hash
+        return redisTemplate.opsForHash().keys(redisKey);
+    }
+
+
+
 
     public void storeQRAttendanceCodesWithWindow(String classCode, List<String> codes) {
         if (codes == null || codes.size() != 3) {
@@ -190,8 +209,11 @@ public class RedisService {
         // Store the code as key in a hash, value can be a dummy or actual timestamp if needed
         redisTemplate.opsForHash().put(redisKey, code, "valid");
 
-        // Set TTL of 1 hour from now (or reset if already exists)
-        redisTemplate.expire(redisKey, Duration.ofHours(1));
+        // Set TTL of 1 hour from now
+        if (redisTemplate.getExpire(redisKey) == -1) {
+            redisTemplate.expire(redisKey, Duration.ofHours(1));
+        }
+
     }
 
     //For passcode
@@ -208,6 +230,7 @@ public class RedisService {
             redisTemplate.delete(key);
         }
     }
+
 
     public void deleteActiveSingleClassCode(String classCode) {
         String key = "attendance:scodes:" + classCode;
