@@ -120,6 +120,11 @@ public class FunctionsLogicalGrouping {
 
         if (registerNumbersChanged) {
             doc.append("registernumbers", regNumbers);
+            HashMap<String,Object> regnosHMAC = new HashMap<>(studentdb.getHMACPasscodes(regNumbers));
+            for (String classCode : classCodes) {
+                classDB.updateClassRegNoHmacMapping(classCode,regnosHMAC);
+            }
+
         }
 
         if (timetableChanged) {

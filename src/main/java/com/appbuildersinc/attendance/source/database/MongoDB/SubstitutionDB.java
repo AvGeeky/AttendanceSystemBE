@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 @Repository
@@ -21,7 +22,7 @@ public class SubstitutionDB {
             .filename("apiee.env")
             .load();
     static String uri = dotenv.get("API_KEY");
-
+    private static final TimeZone IST = TimeZone.getTimeZone("Asia/Kolkata");
     private static MongoClient mongoClient;
     private static MongoDatabase database;
     private static MongoCollection<Document> collection;
@@ -45,15 +46,20 @@ public class SubstitutionDB {
     }
 
     // Method 1: Store substitution code with TTL
-    public static void storeSubstitutionCode(String code, String classCode, Date dateOfUse) {
+    public void storeSubstitutionCode(String code, String classCode, Date dateOfUse) {
         try {
-            Calendar cal = Calendar.getInstance();
+            //Calendar instance for IST and time as 23.59.59.999
+            Calendar cal = Calendar.getInstance(IST);
             cal.setTime(dateOfUse);
             cal.set(Calendar.HOUR_OF_DAY, 23);
             cal.set(Calendar.MINUTE, 59);
             cal.set(Calendar.SECOND, 59);
             cal.set(Calendar.MILLISECOND, 999);
-            Date expiresAt = cal.getTime();
+
+            //Convert to UTC timestamp (Mongo expects UTC)
+            long millisIST = cal.getTimeInMillis();
+            long millisUTC = millisIST - IST.getRawOffset(); // subtract +5:30 offset
+            Date expiresAt = new Date(millisUTC);
 
             Document doc = new Document("code", code)
                     .append("classCode", classCode)
@@ -67,7 +73,7 @@ public class SubstitutionDB {
     }
 
     // Method 2: Fetch substitution code if not expired
-    public static String fetchClassCodeFromSubstitutionCode(String code) {
+    public String fetchClassCodeFromSubstitutionCode(String code) {
         try {
             Document query = new Document("code", code);
             Document doc = collection.find(query).first();
@@ -76,7 +82,7 @@ public class SubstitutionDB {
                 Date dateOfUse = doc.getDate("timeOfUse");
 
                 // Get start of today
-                Calendar todayStart = Calendar.getInstance();
+                Calendar todayStart = Calendar.getInstance(IST);
                 todayStart.set(Calendar.HOUR_OF_DAY, 0);
                 todayStart.set(Calendar.MINUTE, 0);
                 todayStart.set(Calendar.SECOND, 0);
@@ -97,6 +103,42 @@ public class SubstitutionDB {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    //boolean check = substitutionDBclass.fetchAndVerifySubstitutionCode(substitutionCode,classCode);
+    // If substitution code is valid today, and if classCode matches, return true
+    public boolean fetchAndVerifySubstitutionCode(String Subcode, String classCode) {
+        try {
+            Document query = new Document("code", Subcode);
+            Document doc = collection.find(query).first();
+
+            if (doc != null && doc.containsKey("timeOfUse")) {
+                Date dateOfUse = doc.getDate("timeOfUse");
+
+                // Get start of today
+                Calendar todayStart = Calendar.getInstance();
+                todayStart.set(Calendar.HOUR_OF_DAY, 0);
+                todayStart.set(Calendar.MINUTE, 0);
+                todayStart.set(Calendar.SECOND, 0);
+                todayStart.set(Calendar.MILLISECOND, 0);
+
+                // Get start of tomorrow
+                Calendar todayEnd = (Calendar) todayStart.clone();
+                todayEnd.add(Calendar.DAY_OF_MONTH, 1);
+
+                if (dateOfUse.compareTo(todayStart.getTime()) >= 0 &&
+                        dateOfUse.compareTo(todayEnd.getTime()) < 0) {
+                        if ( doc.get("classCode").toString().equalsIgnoreCase(classCode)) {
+                            return true;
+                        }// valid today and class code matches
+                        else return false; // class code does not match
+                }
+            }
+        return false; // not found
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false; // error occurred
         }
     }
 

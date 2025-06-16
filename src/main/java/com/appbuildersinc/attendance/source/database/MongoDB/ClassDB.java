@@ -9,6 +9,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +43,7 @@ public class ClassDB {
             String groupCode, String classCode, String dept,
             String className, String facultyName, String passoutYear, String facultyEmail,
             String credits, Map<String, List<Map<String, Object>>> newTimetable, List<String> regNumbers,
-            String noOfStudents
+            String noOfStudents, HashMap<String,Object> regnoHMACMap
     ) {
         Document query = new Document("classCode", classCode);
         Document classDoc = new Document("groupCode", groupCode)
@@ -54,6 +55,7 @@ public class ClassDB {
                 .append("facultyEmail", facultyEmail)
                 .append("credits", credits)
                 .append("timetable", newTimetable)
+                .append("regnoHMACMap", regnoHMACMap)
                 .append("regNumbers", regNumbers);
 
         try {
@@ -210,6 +212,21 @@ public class ClassDB {
 
             collection.updateOne(query, new Document("$set", new Document("facultyEmail", newFacEmail)));
             collection.updateOne(query, new Document("$set", new Document("facultyName", newFacName)));
+
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateClassRegNoHmacMapping(String classCode, HashMap<String,Object> regnoHMACMap) {
+        try {
+            Document query = new Document("classCode", classCode);
+            Document oldDoc = collection.find(query).first();
+            if (oldDoc == null) return false;
+
+            collection.updateOne(query, new Document("$set", new Document("regnoHMACMap", regnoHMACMap)));
 
             return true;
         } catch (Exception e) {

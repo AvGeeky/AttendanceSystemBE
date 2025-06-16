@@ -124,7 +124,7 @@ public class ControllerAttendance {
                 }
                 String subCode = functionsAttendanceService.generateSubstitutionCode(classCode,dateOfUse);
                 Date cleanDate = functionsAttendanceService.createCleanDate(dateOfUse);
-                SubstitutionDB.storeSubstitutionCode(subCode, classCode, cleanDate);
+                substitutionDBclass.storeSubstitutionCode(subCode, classCode, cleanDate);
                 response.put("status", "S");
                 response.put("substitutionCode", subCode);
                 response.put("message", "Substitution code created successfully.");
@@ -145,7 +145,8 @@ public class ControllerAttendance {
         if (status.equals("S")) {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
-            String classCode = SubstitutionDB.fetchClassCodeFromSubstitutionCode(substitutionCode);
+            String classCode = substitutionDBclass.fetchClassCodeFromSubstitutionCode(substitutionCode);
+
             if (classCode == null) {
                 response.put("status", "E");
                 response.put("message", "Substitution code not found / date of use not arrived yet / expired.");

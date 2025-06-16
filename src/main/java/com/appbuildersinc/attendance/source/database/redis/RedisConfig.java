@@ -17,14 +17,7 @@ public class RedisConfig {
     private int port = Integer.parseInt(dotenv.get("REDIS_PORT"));
     private String password = dotenv.get("REDIS_PASSWORD");
     
-//    @Value("${spring.data.redis.host}")
-//    private String host;
-//
-//    @Value("${spring.data.redis.port}")
-//    private int port;
-//
-//    @Value("${spring.data.redis.password}")
-//    private String password;
+
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
