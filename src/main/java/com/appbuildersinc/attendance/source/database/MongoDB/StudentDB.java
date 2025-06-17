@@ -41,6 +41,12 @@ public class StudentDB {
         Document query=new Document("email",email);
         return collection.find(query).first();
     }
+
+    public String getStudentNameByRegNo(String regno){
+        Document query=new Document("registerNumber",regno);
+        return collection.find(query).first().get("name").toString();
+    }
+
     public Map<String,Object> getStudentDetailsByRegisterNumber(String regno){
         Document query=new Document("registerNumber",regno);
         Document ans =  collection.find(query).first();

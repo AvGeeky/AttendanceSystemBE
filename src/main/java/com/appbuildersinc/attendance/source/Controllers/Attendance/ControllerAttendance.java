@@ -353,12 +353,13 @@ public class ControllerAttendance {
                 response.put("message", "No new attendance updates.");
                 return ResponseEntity.ok(response);
             }
-            Set<String> attendanceRecord = redisService.getVerifiedStudents(classCode);
             long getVerifiedCount = redisService.getVerifiedStudentCount(classCode);
+            Map<String, Object> nameDetails = redisService.getStudentNameFromRedis(classCode,
+                                                                        redisService.getVerifiedStudents(classCode));
             response.put("status", "S");
             response.put("version", currentVersion);
             response.put("verifiedCount", getVerifiedCount);
-            response.put("attendanceRecord", attendanceRecord);
+            response.put("attendanceRecord", nameDetails);
             response.put("message", "Live attendance data fetched successfully.");
             return ResponseEntity.ok(response);
         } else {
@@ -395,15 +396,7 @@ public class ControllerAttendance {
                 substitutionDBclass.deleteSubstitutionCode(subCode);
             }
 
-            Map<String, Integer> lectureRecord = functionsAttendanceService.generateLectureRecord(
-                    redisService.getHmacKeyMapForClass(classCode),
-                    redisService.getVerifiedStudents(classCode)
-            );
-            classDB.addAttendanceRecord(classCode,lectureRecord);
-            redisService.deleteActiveClassCodes(classCode);
-            redisService.deleteVerifiedStudents(classCode);
-            redisService.deleteStudentHMACMappings(classCode);
-            redisService.deleteActiveSingleClassCode(classCode);
+            functionsAttendanceService.SaveAttendanceAndClose(classCode);
 
             response.put("status", "S");
             response.put("message", "Attendance Saved and Closed.");

@@ -68,6 +68,38 @@ public class RedisService {
         redisTemplate.expire(key, Duration.ofHours(DEFAULT_TTL_HOURS));
     }
 
+    public void storeStudentNameDetails(String classCode, Map<String, Object> regNoToHmacMap) {
+        String key = "attendance:name:" + classCode;
+
+        // Store each (regNo -> name) as a hash field
+        regNoToHmacMap.forEach((regNo, _) -> {
+            redisTemplate.opsForHash().put(key, regNo, studentDbClass.getStudentNameByRegNo(regNo));
+        });
+
+        // Set TTL to 1 hour
+        redisTemplate.expire(key, Duration.ofHours(DEFAULT_TTL_HOURS));
+    }
+
+    public Map<String,Object> getStudentNameFromRedis(String classCode, Set<String> regNoSet) {
+        String key = "attendance:name:" + classCode;
+        Map<String,Object> names = new HashMap<>();
+        for (String regNo : regNoSet) {
+            names.put(regNo,redisTemplate.opsForHash().get(key, regNo));
+        }
+        return names;
+    }
+
+    public void deleteStudentNamesForClass(String classCode) {
+        String key = "attendance:name:" + classCode;
+        if (redisTemplate.hasKey(key)) {
+            redisTemplate.delete(key);
+        }
+    }
+
+
+
+
+
     public Map<String, String> getHmacKeyMapForClass(String classCode) {
         String key = "attendance:students:" + classCode;
 
