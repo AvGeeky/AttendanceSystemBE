@@ -5,6 +5,8 @@ import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
 import com.appbuildersinc.attendance.source.database.MongoDB.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class RedisService {
@@ -59,26 +62,26 @@ public class RedisService {
     public void storeHmacKeys(String classCode, Map<String, Object> regNoToHmacMap) {
         String key = "attendance:students:" + classCode;
 
-        // Store each (regNo -> hmacKey) as a hash field
-        regNoToHmacMap.forEach((regNo, hmac) -> {
-            redisTemplate.opsForHash().put(key, regNo, hmac.toString());
-        });
+        if (regNoToHmacMap == null || regNoToHmacMap.isEmpty()) return;
+
+        redisTemplate.opsForHash().putAll(key, regNoToHmacMap);
 
         // Set TTL to 1 hour
         redisTemplate.expire(key, Duration.ofHours(DEFAULT_TTL_HOURS));
     }
 
-    public void storeStudentNameDetails(String classCode, Map<String, Object> regNoToHmacMap) {
+
+    public void storeStudentNameDetails(String classCode) {
         String key = "attendance:name:" + classCode;
+        Map<String, Object> regnoName = classDB.getClassRegNoNameMapping(classCode);
 
-        // Store each (regNo -> name) as a hash field
-        regNoToHmacMap.forEach((regNo, _) -> {
-            redisTemplate.opsForHash().put(key, regNo, studentDbClass.getStudentNameByRegNo(regNo));
-        });
+        // Use putAll to store the entire map at once
+        redisTemplate.opsForHash().putAll(key, regnoName);
 
         // Set TTL to 1 hour
         redisTemplate.expire(key, Duration.ofHours(DEFAULT_TTL_HOURS));
     }
+
 
     public Map<String,Object> getStudentNameFromRedis(String classCode, Set<String> regNoSet) {
         String key = "attendance:name:" + classCode;
@@ -140,12 +143,10 @@ public class RedisService {
     }
 
     public boolean isAttendanceTrackingActive(String classId) {
-        String markedKey = "attendance:marked:" + classId;
         String singleKey = "attendance:scodes:" + classId;
         String qrKey = "attendance:codes:" + classId;
-        return redisTemplate.hasKey(markedKey) ||
-               redisTemplate.hasKey(singleKey) ||
-               redisTemplate.hasKey(qrKey);
+        return (redisTemplate.hasKey(singleKey) ||
+               redisTemplate.hasKey(qrKey));
     }
 
     public void markStudentVerified(String classId, String registerNumber) {
@@ -170,11 +171,32 @@ public class RedisService {
         return count != null ? count : 0;
     }
 
-    public Set<Object> getThreeQRCodes(String classCode) {
+    public List<String> getThreeQRCodes(String classCode) {
         String redisKey = "attendance:codes:" + classCode;
-        // Fetch all elements in the list (0 to -1 => full list)
-        return redisTemplate.opsForHash().keys(redisKey);
+
+        // Fetch all code -> window JSON entries
+        Map<Object, Object> entries = redisTemplate.opsForHash().entries(redisKey);
+
+        // Sort by "start" time and return just the codes
+        return entries.entrySet().stream()
+                .map(entry -> Map.entry(entry.getKey().toString(), entry.getValue().toString()))
+                .sorted(Comparator.comparingLong(e -> extractStartTime(e.getValue())))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
+
+    // Helper method to extract the "start" value from the JSON string
+    private long extractStartTime(String json) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Long> window = mapper.readValue(json, new TypeReference<>() {});
+            return window.getOrDefault("start", Long.MAX_VALUE);
+        } catch (Exception e) {
+            return Long.MAX_VALUE; // On error, place it last
+        }
+    }
+
+
     public Set<Object> getSingleAttendanceCodes(String classCode) {
         String redisKey = "attendance:scodes:" + classCode;
 

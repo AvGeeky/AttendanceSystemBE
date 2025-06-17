@@ -98,7 +98,7 @@ public class ControllerFaculty {
 
 
     @GetMapping("/faculty/refreshTimetable")
-    public ResponseEntity<Map<String,Object>> updateMenteeList(@RequestHeader(HttpHeaders.AUTHORIZATION)
+    public ResponseEntity<Map<String,Object>> refreshTimetable(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                String authorizationHeader,
                                                                @RequestBody Map<String, Object> requestBody) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);

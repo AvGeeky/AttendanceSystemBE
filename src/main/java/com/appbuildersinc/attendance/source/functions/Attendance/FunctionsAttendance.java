@@ -142,6 +142,7 @@ public class FunctionsAttendance {
 
 
     public List<String> initialiseQRAttendanceAndReturnCodes(String classCode){
+        CloseAttendanceWithoutSaving(classCode);
 
         List<String> classCodes = generateAttendanceCodes(classCode);
 
@@ -149,7 +150,7 @@ public class FunctionsAttendance {
 
         redisService.storeHmacKeys(classCode,regNoHmacMapping);
 
-        redisService.storeStudentNameDetails(classCode, regNoHmacMapping);
+        redisService.storeStudentNameDetails(classCode);
 
         redisService.initializeAttendanceTracking(classCode);
 
@@ -158,19 +159,29 @@ public class FunctionsAttendance {
     }
 
     public String initialiseSingleCodeAttendanceAndReturnCode(String classCode){
-
+        CloseAttendanceWithoutSaving(classCode);
         String singleAttendanceCode = generateSingleAttendanceCode(classCode);
 
         Map<String,Object> regNoHmacMapping = classDB.getClassRegNoHmacMapping(classCode);
 
         redisService.storeHmacKeys(classCode,regNoHmacMapping);
 
-        redisService.storeStudentNameDetails(classCode, regNoHmacMapping);
+        redisService.storeStudentNameDetails(classCode);
 
         redisService.initializeAttendanceTracking(classCode);
 
         return singleAttendanceCode;
 
+    }
+
+    public void CloseAttendanceWithoutSaving(String classCode){
+
+        redisService.deleteVerifiedStudents(classCode);
+        redisService.deleteStudentHMACMappings(classCode);
+        redisService.deleteStudentNamesForClass(classCode);
+
+        redisService.deleteActiveClassCodes(classCode);
+        redisService.deleteActiveSingleClassCode(classCode);
     }
 
     public void SaveAttendanceAndClose(String classCode){
