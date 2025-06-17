@@ -142,6 +142,8 @@ public class ControllerStudents {
         Map<String, Object> response = new HashMap<>();
 
         //  Check if ID token is provided
+        System.out.println("DEBUG incoming map: " + request);
+
         String idToken = request.get("idToken");
         if (idToken == null || idToken.isBlank()) {
             response.put("status", "E");
@@ -243,6 +245,27 @@ public class ControllerStudents {
             return ResponseEntity.status(401).body(claims);
         }
     }
+    @GetMapping("/student/getAttendance")
+    public ResponseEntity <Map<String,Object>> getAttendanceDetails(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request) throws Exception {
+
+        Map<String, Object> claims = functionsStudentsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
+        String status = (String) claims.get("status");
+        if(status.equals("S")){
+           Map<String,Object> response=new HashMap<>();
+           Map<String,Map<String,Map<String,Integer>>> attendance=functionsStudentsService. getAttendance((List<String>)request.get("classcode"),(String)claims.get("email"));
+           response.put("status","S");
+           response.put("attendance",attendance);
+           response.put("message","attendance details retireved succesfully");
+          return ResponseEntity.ok(response);
+
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+
+        }
+
+    }
+
 
 
 

@@ -301,5 +301,9 @@ public class ClassDB {
     }
 
 
-
+    public Map<String, String> getregistermap(String classcode) {
+     Document query=new Document("classCode",classcode);
+     Document result=collection.find(query).first();
+     return (Map<String,String>)result.get("regnoNameMap");
+    }
 }

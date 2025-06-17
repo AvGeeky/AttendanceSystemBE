@@ -142,6 +142,9 @@ public class FunctionsLogicalGrouping {
                 doc.append("advisorEmail", advisorEmail);
                 userdb.updateClassAdvisorListByEmail(advisorEmail, regNumbers, groupcode);
             }
+            else if (registerNumbersChanged) {
+                userdb.updateClassAdvisorListByEmail(advisorEmail, regNumbers, groupcode);
+            }
         }
 
         // Delegate insert/update to DB layer

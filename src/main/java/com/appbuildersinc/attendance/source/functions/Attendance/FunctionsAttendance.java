@@ -9,6 +9,7 @@ import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SubstitutionDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.redis.RedisService;
+import com.appbuildersinc.attendance.source.functions.Students.FunctionsStudents;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,9 +42,10 @@ public class FunctionsAttendance {
     private final FacultyJwtUtil jwtclass;
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
+    private final FunctionsStudents functionstudenclass;
     final RedisService redisService;
     @Autowired
-    public FunctionsAttendance(ClassDB classDB, SubstitutionDB substitutionDBclass, FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, RedisService redisService) {
+    public FunctionsAttendance(ClassDB classDB, SubstitutionDB substitutionDBclass, FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, FunctionsStudents functionstudenclass, RedisService redisService) {
         this.classDB = classDB;
         this.substitutionDBclass = substitutionDBclass;
         this.userdb = userdb;
@@ -52,7 +54,9 @@ public class FunctionsAttendance {
         this.jwtclass = jwtutil;
         this.admindb=admindb;
         this.adminjwtclass = adminjwtclass;
+        this.functionstudenclass = functionstudenclass;
         this.redisService = redisService;
+
     }
 
     public boolean isAuthorizedViaSubcodeOrEmail(String classCode, String email, String subCode) {

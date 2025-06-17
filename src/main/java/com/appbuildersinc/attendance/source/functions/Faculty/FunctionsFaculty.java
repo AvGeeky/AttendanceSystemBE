@@ -6,6 +6,7 @@ import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPai
 import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.PasswordUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
 import com.appbuildersinc.attendance.source.database.MongoDB.*;
+import com.appbuildersinc.attendance.source.functions.Students.FunctionsStudents;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,8 +25,9 @@ public class FunctionsFaculty {
     private final FacultyJwtUtil jwtclass;
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
+    private final FunctionsStudents functionstudent;
     @Autowired
-    public FunctionsFaculty(ClassDB cldb, StudentDB stu, FacultyDB facultyDB, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, LogicalGroupingDB logicalGroupingDB) {
+    public FunctionsFaculty(ClassDB cldb, StudentDB stu, FacultyDB facultyDB, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, LogicalGroupingDB logicalGroupingDB, FunctionsStudents functionstudent) {
         this.facultyDB = facultyDB;
         this.classDB = cldb;
         this.studentdb=stu;
@@ -35,6 +37,7 @@ public class FunctionsFaculty {
         this.admindb=admindb;
         this.adminjwtclass = adminjwtclass;
         this.logicalGroupingDB = logicalGroupingDB;
+        this.functionstudent = functionstudent;
     }
     public boolean isEmailAllowed(String email)
     {
@@ -152,7 +155,12 @@ public class FunctionsFaculty {
         }
         return response;
     }
+    public Map<String,Object> getAdvisorList(String email){
 
+        Map<String,Object> advisorlist=facultyDB.getAdvisorList(email);
+        return advisorlist;
+
+    }
     public List<Map<String,Object>> getAllLogicalGroupings(String dept) {
         Set<Map<String, Object>> deptLG = new HashSet<>();
         deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings(dept));
@@ -246,9 +254,72 @@ public class FunctionsFaculty {
 
         return merged;
     }
+    public Map<String,Map<String,Object>> getMentorListAttendance(String email) {
+        Map<String, Object> menteedetails = getMenteeListDetails(email);
+        Map<String, Map<String, Object>> result = new HashMap<>();
+        if(menteedetails ==null){
+            return null;
+        }
+        for (String registerno : menteedetails.keySet()) {
+            Map<String, Object> details = new HashMap<>();
+            Object menteeObj = menteedetails.get(registerno);
+            if (menteeObj instanceof Map) {
+                Map<String, Object> menteeInfo = (Map<String, Object>) menteeObj;
+                List<String> classcodes = (List<String>) menteeInfo.get("registeredClasses");
+                details.put("name",menteeInfo.get("name"));
+                details.put("attendance",functionstudent.getAttendance(classcodes,(String)menteeInfo.get("email")));
+                result.put(registerno,details);
+            }
+        }
+        return  result;
 
+    }
+    public Map<String, List<Map<String, Object>>> getAdvisorListAttendance(String email) {
+        Map<String, Object> advisordetails = getAdvisorList(email);
+        if (advisordetails == null) {
+            return null;
+        }
+        Map<String, List<Map<String, Object>>> result = new HashMap<>();
+        for (String groupcode : advisordetails.keySet()) {
+            List<Map<String, Object>> groupList = new ArrayList<>();
+            for (String registernumber : (List<String>) advisordetails.get(groupcode)) {
+                Map<String, Object> details = new HashMap<>();
+                Map<String, Object> studentdetails = studentdb.getStudentDetailsByRegisterNumber(registernumber);
+                List<String> classcodes = (List<String>) studentdetails.get("registeredClasses");
+                details.put("name", studentdetails.get("name"));
+                details.put("registernumber", registernumber);
+                details.put("attendance", functionstudent.getAttendance(classcodes, (String) studentdetails.get("email")));
+                groupList.add(details);
+            }
+            result.put(groupcode, groupList);
+        }
+        return result;
+    }
+    public Map<String,Map<String,Object>> getStudentAttendanceByClassCode(String email,String classcode){
+        List<String> classcodes=facultyDB.getFacultyRegisteredClasses(email);
+        if(classcodes.size()==0){
+            return null;
+        }
+        else{
+            if(classcodes.indexOf(classcode)==-1){
+                return null;
+            }
+            else{
+                Map<String,String> registernomap=new HashMap<>();
+                registernomap=classDB.getregistermap(classcode);
+                Map<String,Map<String,Object>> result=new HashMap<>();
+                for(String registernumber:registernomap.keySet()){
+                    Map<String, Object> details = new HashMap<>();
+                    Map<String, Object> studentdetails = studentdb.getStudentDetailsByRegisterNumber(registernumber);
+                    details.put("name", registernomap.get(registernumber));
+                    List<String> class_code=new ArrayList<>();
+                    class_code.add(classcode);
+                    details.put("attendance",functionstudent.getAttendance(class_code, (String) studentdetails.get("email")));
+                    result.put(registernumber,details);
+                }
+               return result;
+            }
+        }
 
-
-
-
+    }
 }

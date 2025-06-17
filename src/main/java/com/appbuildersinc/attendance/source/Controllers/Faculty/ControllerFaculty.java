@@ -583,12 +583,94 @@ public class ControllerFaculty {
             return ResponseEntity.status(401).body(claims);
         }
     }
+    @GetMapping("/faculty/getMentorListAttendance")
+    public ResponseEntity<Map<String,Object>> getMentorListAttendance(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")){
+            Map<String, Map<String, Object>> result=functionsFacultyService.getMentorListAttendance((String)claims.get("email"));
+            Map<String,Object> response=new HashMap<>();
+            if(result!=null){
+                response.put("status","S");
+                response.put("details",result);
+                response.put("message","mentees attendance retrieved sucessfully");
+                return ResponseEntity.ok(response);
+            }
+            else{
+                response.put("status","E");
+                response.put("message","this teacher is not a mentor");
+                return ResponseEntity.status(503).body(response);
+            }
 
 
 
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+
+        }
+
+    }
+    @GetMapping("/faculty/getAdvisorListAttendance")
+    public ResponseEntity<Map<String,Object>> getAdvisorListAttendance(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        String status = (String) claims.get("status");
+        if(status.equals("S")){
+            Map<String, List<Map<String, Object>>> result=functionsFacultyService.getAdvisorListAttendance((String) claims.get("email"));
+            Map<String,Object> response=new HashMap<>();
+            if(result!=null){
+                response.put("status","S");
+                response.put("details",result);
+                response.put("message","advisor list attendance retrieved sucessfully");
+                return ResponseEntity.ok(response);
+
+            }
+
+            else{
+                response.put("status","E");
+                response.put("message","this teacher is not a advisor");
+                return ResponseEntity.status(503).body(response);
+
+            }
+
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+
+        }
 
 
 
+    }
+    @GetMapping("/faculty/getStudentAttendanceByClassCode")
+     public ResponseEntity<Map<String,Object>>  getStudentAttendanceByClassCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,String>request) throws Exception {
+
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        String status = (String) claims.get("status");
+        if(status.equals("S")){
+               Map<String,Map<String,Object>> result= functionsFacultyService.getStudentAttendanceByClassCode((String)claims.get("email"),(String)request.get("classcode"));
+               Map<String,Object> response=new HashMap<>();
+               if(result!=null){
+                 response.put("status","S");
+                 response.put("details",result);
+                 response.put("message","succefully retrieved student attednance by class code");
+                 return ResponseEntity.ok(response);
+               }
+               else{
+                   response.put("status","E");
+                   response.put("message","error in retreiving attendance by classcode");
+                   return ResponseEntity.status(503).body(response);
+
+               }
+
+
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+
+        }
+    }
 
 }
 
