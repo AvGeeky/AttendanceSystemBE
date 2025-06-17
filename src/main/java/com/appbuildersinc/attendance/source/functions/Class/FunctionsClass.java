@@ -93,11 +93,13 @@ public class FunctionsClass {
                 }
             }
         }
-        HashMap<String,Object> regnosHMAC = new HashMap<>(studentdb.getHMACPasscodes(regNumbers));
+        Map<String, Map<String, Object>> hmacAndNames= new HashMap<>(studentdb.getHMACPasscodesAndNames(regNumbers));
+        Map<String,Object> regnosHMAC = hmacAndNames.get("hmacPasscodes");
+        Map<String, Object> regNoNameMap = hmacAndNames.get("regNoNameMap");
 
         boolean success = classDB.createNewClass(
                 groupCode, classCode, dept,className, facultyName,passoutYear, facultyEmail, credits, newTimetable, regNumbers
-                , noOfStudents, regnosHMAC
+                , noOfStudents, regnosHMAC,regNoNameMap
         );
         if (success) {
             for (String regNumber : regNumbers) {

@@ -135,17 +135,27 @@ public class StudentDB {
         return (List<String>) student.getOrDefault("registeredClasses", new ArrayList<String>());
     }
 
-    public HashMap<String,Object> getHMACPasscodes(List<String> regnos){
-        HashMap<String,Object> hmacPasscodes = new HashMap<>();
+    public Map<String, Map<String, Object>> getHMACPasscodesAndNames(List<String> regnos) {
+        Map<String, Object> hmacPasscodes = new HashMap<>();
+        Map<String, Object> regNoNameMap = new HashMap<>();
+
         for (String regno : regnos) {
             Document query = new Document("registerNumber", regno);
             Document student = collection.find(query).first();
+
             if (student == null) {
                 continue;
             }
+
+            regNoNameMap.put(regno, student.get("name").toString());
             hmacPasscodes.put(regno, student.get("hmacpasscode").toString());
         }
-        return hmacPasscodes;
+
+        Map<String, Map<String, Object>> result = new HashMap<>();
+        result.put("hmacPasscodes", hmacPasscodes);
+        result.put("regNoNameMap", regNoNameMap);
+
+        return result;
     }
     public String getHMACPasscode(String regno){
         HashMap<String,Object> hmacPasscodes = new HashMap<>();

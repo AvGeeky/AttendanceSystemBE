@@ -43,7 +43,7 @@ public class ClassDB {
             String groupCode, String classCode, String dept,
             String className, String facultyName, String passoutYear, String facultyEmail,
             String credits, Map<String, List<Map<String, Object>>> newTimetable, List<String> regNumbers,
-            String noOfStudents, HashMap<String,Object> regnoHMACMap
+            String noOfStudents, Map<String,Object> regnoHMACMap, Map<String,Object> regnoNameMap
     ) {
         Document query = new Document("classCode", classCode);
         Document classDoc = new Document("groupCode", groupCode)
@@ -56,7 +56,8 @@ public class ClassDB {
                 .append("credits", credits)
                 .append("timetable", newTimetable)
                 .append("regnoHMACMap", regnoHMACMap)
-                .append("regNumbers", regNumbers);
+                .append("regNumbers", regNumbers)
+                .append("regnoNameMap", regnoNameMap);
 
         try {
             Document existing = collection.find(query).first();
@@ -220,13 +221,15 @@ public class ClassDB {
         }
     }
 
-    public boolean updateClassRegNoHmacMapping(String classCode, HashMap<String,Object> regnoHMACMap) {
+    public boolean updateClassRegNoHmacNameMapping(String classCode, Map<String,Object> regnoHMACMap, Map<String,Object> regnoNameMap) {
         try {
             Document query = new Document("classCode", classCode);
             Document oldDoc = collection.find(query).first();
             if (oldDoc == null) return false;
-            collection.updateOne(query, new Document("$set", new Document("regnoHMACMap", regnoHMACMap)));
-
+            Document updateFields = new Document()
+                    .append("regnoHMACMap", regnoHMACMap)
+                    .append("regnoNameMap", regnoNameMap);
+            collection.updateOne(query, new Document("$set", updateFields));
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -244,6 +247,22 @@ public class ClassDB {
             if (regnoHmacDoc == null) return null;
 
             return new HashMap<>(regnoHmacDoc); // Convert Document to HashMap
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public Map<String,Object> getClassRegNoNameMapping(String classCode) {
+        try {
+            Document query = new Document("classCode", classCode);
+            Document oldDoc = collection.find(query).first();
+            if (oldDoc == null) return null;
+
+            Document regnoNameDoc = (Document) oldDoc.get("regnoNameMap");
+            if (regnoNameDoc == null) return null;
+
+            return new HashMap<>(regnoNameDoc); // Convert Document to HashMap
         } catch (Exception e) {
             e.printStackTrace();
             return null;
