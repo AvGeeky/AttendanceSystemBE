@@ -9,6 +9,7 @@ import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 import io.github.cdimascio.dotenv.Dotenv;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,25 +27,26 @@ public class FunctionsStudents {
     private final FacultyJwtUtil jwtclass;
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
+
     @Autowired
     public FunctionsStudents(FacultyDB userdb, ClassDB classDB, StudentDB studentDB, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass) {
         this.userdb = userdb;
         this.classDB = classDB;
         this.studentDB = studentDB;
-        this.emailclass =emailutil;
-        this.keyclass =keyutil;
+        this.emailclass = emailutil;
+        this.keyclass = keyutil;
         this.jwtclass = jwtutil;
-        this.admindb=admindb;
+        this.admindb = admindb;
         this.adminjwtclass = adminjwtclass;
     }
+
     static Dotenv dotenv = Dotenv.configure()
             .filename("apiee.env")
             .load();
     public String googleClientId = dotenv.get("GOOGLE_CLIENT_ID");
 
 
-
-    public Map<String,Object> checkJwtAuthAfterLoginStudent(String jwt) throws Exception {
+    public Map<String, Object> checkJwtAuthAfterLoginStudent(String jwt) throws Exception {
         HashMap<String, Object> response = new HashMap<>();
         // Check if the JWT is null or empty
         if (jwt == null) {
@@ -75,11 +77,10 @@ public class FunctionsStudents {
         }
 
         //return the claims if valid
-        if ((boolean)claims.get("authorised")) {
+        if ((boolean) claims.get("authorised")) {
             claims.put("status", "S");
             return claims;
-        }
-        else{
+        } else {
             response.put("status", "E");
             response.put("message", "NOT AUTHORIZED. Please re-login.");
             return response;
@@ -153,5 +154,70 @@ public class FunctionsStudents {
 
         return merged;
     }
+
+    public Map<String,Map<String,Map<String,Integer>>> getAttendance(List<String> classcodes, String email) {
+        Map<String, Map<String, Map<String,Integer>>> result = new HashMap<>();
+        Map<String, Object> student = studentDB.getStudentDetailsByEmail(email);
+        if (classcodes == null) {
+
+            classcodes = (List<String>) student.get("registeredClasses");
+
+
+        }
+
+        String registerNumber = (String) student.get("registerNumber");
+
+        for (String classcode : classcodes) {
+            Map<String, Object> classdetail = classDB.getAllClassDetails(classcode);
+            System.out.println(classdetail);
+            Map<String,Map<String,Integer>> classattendance=new HashMap<>();
+            //System.out.println("classcode"+classcode);
+            classattendance = (Map<String, Map<String, Integer>>) classdetail.get("attendance");
+            for(String lectureno:classattendance.keySet()){
+                Map<String,Integer> value=classattendance.get(lectureno);
+                Map<String,Integer> detail=new HashMap<>();
+                detail.put("date",value.get("date"));
+                detail.put("time",value.get("time"));
+                detail.put("present",value.get(registerNumber));
+                classattendance.put(lectureno,detail);
+
+
+            }
+            result.put(classcode,classattendance);
+        }
+      return result;
+    }
+    /*
+    public Map<String, Map<String, Map<String, Integer>>> getAttendance(List<String> classcodes, String email) {
+        Map<String, Map<String, Map<String, Integer>>> result = new HashMap<>();
+        Map<String, Object> student = studentDB.getStudentDetailsByEmail(email);
+        if (classcodes == null) {
+            classcodes = (List<String>) student.get("registeredClasses");
+        }
+        String registerNumber = (String) student.get("registerNumber");
+
+        for (String classcode : classcodes) {
+            Map<String, Object> classdetail = classDB.getAllClassDetails(classcode);
+            Map<String, Map<String, Integer>> classattendance = (Map<String, Map<String, Integer>>) classdetail.get("attendance");
+            if (classattendance == null) {
+                result.put(classcode, Collections.emptyMap());
+                continue;
+            }
+            Map<String, Map<String, Integer>> processedAttendance = new HashMap<>();
+            for (String lectureno : classattendance.keySet()) {
+                Map<String, Integer> value = classattendance.get(lectureno);
+                if (value == null) continue;
+                Map<String, Integer> detail = new HashMap<>();
+                detail.put("date", value.get("date"));
+                detail.put("time", value.get("time"));
+                // If registerNumber not present, treat as absent (0) or null
+                detail.put("present", value.getOrDefault(registerNumber, 0));
+                processedAttendance.put(lectureno, detail);
+            }
+            result.put(classcode, processedAttendance);
+        }
+        return result;
+    }
+    */
 
 }
