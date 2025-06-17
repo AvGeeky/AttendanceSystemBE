@@ -140,11 +140,16 @@ public class FunctionsAttendance {
         return fullCode.split("~")[1];
     }
 
+
     public List<String> initialiseQRAttendanceAndReturnCodes(String classCode){
 
         List<String> classCodes = generateAttendanceCodes(classCode);
 
-        redisService.storeHmacKeys(classCode,classDB.getClassRegNoHmacMapping(classCode));
+        Map<String,Object> regNoHmacMapping = classDB.getClassRegNoHmacMapping(classCode);
+
+        redisService.storeHmacKeys(classCode,regNoHmacMapping);
+
+        redisService.storeStudentNameDetails(classCode, regNoHmacMapping);
 
         redisService.initializeAttendanceTracking(classCode);
 
@@ -156,12 +161,30 @@ public class FunctionsAttendance {
 
         String singleAttendanceCode = generateSingleAttendanceCode(classCode);
 
-        redisService.storeHmacKeys(classCode,classDB.getClassRegNoHmacMapping(classCode));
+        Map<String,Object> regNoHmacMapping = classDB.getClassRegNoHmacMapping(classCode);
+
+        redisService.storeHmacKeys(classCode,regNoHmacMapping);
+
+        redisService.storeStudentNameDetails(classCode, regNoHmacMapping);
 
         redisService.initializeAttendanceTracking(classCode);
 
         return singleAttendanceCode;
 
+    }
+
+    public void SaveAttendanceAndClose(String classCode){
+        Map<String, Integer> lectureRecord = generateLectureRecord(
+                redisService.getHmacKeyMapForClass(classCode),
+                redisService.getVerifiedStudents(classCode)
+        );
+        classDB.addAttendanceRecord(classCode,lectureRecord);
+        redisService.deleteVerifiedStudents(classCode);
+        redisService.deleteStudentHMACMappings(classCode);
+        redisService.deleteStudentNamesForClass(classCode);
+
+        redisService.deleteActiveClassCodes(classCode);
+        redisService.deleteActiveSingleClassCode(classCode);
     }
 
     public String createDigest(String originalText, String HMAC_SECRET) throws Exception {
