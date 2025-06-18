@@ -77,6 +77,24 @@ public class LogicalGroupingDB {
             return null; // Group not found
         }
     }
+
+    public Boolean removeRegNofromGrouping(String registernumber,String groupcode) {
+        Document query = new Document("groupcode", groupcode);
+        Document group = collection.find(query).first();
+        List<String> registernumbers=(List<String>)group.get("registernumbers");
+        Boolean done=registernumbers.remove(registernumber);
+        if(done){
+            return collection.updateOne(query,new Document("$set",new Document("registernumbers",registernumbers))).getModifiedCount()>0;
+        }
+        else{
+            return false;
+        }
+    }
+    public String getAdvisorEmail(String groupcode){
+        Document query=new Document("groupcode",groupcode);
+        Document group=collection.find(query).first();
+        return (String)group.get("advisorEmail");
+    }
 }
 
 

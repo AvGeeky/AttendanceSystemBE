@@ -243,4 +243,24 @@ public class FacultyDB {
       }
       return  (Map<String,Object>)fac.get("class_advisor_list");
     }
+
+    public Boolean deleteFacultyByEmail(String email) {
+      Document query=new Document("faculty_email",email);
+      return collection.deleteOne(query).getDeletedCount()>0;
+
+    }
+
+    public Boolean removeRegNoFromAdvisorList(String registernumber,String email,String groupcode) {
+       Document query=new Document("faculty_email",email);
+       Document result=collection.find(query).first();
+       Map<String,Object> advisorlist=(Map<String,Object>) result.get("class_advisor_list");
+        Boolean done=((List<String>)advisorlist.get(groupcode)).remove(registernumber);
+        if(done){
+           return collection.updateOne(query,new Document("$set",new Document("class_advisor_list",advisorlist))).getModifiedCount()>0;
+
+        }
+        else{
+            return false;
+        }
+    }
 }

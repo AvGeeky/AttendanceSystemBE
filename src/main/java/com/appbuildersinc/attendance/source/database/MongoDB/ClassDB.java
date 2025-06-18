@@ -306,4 +306,38 @@ public class ClassDB {
      Document result=collection.find(query).first();
      return (Map<String,String>)result.get("regnoNameMap");
     }
+
+    public Boolean updateAttendance(String classcode, Map<String, Object> classattendance) {
+        Document query=new Document("classCode",classcode);
+        return collection.updateOne(query,new Document("$set",new Document("attendance",classattendance))).getModifiedCount()>0;
+
+
+    }
+    public Boolean deleteStudentFromClass(String registernumber,String classcode){
+        Document query=new Document("classCode",classcode);
+        Document result=collection.find(query).first();
+        List<String> registernumbers=(List<String>)result.get("regNumbers");
+        Boolean regremoval=registernumbers.remove(registernumber);
+        Map<String,String> regnohmacmap=(Map<String,String>)result.get("regnoHMACMap");
+         String value=regnohmacmap.remove(registernumber);
+         Map<String,String> regnonamemap=(Map<String,String>) result.get("regnoNameMap");
+         String value1=regnonamemap.remove(registernumber);
+         if(regremoval && !value.isEmpty() && !value1.isEmpty()){
+            return  collection.updateOne(query,new Document("$set",new Document("regnoHMACMap",regnohmacmap)
+                     .append("regnoNameMap",regnonamemap)
+                     .append("regNumbers",registernumbers)
+             )).getModifiedCount()>0;
+         }
+         else{
+             return false;
+         }
+    }
+
+    public String getLogicalGroupingFromClassCode(String classcode) {
+        Document query=new Document("classCode",classcode);
+        Document result=collection.find(query).first();
+        return (String) result.get("groupCode");
+
+
+    }
 }

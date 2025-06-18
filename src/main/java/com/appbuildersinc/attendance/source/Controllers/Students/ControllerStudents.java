@@ -253,10 +253,17 @@ public class ControllerStudents {
         if(status.equals("S")){
            Map<String,Object> response=new HashMap<>();
            Map<String,Map<String,Map<String,Integer>>> attendance=functionsStudentsService. getAttendance((List<String>)request.get("classcode"),(String)claims.get("email"));
-           response.put("status","S");
-           response.put("attendance",attendance);
-           response.put("message","attendance details retireved succesfully");
-          return ResponseEntity.ok(response);
+           if(attendance!=null) {
+               response.put("status", "S");
+               response.put("attendance", attendance);
+               response.put("message", "attendance details retireved succesfully");
+               return ResponseEntity.ok(response);
+           }
+           else{
+               response.put("status", "E");
+               response.put("message","incorrect classcodes");
+               return ResponseEntity.status(503).body(response);
+           }
 
         }
         else{

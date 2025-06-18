@@ -249,7 +249,42 @@ public class FunctionsAttendance {
 
         return lectureRecord;
     }
+    public Map<String,String> getAllStudentDetails(String classCode,String subCode,String email){
+       if(isAuthorizedViaSubcodeOrEmail(classCode,email,subCode)){
+            Map<String,String> result= classDB.getregistermap(classCode);
+           return result;
 
+       }
+       else{
+           return null;
+       }
+
+    }
+    public Boolean SaveManualAttendance(String classCode,String email,String subCode,List<String>present,List<String>absent){
+        if(isAuthorizedViaSubcodeOrEmail(classCode,email,subCode)){
+            Map<String,Object> classdetails=classDB.getAllClassDetails(classCode);
+            Map<String,Object> attendance=(Map<String,Object>)classdetails.get("attendance");
+            int nextlectureno=attendance.size()+1;
+            String lecturekey="lecture."+nextlectureno;
+            Map<String,Object> lecturerecord=new HashMap<>();
+            int dateInt = Integer.parseInt(LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE));
+            int timeInt = Integer.parseInt(LocalTime.now().format(DateTimeFormatter.ofPattern("HHmm")));
+            lecturerecord.put("date",dateInt);
+            lecturerecord.put("time",timeInt);
+            for(String registernumber:present){
+                lecturerecord.put(registernumber,1);
+            }
+            for(String registernumber:absent){
+                lecturerecord.put(registernumber,0);
+            }
+            attendance.put(lecturekey,lecturerecord);
+            return classDB.updateAttendance(classCode, attendance);
+        }
+        else{
+            return false;
+        }
+
+    }
 
 
 }
