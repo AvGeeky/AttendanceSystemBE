@@ -422,8 +422,51 @@ public class ControllerAttendance {
             return ResponseEntity.ok(response);
 
     }
+    @PostMapping("/faculty/getAllStudentDetails")
+    public ResponseEntity<Map<String, Object>> getAllStudentDetails(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestParam(required = false) String subCode, @RequestParam String classCode) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> result = functionsAttendanceService.getAllStudentDetails((String) classCode, (String) subCode, (String) claims.get("email"));
+            if (result != null) {
+                response.put("status", "S");
+                response.put("details", result);
+                response.put("message", "all student details retireved succesfully");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("status","E");
+                response.put("message","error in retreiving details");
+                return ResponseEntity.status(503).body(response);
+            }
+        } else {
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+    @PostMapping("/faculty/saveManualAttendance")
+    public ResponseEntity<Map<String,Object>> saveManualAttendance(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        String status = (String) claims.get("status");
+        if(status.equals("S")){
+            Map<String, Object> response = new HashMap<>();
+            Boolean done=functionsAttendanceService.SaveManualAttendance((String)request.get("classCode"),(String)claims.get("email"),(String)request.get("subCode"),(List<String>)request.get("present"),(List<String>)request.get("absent"));
+            if(done){
+                response.put("status","S");
+                response.put("message","save manual attendance done successfully");
+                return ResponseEntity.ok(response);
+            }
+            else{
+                response.put("status","E");
+                response.put("message","error while saving manual attendance");
+                return ResponseEntity.status(503).body(response);
+            }
 
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+        }
 
+    }
 
 
 

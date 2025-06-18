@@ -5,13 +5,11 @@ import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPairUtil;
 import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.PasswordUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
-import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
-import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
+import com.appbuildersinc.attendance.source.database.MongoDB.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 //DATABASE ONLY ACCESSIBLE HERE
 //BUSINESS LOGIC HERE????
 
@@ -23,14 +21,20 @@ public class FunctionsSuperAdmin {
     private final FacultyJwtUtil jwtclass;
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
+    private final StudentDB studentdb;
+    private final ClassDB classdb;
+    private final LogicalGroupingDB groupdb;
     @Autowired
-    public FunctionsSuperAdmin(FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass) {
+    public FunctionsSuperAdmin(FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, StudentDB studentdb, ClassDB classdb, LogicalGroupingDB groupdb) {
         this.userdb = userdb;
         this.emailclass =emailutil;
         this.keyclass =keyutil;
         this.jwtclass = jwtutil;
         this.admindb=admindb;
         this.adminjwtclass = adminjwtclass;
+        this.studentdb = studentdb;
+        this.classdb = classdb;
+        this.groupdb = groupdb;
     }
 
     public boolean attemptloginadmin(String email,String password){
@@ -89,6 +93,56 @@ public class FunctionsSuperAdmin {
             response.put("message", "NOT AUTHORIZED. Please re-login.");
             return response;
         }
+
+    }
+    public Boolean deleteTeacher(String email){
+        Map<String,Object> details=userdb.getFacultyDetailsByEmail(email);
+        if ((details.get("class_advisor_list")==null ||((Map<String, Object>) details.get("class_advisor_list")).isEmpty()) && (details.get("facultyClasses")==null||((List<String>) details.get("facultyClasses")).isEmpty())) {
+               return userdb.deleteFacultyByEmail(email);
+        }
+        else{
+            return false;
+        }
+    }
+    public Boolean deleteStudent(List<String> registernumbers){
+        for(String registernumber:registernumbers){
+            Map<String,Object> studentdetails=studentdb.getStudentDetailsByRegisterNumber(registernumber);
+            List<String> registeredclasses=(List<String>)studentdetails.get("registeredClasses");
+            Set<String> logicalgroupingset=new HashSet<>();
+            for(String classcode:registeredclasses){
+                boolean done=classdb.deleteStudentFromClass(registernumber,classcode);
+                if(done){
+                    logicalgroupingset.add(classdb.getLogicalGroupingFromClassCode(classcode));
+                }
+                else{
+                    return false;
+                }
+            }
+            for(String grouping:logicalgroupingset){
+                  boolean done=groupdb.removeRegNofromGrouping(registernumber,grouping);
+                  if(done){
+                      String advisoremail=groupdb.getAdvisorEmail(grouping);
+                      if(advisoremail!=null){
+                          Boolean regremovaldone=userdb.removeRegNoFromAdvisorList(registernumber,advisoremail,grouping);
+
+                          if(regremovaldone){
+                             Boolean studentdocremoval =studentdb.removeStudent(registernumber);
+                             if(!studentdocremoval){
+                                 return false;
+                             }
+                          }
+                          else{
+                              return false;
+                          }
+                      }
+                  }
+                  else{
+                      return false;
+                  }
+            }
+        }
+        return true;
+
 
     }
 

@@ -346,6 +346,52 @@ public class ControllerSuperAdmin {
            return ResponseEntity.status(401).body(claims);
        }
    }
+   @PostMapping("/SuperAdmin/deleteTeacher")
+    public ResponseEntity<Map<String,Object>> deleteFaculty(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,String> request) throws Exception {
+       Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
+       String status=(String)claims.get("status");
+       if(status.equals("S")){
+           Map<String,Object> response=new HashMap<>();
+           boolean done=functionsSuperAdminService.deleteTeacher((String)request.get("email"));
+
+           if(done){
+               response.put("status","S");
+               response.put("message","Teacher deleted succesfully");
+               return ResponseEntity.ok(response);
+           }
+           else{
+               response.put("status","E");
+               response.put("message","Teacher Not deleted sucessfully");
+               return ResponseEntity.status(503).body(response);
+           }
+       }
+       else{
+           return ResponseEntity.status(401).body(claims);
+       }
+   }
+    @PostMapping("/SuperAdmin/deleteStudents")
+    public ResponseEntity<Map<String,Object>> deleteStudents(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request) throws Exception {
+        Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
+        String status=(String)claims.get("status");
+        if(status.equals("S")){
+            Map<String,Object> response =new HashMap<>();
+            Boolean done=functionsSuperAdminService.deleteStudent((List<String>)request.get("registernumbers"));
+            if(done){
+                response.put("status","S");
+                response.put("message","Student details deleted succeafully");
+                return ResponseEntity.ok(response);
+            }
+            else{
+                response.put("status","E");
+                response.put("message","student details not deleted succesfully");
+                return ResponseEntity.status(503).body(response);
+            }
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+        }
+
+    }
 }
 
 

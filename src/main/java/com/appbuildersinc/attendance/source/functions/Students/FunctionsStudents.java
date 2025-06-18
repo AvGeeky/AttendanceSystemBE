@@ -164,12 +164,19 @@ public class FunctionsStudents {
 
 
         }
-
+        else {
+            List<String> classcodesstudlist = (List<String>) student.get("registeredClasses");
+            for (String classcode : classcodes) {
+                if (classcodesstudlist.indexOf(classcode)==-1){
+                    return null;
+                }
+            }
+        }
         String registerNumber = (String) student.get("registerNumber");
 
         for (String classcode : classcodes) {
             Map<String, Object> classdetail = classDB.getAllClassDetails(classcode);
-            System.out.println(classdetail);
+            //System.out.println(classdetail);
             Map<String,Map<String,Integer>> classattendance=new HashMap<>();
             //System.out.println("classcode"+classcode);
             classattendance = (Map<String, Map<String, Integer>>) classdetail.get("attendance");

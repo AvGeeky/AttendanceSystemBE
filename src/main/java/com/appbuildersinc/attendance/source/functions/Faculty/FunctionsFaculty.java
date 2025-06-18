@@ -265,9 +265,9 @@ public class FunctionsFaculty {
             Object menteeObj = menteedetails.get(registerno);
             if (menteeObj instanceof Map) {
                 Map<String, Object> menteeInfo = (Map<String, Object>) menteeObj;
-                List<String> classcodes = (List<String>) menteeInfo.get("registeredClasses");
+                //List<String> classcodes = (List<String>) menteeInfo.get("registeredClasses");
                 details.put("name",menteeInfo.get("name"));
-                details.put("attendance",functionstudent.getAttendance(classcodes,(String)menteeInfo.get("email")));
+                details.put("attendance",functionstudent.getAttendance(null,(String)menteeInfo.get("email")));
                 result.put(registerno,details);
             }
         }
@@ -285,10 +285,10 @@ public class FunctionsFaculty {
             for (String registernumber : (List<String>) advisordetails.get(groupcode)) {
                 Map<String, Object> details = new HashMap<>();
                 Map<String, Object> studentdetails = studentdb.getStudentDetailsByRegisterNumber(registernumber);
-                List<String> classcodes = (List<String>) studentdetails.get("registeredClasses");
+                //List<String> classcodes = (List<String>) studentdetails.get("registeredClasses");
                 details.put("name", studentdetails.get("name"));
                 details.put("registernumber", registernumber);
-                details.put("attendance", functionstudent.getAttendance(classcodes, (String) studentdetails.get("email")));
+                details.put("attendance", functionstudent.getAttendance(null, (String) studentdetails.get("email")));
                 groupList.add(details);
             }
             result.put(groupcode, groupList);
@@ -322,4 +322,98 @@ public class FunctionsFaculty {
         }
 
     }
+    public Map<String,Map<String,Object>> getLectureAttendanceByClassCode(String email,String classcode){
+        List<String> classcodes=facultyDB.getFacultyRegisteredClasses(email);
+        if(classcodes.size()==0){
+            return null;
+        }
+        else {
+            if (classcodes.indexOf(classcode) == -1) {
+                return null;
+            }
+            else{
+                Map<String,String> registernomap=new HashMap<>();
+                registernomap=classDB.getregistermap(classcode);
+                Map<String,Map<String,Object>> result=new HashMap<>();
+                Map<String, Object> studentDetailsMap = new HashMap<>();
+                studentDetailsMap.put("map", registernomap);
+                result.put("student-details",studentDetailsMap);
+                Map<String, Object> classdetail = classDB.getAllClassDetails(classcode);
+                Map<String, Object> classattendance = (Map<String,Object>) classdetail.get("attendance");
+                for(String lectureno:classattendance.keySet()){
+                    Map<String,Object> value=(Map<String,Object>)classattendance.get(lectureno);
+                    Map<String,Object> lectureattendance=new HashMap<>();
+                    Object date=value.remove("date");
+                    Object time=value.remove("time");
+                    lectureattendance.put("date",date);
+                    lectureattendance.put("time",time);
+                    lectureattendance.put("attendance",value);
+                    result.put(lectureno,lectureattendance);
+                }
+                return result;
+            }
+
+
+
+        }
+
+    }
+    public Boolean flipAttendance(String classcode,String email,String registernumber,String lecturenumber){
+        List<String> classcodes=facultyDB.getFacultyRegisteredClasses(email);
+        if(classcodes.size()==0){
+            System.out.println("error1");
+            return false;
+        }
+        else {
+            if (classcodes.indexOf(classcode) == -1) {
+                System.out.println("error2"+classcode);
+                return false;
+            }
+            else{
+                Map<String,String> registernomap=new HashMap<>();
+                registernomap=classDB.getregistermap(classcode);
+                if(registernomap.get(registernumber)==null){
+                    System.out.println("error4");
+                    return false;
+                }
+                else{
+                    Map<String, Object> classdetail = classDB.getAllClassDetails(classcode);
+                    Map<String, Object> classattendance = (Map<String,Object>) classdetail.get("attendance");
+                    String lecture="lecture."+lecturenumber;
+                    if(classattendance.get(lecture)==null){
+                        System.out.println("error3");
+                        return false;
+                    }
+                    else{
+                        Map<String,Object> lectureattendance=(Map<String,Object>)classattendance.get(lecture);
+                        if((Integer)lectureattendance.get(registernumber)==1){
+                            lectureattendance.put(registernumber,0);
+                            return classDB.updateAttendance(classcode, classattendance);
+
+                        }
+                        else{
+                            lectureattendance.put(registernumber,1);
+                            return classDB.updateAttendance(classcode, classattendance);
+
+                        }
+                    }
+                }
+
+
+
+
+            }
+
+
+
+
+
+        }
+
+
+
+
+    }
+
+
 }

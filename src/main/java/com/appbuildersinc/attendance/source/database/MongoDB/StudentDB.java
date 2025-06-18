@@ -164,7 +164,9 @@ public class StudentDB {
         return student.get("hmacpasscode").toString();
     }
 
-    
 
-
+    public Boolean removeStudent(String registernumber) {
+       Document query=new Document("registerNumber",registernumber);
+        return collection.deleteOne(query).getDeletedCount()>0;
+    }
 }
