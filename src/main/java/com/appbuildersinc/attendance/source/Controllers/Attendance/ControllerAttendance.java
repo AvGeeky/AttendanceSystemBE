@@ -451,6 +451,9 @@ public class ControllerAttendance {
             Map<String, Object> response = new HashMap<>();
             Boolean done=functionsAttendanceService.SaveManualAttendance((String)request.get("classCode"),(String)claims.get("email"),(String)request.get("subCode"),(List<String>)request.get("present"),(List<String>)request.get("absent"));
             if(done){
+                if ((String)request.get("subCode") != null) {
+                    substitutionDBclass.deleteSubstitutionCode((String)request.get("subCode"));
+                }
                 response.put("status","S");
                 response.put("message","save manual attendance done successfully");
                 return ResponseEntity.ok(response);
