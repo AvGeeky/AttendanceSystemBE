@@ -444,15 +444,15 @@ public class ControllerAttendance {
         }
     }
     @PostMapping("/faculty/saveManualAttendance")
-    public ResponseEntity<Map<String,Object>> saveManualAttendance(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request) throws Exception {
+    public ResponseEntity<Map<String,Object>> saveManualAttendance(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request, @RequestParam (required = false) String subCode) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         String status = (String) claims.get("status");
         if(status.equals("S")){
             Map<String, Object> response = new HashMap<>();
-            Boolean done=functionsAttendanceService.SaveManualAttendance((String)request.get("classCode"),(String)claims.get("email"),(String)request.get("subCode"),(List<String>)request.get("present"),(List<String>)request.get("absent"));
+            Boolean done=functionsAttendanceService.SaveManualAttendance((String)request.get("classCode"),(String)claims.get("email"),subCode,(List<String>)request.get("present"),(List<String>)request.get("absent"));
             if(done){
-                if ((String)request.get("subCode") != null) {
-                    substitutionDBclass.deleteSubstitutionCode((String)request.get("subCode"));
+                if (subCode != null) {
+                    substitutionDBclass.deleteSubstitutionCode(subCode);
                 }
                 response.put("status","S");
                 response.put("message","save manual attendance done successfully");
