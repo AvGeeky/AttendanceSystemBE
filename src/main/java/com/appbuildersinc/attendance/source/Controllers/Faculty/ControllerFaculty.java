@@ -44,26 +44,32 @@ import java.util.*;
  * <li><b>These roles are critical for authorization logic and should be kept in sync
  * with the application's access control policies.
  * </p>
+
+    * <b>ControllerFaculty</b> is a Spring REST controller that handles HTTP requests related to faculty operations.
+ * <b>Endpoints:</b>
+ * <ul>
+ *   <li><b>GET /faculty/refreshTimetable</b> - Input: JWT in header, body: { } - Returns merged timetable for faculty after JWT validation.</li>
+ *   <li><b>POST /faculty/createOrUpdateClass</b> - Input: JWT in header, body: {name, classCode, groupCode, credits} - Creates or updates a class for faculty.</li>
+ *   <li><b>POST /faculty/dropClass</b> - Input: JWT in header, body: {classCode, groupCode} - Drops a class assigned to faculty.</li>
+ *   <li><b>POST /faculty/transferClass</b> - Input: JWT in header, body: {classCode, groupCode, newFacEmail} - Transfers a class to another faculty.</li>
+ *   <li><b>GET /faculty/getClassDetails</b> - Input: JWT in header, body: {classCode, groupCode} - Returns details of a specific class.</li>
+ *   <li><b>GET /faculty/getAllLogicalGroupings</b> - Input: JWT in header - Returns all logical groupings for faculty's department.</li>
+ *   <li><b>POST /faculty/updateMenteeListAndReturnDetails</b> - Input: JWT in header, body: {mentee_list, reset} - Updates mentee list and returns details.</li>
+ *   <li><b>POST /faculty/setEmail</b> - Input: email param - Sends OTP to faculty email and returns JWT with OTP claim.</li>
+ *   <li><b>POST /faculty/verifyOtp</b> - Input: JWT in header, otp param - Verifies OTP and returns new JWT if successful.</li>
+ *   <li><b>POST /faculty/updatePassword</b> - Input: JWT in header, password param - Updates faculty password after OTP verification.</li>
+ *   <li><b>POST /faculty/login</b> - Input: email, password params - Authenticates faculty and returns JWT and user details.</li>
+ *   <li><b>GET /faculty/getDetails</b> - Input: JWT in header - Returns faculty user details after authentication.</li>
+ *   <li><b>POST /faculty/setDetails</b> - Input: JWT in header, body: {name, department, position, mentor} - Updates faculty profile details.</li>
+ *   <li><b>GET /faculty/getMentorListAttendance</b> - Input: JWT in header - Returns attendance for mentees if faculty is a mentor.</li>
+ *   <li><b>GET /faculty/getAdvisorListAttendance</b> - Input: JWT in header - Returns attendance for advisees if faculty is an advisor.</li>
+ *   <li><b>GET /faculty/getStudentAttendanceByClassCode</b> - Input: JWT in header, body: {classcode} - Returns student attendance for a class.</li>
+ *   <li><b>GET /faculty/getLectureAttendanceByClassCode</b> - Input: JWT in header, body: {classcode} - Returns lecture attendance for a class.</li>
+ *   <li><b>POST /faculty/flipAttendance</b> - Input: JWT in header, body: {classcode, registernumber, lecturenumber} - Flips attendance for a student in a lecture.</li>
+ * </ul>
  */
 
-/*
-public ResponseEntity<Map<String,Object>> updateMenteeList(@RequestHeader(HttpHeaders.AUTHORIZATION)
-                                                         String authorizationHeader,
-                                                         @RequestBody Map<String, Object> requestBody) throws Exception {
-        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
-        //Check if the JWT is valid
-        String status = (String) claims.get("status");
-        if (status.equals("S")) {
-            //JWT is valid, proceed with business logic
-            Map<String, Object> response = new HashMap<>();
 
-
-        } else {
-            //JWT is invalid, return error response
-            return ResponseEntity.status(401).body(claims);
-        }
-    }
-*/
 
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
@@ -140,7 +146,7 @@ public class ControllerFaculty {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
             String name = (String) requestBody.get("name");
-            String dept = (String) claims.get("dept");
+            String dept = (String) requestBody.get("dept");
             String classCode = (String) requestBody.get("classCode");
             String logicalGroupingCode = (String) requestBody.get("groupCode");
             String credits = (String) requestBody.get("credits");

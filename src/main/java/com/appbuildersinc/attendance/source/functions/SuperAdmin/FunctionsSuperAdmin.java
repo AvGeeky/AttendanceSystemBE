@@ -114,37 +114,42 @@ public class FunctionsSuperAdmin {
             }
             Map<String,Object> studentdetails=studentdb.getStudentDetailsByRegisterNumber(registernumber);
             List<String> registeredclasses=(List<String>)studentdetails.get("registeredClasses");
-            Set<String> logicalgroupingset=new HashSet<>();
-            for(String classcode:registeredclasses){
-                boolean done=classdb.deleteStudentFromClass(registernumber,classcode);
-                if(done){
-                    logicalgroupingset.add(classdb.getLogicalGroupingFromClassCode(classcode));
-                }
-                else{
-                    return false;
+
+            if (!(registeredclasses == null || registeredclasses.isEmpty())) {
+                for(String classcode:registeredclasses){
+                    classdb.deleteStudentFromClass(registernumber,classcode);
                 }
             }
-            for(String grouping:logicalgroupingset){
-                  boolean done=groupdb.removeRegNofromGrouping(registernumber,grouping);
-                  if(done){
-                      String advisoremail=groupdb.getAdvisorEmail(grouping);
-                      if(advisoremail!=null){
-                          Boolean regremovaldone=userdb.removeRegNoFromAdvisorList(registernumber,advisoremail,grouping);
+            List<String> logicalgroupingset = studentdb.getStudentRegisteredGroupings(registernumber);
+            if (!(logicalgroupingset == null || logicalgroupingset.isEmpty())) {
+                for(String grouping:logicalgroupingset){
+                    boolean done=groupdb.removeRegNofromGrouping(registernumber,grouping);
+                    if(done){
+                        String advisoremail=groupdb.getAdvisorEmail(grouping);
+                        if(advisoremail!=null){
+                            Boolean regremovaldone=userdb.removeRegNoFromAdvisorList(registernumber,advisoremail,grouping);
 
-                          if(regremovaldone){
-                             Boolean studentdocremoval =studentdb.removeStudent(registernumber);
-                             if(!studentdocremoval){
-                                 return false;
-                             }
-                          }
-                          else{
-                              return false;
-                          }
-                      }
-                  }
-                  else{
-                      return false;
-                  }
+                            if(regremovaldone){
+                                Boolean studentdocremoval =studentdb.removeStudent(registernumber);
+                                if(!studentdocremoval){
+                                    return false;
+                                }
+                            }
+                            else{
+                                return false;
+                            }
+                        }
+                    }
+                    else{
+                        return false;
+                    }
+                }
+            }
+            else{
+                Boolean studentdocremoval =studentdb.removeStudent(registernumber);
+                if(!studentdocremoval){
+                    return false;
+                }
             }
         }
         return true;
