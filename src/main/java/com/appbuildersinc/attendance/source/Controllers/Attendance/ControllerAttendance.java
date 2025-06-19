@@ -460,7 +460,7 @@ public class ControllerAttendance {
             }
             else{
                 response.put("status","E");
-                response.put("message","error while saving manual attendance");
+                response.put("message","error while saving manual attendance. Possibly Classcode is not registered for you and/or substitution code is not valid, or register nos list has invalid register nos/duplicates");
                 return ResponseEntity.status(503).body(response);
             }
 

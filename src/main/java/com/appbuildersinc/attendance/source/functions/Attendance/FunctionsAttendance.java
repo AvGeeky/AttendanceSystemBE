@@ -298,6 +298,9 @@ public class FunctionsAttendance {
             // Proceed to save attendance
             Map<String,Object> classdetails=classDB.getAllClassDetails(classCode);
             Map<String,Object> attendance=(Map<String,Object>)classdetails.get("attendance");
+            if (attendance==null){
+                attendance = new HashMap<>();
+            }
             int nextlectureno=attendance.size()+1;
             String lecturekey="lecture."+nextlectureno;
             Map<String,Object> lecturerecord=new HashMap<>();
