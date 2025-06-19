@@ -36,9 +36,6 @@ public class SubstitutionDB {
             database = mongoClient.getDatabase("AttendEz");
             collection = database.getCollection("Sub");
 
-            // Ensure TTL index exists (only runs once per app start)
-            collection.createIndex(new Document("expiresAt", 1),
-                    new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -56,10 +53,8 @@ public class SubstitutionDB {
             cal.set(Calendar.SECOND, 59);
             cal.set(Calendar.MILLISECOND, 999);
 
-            //Convert to UTC timestamp (Mongo expects UTC)
-            long millisIST = cal.getTimeInMillis();
-            long millisUTC = millisIST - IST.getRawOffset(); // subtract +5:30 offset
-            Date expiresAt = new Date(millisUTC);
+            Date expiresAt = cal.getTime();
+
 
             Document doc = new Document("code", code)
                     .append("classCode", classCode)
