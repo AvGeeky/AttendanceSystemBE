@@ -261,8 +261,7 @@ public class FunctionsAttendance {
 
     }
 
-    public boolean checkIfAllStudentsRegisteredAndNotOverlapping(String classCode, List<String> present, List<String> absent) {
-        Map<String, Object> regnoHmacMapping = classDB.getClassRegNoHmacMapping(classCode);
+    public boolean checkIfAllStudentsRegisteredAndNotOverlapping(String classCode, List<String> present, List<String> absent, Map<String, Object> regnoHmacMapping) {
 
         Set<String> presentSet = new HashSet<>(present);
         Set<String> absentSet = new HashSet<>(absent);
@@ -292,7 +291,8 @@ public class FunctionsAttendance {
 
     public Boolean SaveManualAttendance(String classCode,String email,String subCode,List<String>present,List<String>absent){
         if(isAuthorizedViaSubcodeOrEmail(classCode,email,subCode)){
-            if (!checkIfAllStudentsRegisteredAndNotOverlapping(classCode, present, absent)) {
+            Map<String, Object> regnoHmacMapping = classDB.getClassRegNoHmacMapping(classCode);
+            if (!checkIfAllStudentsRegisteredAndNotOverlapping(classCode, present, absent, regnoHmacMapping)) {
                 return false; // Not all students are registered in the class
             }
             // Proceed to save attendance
@@ -314,6 +314,13 @@ public class FunctionsAttendance {
             for(String registernumber:absent){
                 lecturerecord.put(registernumber,0);
             }
+            // For all regnos not in present or absent but present in regnoHmacMapping, mark as absent (0)
+            for (String regno : regnoHmacMapping.keySet()) {
+                if (!present.contains(regno) && !absent.contains(regno)) {
+                    lecturerecord.put(regno, 0);
+                }
+            }
+
             attendance.put(lecturekey,lecturerecord);
             return classDB.updateAttendance(classCode, attendance);
         }
