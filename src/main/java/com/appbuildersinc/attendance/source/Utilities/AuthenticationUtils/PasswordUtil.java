@@ -91,17 +91,17 @@ public class PasswordUtil {
 
 
     // Test the functions
-    public static void main(String[] args) {
-        String password = "SecurePassword123";
-        String hashedPassword = hashPassword(password);
-
-        System.out.println("Stored Hash: " + hashedPassword);
-
-        boolean isMatch = verifyPassword("SecurePassword123", hashedPassword);
-        System.out.println("Password match: " + isMatch);
-
-        boolean isWrongMatch = verifyPassword("WrongPassword", hashedPassword);
-        System.out.println("Wrong password match: " + isWrongMatch);
-    }
+//    public static void main(String[] args) {
+//        String password = "SecurePassword123";
+//        String hashedPassword = hashPassword(password);
+//
+//        System.out.println("Stored Hash: " + hashedPassword);
+//
+//        boolean isMatch = verifyPassword("SecurePassword123", hashedPassword);
+//        System.out.println("Password match: " + isMatch);
+//
+//        boolean isWrongMatch = verifyPassword("WrongPassword", hashedPassword);
+//        System.out.println("Wrong password match: " + isWrongMatch);
+//    }
 }
 

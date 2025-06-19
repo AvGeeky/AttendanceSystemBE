@@ -640,7 +640,7 @@ public class ControllerFaculty {
             if (result != null) {
                 response.put("status", "S");
                 response.put("details", result);
-                response.put("message", "successfully retrieved student attendance by class code");
+                response.put("message", "successfully retrieved student attendance by class code. Check faculty-code mapping.");
                 return ResponseEntity.ok(response);
             } else {
                 response.put("status", "E");

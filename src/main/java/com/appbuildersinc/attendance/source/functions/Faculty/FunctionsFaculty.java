@@ -96,7 +96,7 @@ public class FunctionsFaculty {
             response.put("message", "Login Expired. Please re-login.");
             return response;
         }
-        if (claims.get("role").equals("STUDENT")) {
+        if (!claims.get("role").equals("FACULTY")) {
             response.put("status", "E");
             response.put("message", "NOT AUTHORIZED.");
             return response;
