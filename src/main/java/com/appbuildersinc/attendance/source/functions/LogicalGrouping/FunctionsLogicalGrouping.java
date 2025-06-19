@@ -163,6 +163,9 @@ public class FunctionsLogicalGrouping {
                 }
             }
         }
+        if (isNew){
+            studentdb.addGroupingToRegisteredGroupings(regNumbers,groupcode);
+        }
 
         // If register numbers changed, update student mappings
         if (!isNew && registerNumbersChanged) {
@@ -183,11 +186,14 @@ public class FunctionsLogicalGrouping {
                 }
             }
 
+
             for (String regNo : added) {
                 for (String className : existingClassCodes) {
                     studentdb.addClassToRegisteredClasses(regNo, className);
                 }
             }
+            studentdb.addGroupingToRegisteredGroupings(added,groupcode);
+            studentdb.removeGroupingFromRegisteredGroupings(removed,groupcode);
         }
 
         return updated;
@@ -218,6 +224,7 @@ public class FunctionsLogicalGrouping {
                 studentdb.removeClassFromRegisteredClasses(regNo, className);
             }
         }
+        studentdb.removeGroupingFromRegisteredGroupings(oldSet, groupcode);
         for (String className : classCodes) {
             String facultyEmail = classDB.getFacultyEmailFromClass(className);
             userdb.removeClassFromFacultyClasses(facultyEmail, className);

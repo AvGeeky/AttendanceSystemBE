@@ -54,6 +54,15 @@ public class LogicalGroupingDB {
             return true;
         }
     }
+
+    public List<Map<String, Object>> viewalllogicalgroupings() {
+        List<Map<String, Object>> groupings = new ArrayList<>();
+        for (Document doc : collection.find()) {
+            groupings.add(new HashMap<>(doc));
+        }
+        return groupings;
+    }
+
     public List<Map<String, Object>> viewalllogicalgroupings(String dept) {
         List<Map<String, Object>> groupings = new ArrayList<>();
         Document doc1 = new Document("department", dept);
@@ -84,6 +93,7 @@ public class LogicalGroupingDB {
         List<String> registernumbers=(List<String>)group.get("registernumbers");
         Boolean done=registernumbers.remove(registernumber);
         if(done){
+            System.out.println("Register number removed from grouping");
             return collection.updateOne(query,new Document("$set",new Document("registernumbers",registernumbers))).getModifiedCount()>0;
         }
         else{

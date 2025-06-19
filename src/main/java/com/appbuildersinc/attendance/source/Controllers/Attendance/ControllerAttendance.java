@@ -47,26 +47,57 @@ import java.util.*;
  * <li><b>These roles are critical for authorization logic and should be kept in sync
  * with the application's access control policies.
  * </p>
+ * <hr>
+ * <b>Attendance Controller Endpoints Overview</b>
+ * <ul>
+ *   <li><b>/faculty/createSubstitutionCode</b> (POST): Faculty creates a substitution code for a class and date. <br>
+ *       <b>Input:</b> JWT in header, classCode, dateOfUse (yyyy-MM-dd). <br>
+ *       <b>Output:</b> Substitution code or error message.
+ *   </li>
+ *   <li><b>/faculty/fetchClassCodeFromSubstitutionCode</b> (GET): Fetches the class code mapped to a substitution code. <br>
+ *       <b>Input:</b> JWT in header, substitutionCode. <br>
+ *       <b>Output:</b> Class code or error message.
+ *   </li>
+ *   <li><b>/faculty/qr/generateQRCode</b> (POST): Generates QR codes for attendance for a class. <br>
+ *       <b>Input:</b> JWT in header, classCode, optional subCode. <br>
+ *       <b>Output:</b> List of QR codes or error/status.
+ *   </li>
+ *   <li><b>/student/qr/sendCode</b> (POST): Student submits scanned QR code and digest for attendance. <br>
+ *       <b>Input:</b> JWT in header, digest, qrCode. <br>
+ *       <b>Output:</b> Attendance verification status.
+ *   </li>
+ *   <li><b>/faculty/passcode/generateCode</b> (POST): Faculty generates a single passcode for attendance. <br>
+ *       <b>Input:</b> JWT in header, classCode, optional subCode. <br>
+ *       <b>Output:</b> Passcode or error/status.
+ *   </li>
+ *   <li><b>/student/passcode/sendCode</b> (POST): Student submits passcode and digest for attendance. <br>
+ *       <b>Input:</b> JWT in header, digest, passcode. <br>
+ *       <b>Output:</b> Attendance verification status.
+ *   </li>
+ *   <li><b>/faculty/liveAttendanceViewWithVersion</b> (GET): Faculty fetches live attendance data and version for a class. <br>
+ *       <b>Input:</b> JWT in header, classCode, optional version. <br>
+ *       <b>Output:</b> Attendance data, version, and status.
+ *   </li>
+ *   <li><b>/faculty/qrpasscode/confirmAttendanceClose</b> (POST): Faculty closes attendance session and saves data. <br>
+ *       <b>Input:</b> JWT in header, classCode, optional subCode. <br>
+ *       <b>Output:</b> Confirmation status.
+ *   </li>
+ *   <li><b>/generateDigest</b> (GET, testing only): Generates HMAC digest for a code and register number. <br>
+ *       <b>Input:</b> JWT in header, reg, code. <br>
+ *       <b>Output:</b> HMAC passcode and digest.
+ *   </li>
+ *   <li><b>/faculty/getAllStudentDetails</b> (POST): Faculty fetches all student details for a class. <br>
+ *       <b>Input:</b> JWT in header, classCode, optional subCode. <br>
+ *       <b>Output:</b> Student details or error.
+ *   </li>
+ *   <li><b>/faculty/saveManualAttendance</b> (POST): Faculty saves manual attendance for a class. <br>
+ *       <b>Input:</b> JWT in header, request body with classCode, present, absent, optional subCode. <br>
+ *       <b>Output:</b> Status of save operation.
+ *   </li>
+ * </ul>
+ * <hr>
  */
 
-/*
-public ResponseEntity<Map<String,Object>> updateMenteeList(@RequestHeader(HttpHeaders.AUTHORIZATION)
-                                                         String authorizationHeader,
-                                                         @RequestBody Map<String, Object> requestBody) throws Exception {
-        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
-        //Check if the JWT is valid
-        String status = (String) claims.get("status");
-        if (status.equals("S")) {
-            //JWT is valid, proceed with business logic
-            Map<String, Object> response = new HashMap<>();
-
-
-        } else {
-            //JWT is invalid, return error response
-            return ResponseEntity.status(401).body(claims);
-        }
-    }
-*/
 
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController

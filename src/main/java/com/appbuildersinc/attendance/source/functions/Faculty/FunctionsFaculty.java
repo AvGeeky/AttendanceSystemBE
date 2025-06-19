@@ -161,12 +161,13 @@ public class FunctionsFaculty {
         return advisorlist;
 
     }
+
     public List<Map<String,Object>> getAllLogicalGroupings(String dept) {
         Set<Map<String, Object>> deptLG = new HashSet<>();
-        deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings(dept));
-        deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings("FirstYear"));
+        deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings());
         return new ArrayList<>(deptLG);
     }
+
 
     public boolean transferClass (String classCode, String groupCode, String newFacEmail){
         String oldFacEmail = classDB.getFacultyEmailFromClass(classCode);
@@ -261,6 +262,9 @@ public class FunctionsFaculty {
             return null;
         }
         for (String registerno : menteedetails.keySet()) {
+            if (!studentdb.doesRegisterNumberExist(registerno)){
+                continue;
+            }
             Map<String, Object> details = new HashMap<>();
             Object menteeObj = menteedetails.get(registerno);
             if (menteeObj instanceof Map) {

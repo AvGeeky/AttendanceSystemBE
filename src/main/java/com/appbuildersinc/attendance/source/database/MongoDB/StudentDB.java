@@ -53,6 +53,9 @@ public class StudentDB {
     public Map<String,Object> getStudentDetailsByRegisterNumber(String regno){
         Document query=new Document("registerNumber",regno);
         Document ans =  collection.find(query).first();
+        if (ans == null) {
+            return null; // Return null if no student found
+        }
         ans.remove("hmacpasscode"); // Remove sensitive information
         return ans;
     }
@@ -129,6 +132,119 @@ public class StudentDB {
         return true;
     }
 
+    //
+
+    public boolean removeGroupingFromRegisteredGroupings(Set<String> regnos, String logicalGrouping) {
+        boolean updated = false;
+        for (String regno : regnos) {
+            Document query = new Document("registerNumber", regno);
+            Document student = collection.find(query).first();
+            if (student == null) {
+                continue;
+            }
+            List<String> registeredGroupings = (List<String>) student.getOrDefault("registeredGroupings", new ArrayList<String>());
+            if (!registeredGroupings.remove(logicalGrouping)) {
+                continue;
+            }
+            Document update = new Document("$set", new Document("registeredGroupings", registeredGroupings));
+            collection.updateOne(query, update);
+            updated = true;
+        }
+        return updated;
+    }
+
+    public boolean addGroupingToRegisteredGroupings(List<String> regnos, String logicalGrouping) {
+        boolean updated = false;
+        for (String regno : regnos) {
+            Document query = new Document("registerNumber", regno);
+            Document student = collection.find(query).first();
+            if (student == null) {
+                continue;
+            }
+            List<String> registeredGroupings = (List<String>) student.getOrDefault("registeredGroupings", new ArrayList<String>());
+            Set<String> registeredGroupingsSet = new HashSet<>(registeredGroupings);
+            if (!registeredGroupingsSet.add(logicalGrouping)) {
+                continue;
+            }
+            registeredGroupings.add(logicalGrouping);
+            Document update = new Document("$set", new Document("registeredGroupings", registeredGroupings));
+            collection.updateOne(query, update);
+            updated = true;
+        }
+        return updated;
+    }
+    public boolean addGroupingToRegisteredGroupings(Set<String> regnos, String logicalGrouping) {
+        boolean updated = false;
+        for (String regno : regnos) {
+            Document query = new Document("registerNumber", regno);
+            Document student = collection.find(query).first();
+            if (student == null) {
+                continue;
+            }
+            List<String> registeredGroupings = (List<String>) student.getOrDefault("registeredGroupings", new ArrayList<String>());
+            Set<String> registeredGroupingsSet = new HashSet<>(registeredGroupings);
+            if (!registeredGroupingsSet.add(logicalGrouping)) {
+                continue;
+            }
+            registeredGroupings.add(logicalGrouping);
+            Document update = new Document("$set", new Document("registeredGroupings", registeredGroupings));
+            collection.updateOne(query, update);
+            updated = true;
+        }
+        return updated;
+    }
+
+//    public boolean addClassAndGroupingToRegisteredClasses(String regno, String className, String logicalGrouping) {
+//        Document query = new Document("registerNumber", regno);
+//        Document student = collection.find(query).first();
+//        if (student == null) {
+//            return false;
+//        }
+//        List<String> registeredClasses = (List<String>) student.getOrDefault("registeredClasses", new ArrayList<String>());
+//        Set<String> registeredClassesSet = new HashSet<>(registeredClasses);
+//        if (!registeredClassesSet.add(className)) {
+//            return false;
+//        }
+//        List<String> registeredGroupings = (List<String>) student.getOrDefault("registeredGroupings", new ArrayList<String>());
+//        Set<String> registeredGroupingsSet = new HashSet<>(registeredGroupings);
+//        if (!registeredGroupingsSet.add(logicalGrouping)) {
+//            return false;
+//        }
+//        registeredClasses.add(className);
+//        registeredGroupings.add(logicalGrouping);
+//        Document updateFields = new Document("registeredClasses", registeredClasses)
+//                .append("registeredGroupings", registeredGroupings);
+//        Document update = new Document("$set", updateFields);
+//        collection.updateOne(query, update);
+//        return true;
+//    }
+//
+//    public boolean removeClassAndGroupingFromRegisteredClasses(String regno, String classCode, String logicalGrouping) {
+//        Document query = new Document("registerNumber", regno);
+//        Document student = collection.find(query).first();
+//        if (student == null) {
+//            return false;
+//        }
+//        List<String> registeredClasses = (List<String>) student.getOrDefault("registeredClasses", new ArrayList<String>());
+//
+//        if (!registeredClasses.remove(classCode)) {
+//            return false;
+//        }
+//        List<String> registeredGroupings = (List<String>) student.getOrDefault("registeredGroupings", new ArrayList<String>());
+//
+//        if (!registeredGroupings.remove(logicalGrouping)) {
+//            return false;
+//        }
+//        // If both classCode and logicalGrouping were removed, update the document
+//        Document updateFields = new Document("registeredClasses", registeredClasses)
+//                .append("registeredGroupings", registeredGroupings);
+//        Document update = new Document("$set", updateFields);
+//        collection.updateOne(query, update);
+//        return true;
+//    }
+
+    //
+
     public List<String> getStudentRegisteredClasses(String email){
         Document query = new Document("email", email);
         Document student = collection.find(query).first();
@@ -136,6 +252,15 @@ public class StudentDB {
             return new ArrayList<>();
         }
         return (List<String>) student.getOrDefault("registeredClasses", new ArrayList<String>());
+    }
+
+    public List<String> getStudentRegisteredGroupings(String regno){
+        Document query = new Document("registerNumber", regno);
+        Document student = collection.find(query).first();
+        if (student == null) {
+            return new ArrayList<>();
+        }
+        return (List<String>) student.getOrDefault("registeredGroupings", new ArrayList<String>());
     }
 
     public Map<String, Map<String, Object>> getHMACPasscodesAndNames(List<String> regnos) {

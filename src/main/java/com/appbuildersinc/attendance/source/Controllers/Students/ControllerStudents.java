@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.*;
 
+
 /**
  * <b>Standard HTTP Error Response Codes:</b>
  * <ul>
@@ -53,25 +54,18 @@ import java.util.*;
  * </p>
  */
 
-/*
-Error handling template:
-public ResponseEntity<Map<String,Object>>refreshTimetable(@RequestHeader(HttpHeaders.AUTHORIZATION)
-                                                               String authorizationHeader)throws Exception {
-
-        Map<String, Object> claims = functionsStudentsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
-        //Check if the JWT is valid
-        String status = (String) claims.get("status");
-        if (status.equals("S")) {
-            Map<String, Object> response = new HashMap<>();
-
-
-
-        } else {
-            return ResponseEntity.status(401).body(claims);
-        }
-    }
-*/
-
+//  Controller for Student related operations
+/**
+ *
+ * <b>Endpoints in ControllerStudents</b>
+ * <ul>
+ *   <li><b>GET /student/refreshTimetable</b> &ndash; <i>Input:</i> JWT in Authorization header, <i>Output:</i> Timetable map, <i>Function:</i> Refresh and return merged timetable for authenticated student.</li>
+ *   <li><b>POST /student/googleAuth</b> &ndash; <i>Input:</i> JSON body with Google ID token, <i>Output:</i> JWT and student info, <i>Function:</i> Authenticate student via Google and issue internal JWT.</li>
+ *   <li><b>GET /student/getDetails</b> &ndash; <i>Input:</i> JWT in Authorization header, <i>Output:</i> Student details map, <i>Function:</i> Return student details for authenticated user.</li>
+ *   <li><b>GET /student/getAttendance</b> &ndash; <i>Input:</i> JWT in Authorization header, JSON body with class codes, <i>Output:</i> Attendance map, <i>Function:</i> Return attendance details for given class codes.</li>
+ *   <!-- <li><b>POST /student/setDetails</b> &ndash; <i>Input:</i> JWT in Authorization header, JSON body with student details, <i>Output:</i> Status message, <i>Function:</i> Update student details (currently commented out).</li> -->
+ * </ul>
+ */
 //ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
 public class ControllerStudents {
@@ -272,49 +266,6 @@ public class ControllerStudents {
         }
 
     }
-
-
-
-
-
-
-
-
-
-//    @PostMapping("/student/setDetails")
-//    public ResponseEntity<Map<String,Object>> setStudentDetails(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
-//                                                                @RequestBody Map<String, Object> requestBody) throws Exception{
-//
-//    Map<String,Object> claims=functionsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
-//    String status=(String)claims.get("status");
-//    if(status.equals("S")){
-//        Map<String,Object> response =new HashMap<>();
-//        boolean succ = studentDbClass.updateStudentDocumentsbyemail(
-//                (String) claims.get("email"),
-//                (String) requestBody.get("name"),
-//                (String) requestBody.get("regno"),
-//                (String) requestBody.get("passout")
-//        );
-//        if (succ) {
-//            response.put("status", "S");
-//            response.put("message", "Student  details updated successfully!");
-//            return ResponseEntity.ok(response);
-//
-//        } else {
-//            //Error in updating user details
-//            response.put("status", "E");
-//            response.put("message", "No change between database and passed details or Error. Please try again.");
-//            return ResponseEntity.status(503).body(response);
-//        }
-//
-//
-//    }
-//    else{
-//        return ResponseEntity.status(401).body(claims);
-//
-//    }
-//
-//}
 
 }
 
