@@ -361,19 +361,19 @@ public class FunctionsFaculty {
     public Boolean flipAttendance(String classcode,String email,String registernumber,String lecturenumber){
         List<String> classcodes=facultyDB.getFacultyRegisteredClasses(email);
         if(classcodes.size()==0){
-            System.out.println("error1");
+            //System.out.println("error1");
             return false;
         }
         else {
             if (classcodes.indexOf(classcode) == -1) {
-                System.out.println("error2"+classcode);
+                //System.out.println("error2"+classcode);
                 return false;
             }
             else{
                 Map<String,String> registernomap=new HashMap<>();
                 registernomap=classDB.getregistermap(classcode);
                 if(registernomap.get(registernumber)==null){
-                    System.out.println("error4");
+                    //System.out.println("error4");
                     return false;
                 }
                 else{
@@ -381,7 +381,7 @@ public class FunctionsFaculty {
                     Map<String, Object> classattendance = (Map<String,Object>) classdetail.get("attendance");
                     String lecture="lecture."+lecturenumber;
                     if(classattendance.get(lecture)==null){
-                        System.out.println("error3");
+                       // System.out.println("error3");
                         return false;
                     }
                     else{

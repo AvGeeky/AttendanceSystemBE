@@ -611,12 +611,12 @@ public class ControllerFaculty {
             if (result != null) {
                 response.put("status", "S");
                 response.put("details", result);
-                response.put("message", "advisor list attendance retrieved sucessfully");
+                response.put("message", "advisor list attendance retrieved successfully");
                 return ResponseEntity.ok(response);
 
             } else {
                 response.put("status", "E");
-                response.put("message", "this teacher is not a advisor");
+                response.put("message", "this teacher is not an advisor");
                 return ResponseEntity.status(503).body(response);
 
             }
@@ -640,11 +640,11 @@ public class ControllerFaculty {
             if (result != null) {
                 response.put("status", "S");
                 response.put("details", result);
-                response.put("message", "succefully retrieved student attednance by class code");
+                response.put("message", "successfully retrieved student attendance by class code");
                 return ResponseEntity.ok(response);
             } else {
                 response.put("status", "E");
-                response.put("message", "error in retreiving attendance by classcode");
+                response.put("message", "error in retrieving attendance by class code");
                 return ResponseEntity.status(503).body(response);
 
             }
@@ -672,7 +672,7 @@ public class ControllerFaculty {
             } else {
 
                 response.put("status", "E");
-                response.put("message", "error in retreiving attendance by classcode");
+                response.put("message", "error in retrieving attendance by class code");
                 return ResponseEntity.status(503).body(response);
             }
 
@@ -694,12 +694,12 @@ public class ControllerFaculty {
             Boolean done = functionsFacultyService.flipAttendance((String) request.get("classcode"), (String) claims.get("email"), (String) request.get("registernumber"), (String) request.get("lecturenumber"));
             if (done) {
                 response.put("status", "S");
-                response.put("message", "flipped the attendance of the student succesfully");
+                response.put("message", "flipped the attendance of the student successfully");
                 return ResponseEntity.ok(response);
 
             } else {
                 response.put("status", "E");
-                response.put("message", "error due to incorrect registernumber or classcode or lecturenumber");
+                response.put("message", "error in updating due to incorrect register-number or class-code or lecture-number");
                 return ResponseEntity.status(503).body(response);
 
             }

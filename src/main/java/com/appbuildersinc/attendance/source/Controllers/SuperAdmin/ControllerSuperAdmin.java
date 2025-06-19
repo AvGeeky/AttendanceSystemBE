@@ -356,12 +356,12 @@ public class ControllerSuperAdmin {
 
            if(done){
                response.put("status","S");
-               response.put("message","Teacher deleted succesfully");
+               response.put("message","Teacher deleted successfully");
                return ResponseEntity.ok(response);
            }
            else{
                response.put("status","E");
-               response.put("message","Teacher Not deleted sucessfully");
+               response.put("message","Teacher Not deleted.");
                return ResponseEntity.status(503).body(response);
            }
        }
@@ -378,12 +378,12 @@ public class ControllerSuperAdmin {
             Boolean done=functionsSuperAdminService.deleteStudent((List<String>)request.get("registernumbers"));
             if(done){
                 response.put("status","S");
-                response.put("message","Student details deleted succeafully");
+                response.put("message","Student details deleted successfully");
                 return ResponseEntity.ok(response);
             }
             else{
                 response.put("status","E");
-                response.put("message","student details not deleted succesfully");
+                response.put("message","student details not deleted");
                 return ResponseEntity.status(503).body(response);
             }
         }
