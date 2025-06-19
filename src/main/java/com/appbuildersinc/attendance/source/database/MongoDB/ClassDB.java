@@ -302,17 +302,25 @@ public class ClassDB {
 
 
     public Map<String, String> getregistermap(String classcode) {
-     Document query=new Document("classCode",classcode);
-     Document result=collection.find(query).first();
-     return (Map<String,String>)result.get("regnoNameMap");
+        Document query = new Document("classCode", classcode);
+        Document result = collection.find(query).first();
+        if (result == null || result.get("regnoNameMap") == null) {
+            return null;
+        }
+        return (Map<String, String>) result.get("regnoNameMap");
     }
 
     public Boolean updateAttendance(String classcode, Map<String, Object> classattendance) {
-        Document query=new Document("classCode",classcode);
-        return collection.updateOne(query,new Document("$set",new Document("attendance",classattendance))).getModifiedCount()>0;
-
-
+        if (classcode == null || classattendance == null) {
+            return false;
+        }
+        Document query = new Document("classCode", classcode);
+        if (collection == null) {
+            return false;
+        }
+        return collection.updateOne(query, new Document("$set", new Document("attendance", classattendance))).getModifiedCount() > 0;
     }
+
     public Boolean deleteStudentFromClass(String registernumber,String classcode){
         Document query=new Document("classCode",classcode);
         Document result=collection.find(query).first();

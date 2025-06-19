@@ -260,8 +260,42 @@ public class FunctionsAttendance {
        }
 
     }
+
+    public boolean checkIfAllStudentsRegisteredAndNotOverlapping(String classCode, List<String> present, List<String> absent) {
+        Map<String, Object> regnoHmacMapping = classDB.getClassRegNoHmacMapping(classCode);
+
+        Set<String> presentSet = new HashSet<>(present);
+        Set<String> absentSet = new HashSet<>(absent);
+
+        // 1. Check for overlap
+        presentSet.retainAll(absentSet); // this keeps only common elements
+
+        if (!presentSet.isEmpty()) {
+            System.err.println("Error: Students marked both present and absent: " + presentSet);
+            return false;
+        }
+
+        // 2. Combine both for registration check
+        Set<String> allStudents = new HashSet<>(present);
+        allStudents.addAll(absent);
+
+        for (String regno : allStudents) {
+            if (!regnoHmacMapping.containsKey(regno)) {
+                System.err.println("Error: Unregistered student: " + regno);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
     public Boolean SaveManualAttendance(String classCode,String email,String subCode,List<String>present,List<String>absent){
         if(isAuthorizedViaSubcodeOrEmail(classCode,email,subCode)){
+            if (!checkIfAllStudentsRegisteredAndNotOverlapping(classCode, present, absent)) {
+                return false; // Not all students are registered in the class
+            }
+            // Proceed to save attendance
             Map<String,Object> classdetails=classDB.getAllClassDetails(classCode);
             Map<String,Object> attendance=(Map<String,Object>)classdetails.get("attendance");
             int nextlectureno=attendance.size()+1;
