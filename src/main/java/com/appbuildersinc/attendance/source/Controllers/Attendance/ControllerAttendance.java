@@ -432,11 +432,11 @@ public class ControllerAttendance {
             if (result != null) {
                 response.put("status", "S");
                 response.put("details", result);
-                response.put("message", "all student details retireved succesfully");
+                response.put("message", "all student details retrieving successfully");
                 return ResponseEntity.ok(response);
             } else {
                 response.put("status","E");
-                response.put("message","error in retreiving details");
+                response.put("message","error in retrieving details");
                 return ResponseEntity.status(503).body(response);
             }
         } else {

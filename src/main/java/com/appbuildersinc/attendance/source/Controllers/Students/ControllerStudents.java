@@ -142,7 +142,7 @@ public class ControllerStudents {
         Map<String, Object> response = new HashMap<>();
 
         //  Check if ID token is provided
-        System.out.println("DEBUG incoming map: " + request);
+        //System.out.println("DEBUG incoming map: " + request);
 
         String idToken = request.get("idToken");
         if (idToken == null || idToken.isBlank()) {
@@ -256,12 +256,12 @@ public class ControllerStudents {
            if(attendance!=null) {
                response.put("status", "S");
                response.put("attendance", attendance);
-               response.put("message", "attendance details retireved succesfully");
+               response.put("message", "attendance details retrieved successfully");
                return ResponseEntity.ok(response);
            }
            else{
                response.put("status", "E");
-               response.put("message","incorrect classcodes");
+               response.put("message","incorrect class codes");
                return ResponseEntity.status(503).body(response);
            }
 
