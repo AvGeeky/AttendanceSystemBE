@@ -361,7 +361,7 @@ public class ControllerSuperAdmin {
            }
            else{
                response.put("status","E");
-               response.put("message","Teacher Not deleted.");
+               response.put("message","Teacher Not deleted. Class advisor and faculty registered classes not empty or some other error occurred");
                return ResponseEntity.status(503).body(response);
            }
        }
