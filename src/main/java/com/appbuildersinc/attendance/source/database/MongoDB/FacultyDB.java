@@ -236,7 +236,7 @@ public class FacultyDB {
 
     public Map<String,Object> getAdvisorList(String email) {
       Document query=new Document("faculty_email",email);
-      System.out.println(email);
+      //System.out.println(email);
       Document fac=collection.find(query).first();
       if(fac==null){
           return null;

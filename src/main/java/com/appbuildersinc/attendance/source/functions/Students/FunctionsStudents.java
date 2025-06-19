@@ -64,7 +64,7 @@ public class FunctionsStudents {
             response.put("message", "Login Expired. Please re-login.");
             return response;
         }
-        if (claims.get("role").equals("FACULTY")) {
+        if (!claims.get("role").equals("STUDENT")) {
             response.put("status", "E");
             response.put("message", "NOT AUTHORIZED.");
             return response;
@@ -180,6 +180,10 @@ public class FunctionsStudents {
             Map<String,Map<String,Integer>> classattendance=new HashMap<>();
             //System.out.println("classcode"+classcode);
             classattendance = (Map<String, Map<String, Integer>>) classdetail.get("attendance");
+            if (classattendance == null) {
+                result.put(classcode, Collections.emptyMap());
+                continue;
+            }
             for(String lectureno:classattendance.keySet()){
                 Map<String,Integer> value=classattendance.get(lectureno);
                 Map<String,Integer> detail=new HashMap<>();
