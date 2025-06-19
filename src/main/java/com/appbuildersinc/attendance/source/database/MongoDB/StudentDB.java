@@ -176,6 +176,7 @@ public class StudentDB {
     public boolean addGroupingToRegisteredGroupings(Set<String> regnos, String logicalGrouping) {
         boolean updated = false;
         for (String regno : regnos) {
+
             Document query = new Document("registerNumber", regno);
             Document student = collection.find(query).first();
             if (student == null) {
@@ -187,6 +188,7 @@ public class StudentDB {
                 continue;
             }
             registeredGroupings.add(logicalGrouping);
+            //System.out.println(regno+registeredGroupings);
             Document update = new Document("$set", new Document("registeredGroupings", registeredGroupings));
             collection.updateOne(query, update);
             updated = true;

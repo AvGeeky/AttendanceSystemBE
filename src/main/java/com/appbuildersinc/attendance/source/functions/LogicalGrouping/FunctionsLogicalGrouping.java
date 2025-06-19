@@ -180,7 +180,9 @@ public class FunctionsLogicalGrouping {
             Set<String> added = new HashSet<>(newSet);
             added.removeAll(oldSet); // New students
 
+
             for (String regNo : removed) {
+                //System.out.println("Removing " + regNo + " from group " + groupcode);
                 for (String className : existingClassCodes) {
                     studentdb.removeClassFromRegisteredClasses(regNo, className);
                 }
@@ -188,6 +190,7 @@ public class FunctionsLogicalGrouping {
 
 
             for (String regNo : added) {
+                //System.out.println("Adding " + regNo + " to group " + groupcode);
                 for (String className : existingClassCodes) {
                     studentdb.addClassToRegisteredClasses(regNo, className);
                 }
