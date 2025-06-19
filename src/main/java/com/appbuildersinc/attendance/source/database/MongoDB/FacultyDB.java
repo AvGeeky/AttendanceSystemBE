@@ -129,6 +129,8 @@ public class FacultyDB {
         return result != null;
     }
 
+
+
     // Method to get user details by email
     public Map<String, Object> getUserDetailsByEmail(String email) {
         Document query = new Document("faculty_email", email);

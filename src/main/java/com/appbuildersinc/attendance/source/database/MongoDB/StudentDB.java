@@ -36,7 +36,10 @@ public class StudentDB {
             e.printStackTrace();
         }
     }
-
+    public boolean doesRegisterNumberExist(String regno) {
+        Document query = new Document("registerNumber", regno);
+        return collection.find(query).first() != null;
+    }
     public Map<String,Object> getStudentDetailsByEmail(String email){
         Document query=new Document("email",email);
         return collection.find(query).first();

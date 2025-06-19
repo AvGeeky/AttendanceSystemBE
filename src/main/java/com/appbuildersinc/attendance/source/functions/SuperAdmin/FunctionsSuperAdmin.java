@@ -96,6 +96,9 @@ public class FunctionsSuperAdmin {
 
     }
     public Boolean deleteTeacher(String email){
+        if (!userdb.isEmailAllowed(email)) {
+            return false;
+        }
         Map<String,Object> details=userdb.getFacultyDetailsByEmail(email);
         if ((details.get("class_advisor_list")==null ||((Map<String, Object>) details.get("class_advisor_list")).isEmpty()) && (details.get("facultyClasses")==null||((List<String>) details.get("facultyClasses")).isEmpty())) {
                return userdb.deleteFacultyByEmail(email);
@@ -106,6 +109,9 @@ public class FunctionsSuperAdmin {
     }
     public Boolean deleteStudent(List<String> registernumbers){
         for(String registernumber:registernumbers){
+            if (!studentdb.doesRegisterNumberExist(registernumber)){
+                return false;
+            }
             Map<String,Object> studentdetails=studentdb.getStudentDetailsByRegisterNumber(registernumber);
             List<String> registeredclasses=(List<String>)studentdetails.get("registeredClasses");
             Set<String> logicalgroupingset=new HashSet<>();
