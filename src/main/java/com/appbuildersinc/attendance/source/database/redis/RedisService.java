@@ -145,8 +145,10 @@ public class RedisService {
     public boolean isAttendanceTrackingActive(String classId) {
         String singleKey = "attendance:scodes:" + classId;
         String qrKey = "attendance:codes:" + classId;
+        String markedKey = "attendance:marked:" + classId;
         return (redisTemplate.hasKey(singleKey) ||
-               redisTemplate.hasKey(qrKey));
+               redisTemplate.hasKey(qrKey)) ||
+                redisTemplate.hasKey(markedKey);
     }
 
     public void markStudentVerified(String classId, String registerNumber) {

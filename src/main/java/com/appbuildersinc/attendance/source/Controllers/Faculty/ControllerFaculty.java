@@ -108,8 +108,7 @@ public class ControllerFaculty {
 
     @GetMapping("/faculty/refreshTimetable")
     public ResponseEntity<Map<String, Object>> refreshTimetable(@RequestHeader(HttpHeaders.AUTHORIZATION)
-                                                                String authorizationHeader,
-                                                                @RequestBody Map<String, Object> requestBody) throws Exception {
+                                                                String authorizationHeader) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
@@ -501,6 +500,7 @@ public class ControllerFaculty {
             response.put("name", details.get("name"));
             response.put("department", details.get("department"));
             response.put("email", details.get("faculty_email"));
+            response.put("position", details.get("position"));
 
 
             String jwt = facultyJwtUtil.signJwt(claims);
