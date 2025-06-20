@@ -10,7 +10,7 @@ import com.appbuildersinc.attendance.source.database.MongoDB.SubstitutionDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.redis.RedisService;
 import com.appbuildersinc.attendance.source.functions.Students.FunctionsStudents;
-import io.github.cdimascio.dotenv.Dotenv;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

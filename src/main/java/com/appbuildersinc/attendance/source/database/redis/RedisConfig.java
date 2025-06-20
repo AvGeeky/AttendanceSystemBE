@@ -1,23 +1,22 @@
 package com.appbuildersinc.attendance.source.database.redis;
 
-import io.github.cdimascio.dotenv.Dotenv;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.*;
 import org.springframework.data.redis.connection.lettuce.*;
-import org.springframework.data.redis.core.*;
-import org.springframework.data.redis.serializer.*;
+
 
 @Configuration
 public class RedisConfig {
 
-    static Dotenv dotenv = Dotenv.configure()
-            .filename("apiee.env")
-            .load();
+//    static Dotenv dotenv = Dotenv.configure()
+//            .filename("apiee.env")
+//            .load();
 
-    private final String host = dotenv.get("REDIS_HOST");
-    private final int port = Integer.parseInt(dotenv.get("REDIS_PORT"));
-    private final String password = dotenv.get("REDIS_PASSWORD");
+    private final String host = System.getenv("REDIS_HOST");
+    private final int port = Integer.parseInt(System.getenv("REDIS_PORT"));
+    private final String password = System.getenv("REDIS_PASSWORD");
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {

@@ -9,7 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
-import io.github.cdimascio.dotenv.Dotenv;
+
 
 public class PasswordUtil {
 
@@ -76,8 +76,8 @@ public class PasswordUtil {
         return result == 0;
     }
     public static String generateHmacPasscode(String randomText) throws Exception {
-        Dotenv dotenv = Dotenv.configure().filename("apiee.env").load();  // Load dotenv here in static context
-        String HMAC_SECRET = dotenv.get("JWT_HMAC_SECRET");
+        //Dotenv dotenv = Dotenv.configure().filename("apiee.env").load();  // Load dotenv here in static context
+        String HMAC_SECRET = System.getenv("JWT_HMAC_SECRET");
 
         Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
         SecretKeySpec secretKeySpec = new SecretKeySpec(HMAC_SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256");

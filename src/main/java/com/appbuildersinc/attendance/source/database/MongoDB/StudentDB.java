@@ -5,7 +5,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import io.github.cdimascio.dotenv.Dotenv;
+
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
 
@@ -15,11 +15,11 @@ import static com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils
 
 @Repository
 public class StudentDB {
-    static Dotenv dotenv = Dotenv.configure()
-            .filename("apiee.env")
-            .load();
-    static String uri = dotenv.get("API_KEY");
-
+//    static Dotenv dotenv = Dotenv.configure()
+//            .filename("apiee.env")
+//            .load();
+//    static String uri = dotenv.get("API_KEY");
+    static String uri = System.getenv("API_KEY");
     private static MongoClient mongoClient;
     private static MongoDatabase database;
     private static MongoCollection<Document> collection;
@@ -195,57 +195,6 @@ public class StudentDB {
         }
         return updated;
     }
-
-//    public boolean addClassAndGroupingToRegisteredClasses(String regno, String className, String logicalGrouping) {
-//        Document query = new Document("registerNumber", regno);
-//        Document student = collection.find(query).first();
-//        if (student == null) {
-//            return false;
-//        }
-//        List<String> registeredClasses = (List<String>) student.getOrDefault("registeredClasses", new ArrayList<String>());
-//        Set<String> registeredClassesSet = new HashSet<>(registeredClasses);
-//        if (!registeredClassesSet.add(className)) {
-//            return false;
-//        }
-//        List<String> registeredGroupings = (List<String>) student.getOrDefault("registeredGroupings", new ArrayList<String>());
-//        Set<String> registeredGroupingsSet = new HashSet<>(registeredGroupings);
-//        if (!registeredGroupingsSet.add(logicalGrouping)) {
-//            return false;
-//        }
-//        registeredClasses.add(className);
-//        registeredGroupings.add(logicalGrouping);
-//        Document updateFields = new Document("registeredClasses", registeredClasses)
-//                .append("registeredGroupings", registeredGroupings);
-//        Document update = new Document("$set", updateFields);
-//        collection.updateOne(query, update);
-//        return true;
-//    }
-//
-//    public boolean removeClassAndGroupingFromRegisteredClasses(String regno, String classCode, String logicalGrouping) {
-//        Document query = new Document("registerNumber", regno);
-//        Document student = collection.find(query).first();
-//        if (student == null) {
-//            return false;
-//        }
-//        List<String> registeredClasses = (List<String>) student.getOrDefault("registeredClasses", new ArrayList<String>());
-//
-//        if (!registeredClasses.remove(classCode)) {
-//            return false;
-//        }
-//        List<String> registeredGroupings = (List<String>) student.getOrDefault("registeredGroupings", new ArrayList<String>());
-//
-//        if (!registeredGroupings.remove(logicalGrouping)) {
-//            return false;
-//        }
-//        // If both classCode and logicalGrouping were removed, update the document
-//        Document updateFields = new Document("registeredClasses", registeredClasses)
-//                .append("registeredGroupings", registeredGroupings);
-//        Document update = new Document("$set", updateFields);
-//        collection.updateOne(query, update);
-//        return true;
-//    }
-
-    //
 
     public List<String> getStudentRegisteredClasses(String email){
         Document query = new Document("email", email);

@@ -8,8 +8,8 @@ import com.appbuildersinc.attendance.source.database.MongoDB.ClassDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
-import io.github.cdimascio.dotenv.Dotenv;
-import org.bson.Document;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,10 +40,10 @@ public class FunctionsStudents {
         this.adminjwtclass = adminjwtclass;
     }
 
-    static Dotenv dotenv = Dotenv.configure()
-            .filename("apiee.env")
-            .load();
-    public String googleClientId = dotenv.get("GOOGLE_CLIENT_ID");
+//    static Dotenv dotenv = Dotenv.configure()
+//            .filename("apiee.env")
+//            .load();
+    public String googleClientId = System.getenv("GOOGLE_CLIENT_ID");
 
 
     public Map<String, Object> checkJwtAuthAfterLoginStudent(String jwt) throws Exception {
