@@ -6,9 +6,9 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import io.github.cdimascio.dotenv.Dotenv;
+
 import org.bson.Document;
-import com.mongodb.client.model.IndexOptions;
+
 import org.springframework.stereotype.Repository;
 
 import java.util.Calendar;
@@ -18,10 +18,11 @@ import java.util.concurrent.TimeUnit;
 
 @Repository
 public class SubstitutionDB {
-    static Dotenv dotenv = Dotenv.configure()
-            .filename("apiee.env")
-            .load();
-    static String uri = dotenv.get("API_KEY");
+//    static Dotenv dotenv = Dotenv.configure()
+//            .filename("apiee.env")
+//            .load();
+//    static String uri = dotenv.get("API_KEY");
+    static String uri = System.getenv("API_KEY");
     private static final TimeZone IST = TimeZone.getTimeZone("Asia/Kolkata");
     private static MongoClient mongoClient;
     private static MongoDatabase database;

@@ -7,7 +7,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import io.github.cdimascio.dotenv.Dotenv;
+
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
 
@@ -26,11 +26,11 @@ import java.util.Base64;
 // KeypairStore is a class that handles the storage and retrieval of key pairs
 @Repository
 public class KeypairStore {
-    static Dotenv dotenv = Dotenv.configure()
-            .filename("apiee.env")
-            .load();
-    static String uri = dotenv.get("API_KEY");
-
+//    static Dotenv dotenv = Dotenv.configure()
+//            .filename("apiee.env")
+//            .load();
+//    static String uri = dotenv.get("API_KEY");
+    static String uri = System.getenv("API_KEY");
     private static MongoClient mongoClient;
     private static MongoDatabase database;
     private static MongoCollection<Document> collection;
@@ -119,6 +119,6 @@ public class KeypairStore {
     //RUN THIS (ONE TIME PROCESS) TO CREATE AND STORE KEYPAIR
     public static void main(String[] args) throws Exception {
 
-        KeypairStore.generateAndStoreKeyPair(dotenv.get("KEYPAIR_PASSPHRASE"));
+        KeypairStore.generateAndStoreKeyPair(System.getenv("KEYPAIR_PASSPHRASE"));
     }
 }

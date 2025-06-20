@@ -1,7 +1,7 @@
 
 package com.appbuildersinc.attendance.source.Utilities.Email;
 
-import io.github.cdimascio.dotenv.Dotenv;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -25,13 +25,13 @@ public class AsyncEmailSenderUtil {
 
     public static void initEmailProperties() {
         // config setup
-        Dotenv dotenv = Dotenv.configure()
-                .filename("apiee.env")
-                .load();
+//        Dotenv dotenv = Dotenv.configure()
+//                .filename("apiee.env")
+//                .load();
 
         String host = "smtp.gmail.com";
-        String username = dotenv.get("MAIL_ID");
-        String password = dotenv.get("MAIL_PASSKEY");
+        String username = System.getenv("MAIL_ID");
+        String password = System.getenv("MAIL_PASSKEY");
 
         Properties properties = new Properties();
         properties.put("mail.smtp.host", host);
@@ -69,10 +69,10 @@ public class AsyncEmailSenderUtil {
                 initEmailProperties();
             }
 
-            Dotenv dotenv = Dotenv.configure()
-                    .filename("apiee.env")
-                    .load();
-            String username = dotenv.get("MAIL_ID");
+//            Dotenv dotenv = Dotenv.configure()
+//                    .filename("apiee.env")
+//                    .load();
+            String username = System.getenv("MAIL_ID");
             //String sender = username;
 
 
@@ -230,10 +230,10 @@ public class AsyncEmailSenderUtil {
                 initEmailProperties();
             }
 
-            Dotenv dotenv = Dotenv.configure()
-                    .filename("apiee.env")
-                    .load();
-            String username = dotenv.get("MAIL_ID");
+//            Dotenv dotenv = Dotenv.configure()
+//                    .filename("apiee.env")
+//                    .load();
+            String username = System.getenv("MAIL_ID");
             //String sender = username;
 
 

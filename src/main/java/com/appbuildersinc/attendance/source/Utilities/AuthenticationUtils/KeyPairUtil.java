@@ -1,7 +1,7 @@
 package com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils;
 
 import com.appbuildersinc.attendance.source.database.MongoDB.KeypairStore;
-import io.github.cdimascio.dotenv.Dotenv;
+
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -13,16 +13,16 @@ import java.util.Base64;
 //KeyPairUtil is a utility class for encrypting and decrypting data using RSA public/private key pairs
 @Service
 public class KeyPairUtil {
-    static Dotenv dotenv = Dotenv.configure()
-            .filename("apiee.env")
-            .load();
+//    static Dotenv dotenv = Dotenv.configure()
+//            .filename("apiee.env")
+//            .load();
 
     static PublicKey publicKey;
     static PrivateKey privateKey;
 
     static {
         try {
-            String passphrase = dotenv.get("KEYPAIR_PASSPHRASE");
+            String passphrase = System.getenv("KEYPAIR_PASSPHRASE");
             KeyPair kp = KeypairStore.getKeyPair(passphrase);
             publicKey = kp.getPublic();
             privateKey  = kp.getPrivate();

@@ -6,7 +6,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import io.github.cdimascio.dotenv.Dotenv;
+
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
 
@@ -15,10 +15,12 @@ import java.util.*;
 //FacultyDB is a repository class that handles database operations related to user management.
 @Repository
 public class FacultyDB {
-    static Dotenv dotenv = Dotenv.configure()
-            .filename("apiee.env")
-            .load();
-    static String uri = dotenv.get("API_KEY");
+//    static Dotenv dotenv = Dotenv.configure()
+//            .filename("apiee.env")
+//            .load();
+//    static String uri = dotenv.get("API_KEY");
+
+    static String uri = System.getenv("API_KEY");
 
     private static MongoClient mongoClient;
     private static MongoDatabase database;
