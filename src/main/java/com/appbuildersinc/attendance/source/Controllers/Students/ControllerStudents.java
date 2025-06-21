@@ -34,29 +34,6 @@ import java.util.*;
  *   <li><b>403 Forbidden:</b> The user does not have permission to access the resource.</li>
  *   <li><b>503 Service Unavailable:</b> The server is currently unable to handle the request.</li>
  * </ul>
-
-
- * <li><b>ROLES DEFINITION FOR JWT CLAIMS
-
- * The following roles are used throughout the application to define user access
- * and permissions within the JWT claims structure:
- * <ul>
- *   <li><b>FACULTY</b> &ndash;</b> Standard faculty member</li>
- *   <li><b>ADDITIONAL ROLE (addnl_role)</b></li>
- *   <li><b>CLASS_ADVISOR (C)</b> &ndash;</b> Faculty member and serving as a Class Advisor</li>
- *   <li><b>MENTOR (M) &ndash;</b> Faculty member and serving as a Mentor</li>
- *   <li><b>BOTH (CM) </b> Faculty member and serving as a Mentor & Class Advisor</li>
- *   <li><b>STUDENT</b>   &ndash;</b> Student user</li>
- * </ul>
- * <p>
- * <li><b>These roles are critical for authorization logic and should be kept in sync
- * with the application's access control policies.
- * </p>
- */
-
-//  Controller for Student related operations
-/**
- *
  * <b>Endpoints in ControllerStudents</b>
  * <ul>
  *   <li><b>GET /student/refreshTimetable</b> &ndash; <i>Input:</i> JWT in Authorization header, <i>Output:</i> Timetable map, <i>Function:</i> Refresh and return merged timetable for authenticated student.</li>
@@ -66,7 +43,8 @@ import java.util.*;
  *   <!-- <li><b>POST /student/setDetails</b> &ndash; <i>Input:</i> JWT in Authorization header, JSON body with student details, <i>Output:</i> Status message, <i>Function:</i> Update student details (currently commented out).</li> -->
  * </ul>
  */
-//ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
+
+
 @RestController
 public class ControllerStudents {
     private final FunctionsClass functionsMiscService;
@@ -136,7 +114,6 @@ public class ControllerStudents {
         Map<String, Object> response = new HashMap<>();
 
         //  Check if ID token is provided
-        //System.out.println("DEBUG incoming map: " + request);
 
         String idToken = request.get("idToken");
         if (idToken == null || idToken.isBlank()) {
@@ -183,11 +160,6 @@ public class ControllerStudents {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // 401
         }
         String email = payload.getEmail();
-
-
-        // You can optionally validate the email domain or userId here
-
-        //  Generate internal JWT for session
 
         Map<String,Object> details = studentDbClass.getStudentDetailsByEmail(email);
         Map<String, Object> claims = studentjwtUtil.createClaims(email, true,details.get("department").toString(),details.get("registerNumber").toString());
@@ -239,6 +211,15 @@ public class ControllerStudents {
             return ResponseEntity.status(401).body(claims);
         }
     }
+
+    /**
+     * Endpoint to get attendance details for a student.
+     *
+     * @param authorizationHeader JWT token in the Authorization header.
+     * @param request Map containing class codes.
+     * @return ResponseEntity with attendance details or error message.
+     * @throws Exception if there is an error during processing.
+     */
     @GetMapping("/student/getAttendance")
     public ResponseEntity <Map<String,Object>> getAttendanceDetails(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request) throws Exception {
 

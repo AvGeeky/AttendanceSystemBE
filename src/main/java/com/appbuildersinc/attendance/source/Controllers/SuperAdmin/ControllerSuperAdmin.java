@@ -28,44 +28,23 @@ import java.util.*;
  *   <li><b>403 Forbidden:</b> The user does not have permission to access the resource.</li>
  *   <li><b>503 Service Unavailable:</b> The server is currently unable to handle the request.</li>
  * </ul>
+ *
+    <B>Controller Endpoints Overview</B>
+    <ul>
+        <li><b>/test/genHash</b> - Returns hashed password as plain text. Used for testing password hashing.</li>
+        <li><b>/SuperAdmin/login</b> - Returns JSON with status, message, name, dept, and JWT token. Used for Super Admin login.</li>
+        <li><b>/SuperAdmin/addStudents</b> - Returns JSON with status and message. Adds multiple students; requires JWT.</li>
+        <li><b>/SuperAdmin/viewAllStudents</b> - Returns JSON with status, message, and student details list. Views all students; requires JWT.</li>
+        <li><b>/SuperAdmin/createOrEditLogicalGrouping</b> - Returns JSON with status and message. Creates/edits logical groupings; requires JWT.</li>
+        <li><b>/SuperAdmin/viewAllGroupings</b> - Returns JSON with status, message, and groupings list. Views all logical groupings; requires JWT.</li>
+        <li><b>/SuperAdmin/deleteGrouping</b> - Returns JSON with status and message. Deletes a logical grouping; requires JWT.</li>
+        <li><b>/SuperAdmin/viewAllTeachers</b> - Returns JSON with status, message, and teacher details list. Views all teachers; requires JWT.</li>
+        <li><b>/SuperAdmin/addOrUpdateTeacher</b> - Returns JSON with status and message. Adds or updates a teacher; requires JWT.</li>
+        <li><b>/SuperAdmin/deleteTeacher</b> - Returns JSON with status and message. Deletes a teacher; requires JWT.</li>
+        <li><b>/SuperAdmin/deleteStudents</b> - Returns JSON with status and message. Deletes students; requires JWT.</li>
+    </ul>
+    */
 
-
- * <li><b>ROLES DEFINITION FOR JWT CLAIMS
-
- * The following roles are used throughout the application to define user access
- * and permissions within the JWT claims structure:
- * <ul>
- *   <li><b>FACULTY</b> &ndash;</b> Standard faculty member</li>
- *   <li><b>ADDITIONAL ROLE (addnl_role)</b></li>
- *   <li><b>CLASS_ADVISOR (C)</b> &ndash;</b> Faculty member and serving as a Class Advisor</li>
- *   <li><b>MENTOR (M) &ndash;</b> Faculty member and serving as a Mentor</li>
- *   <li><b>BOTH (CM) </b> Faculty member and serving as a Mentor & Class Advisor</li>
- *   <li><b>STUDENT</b>   &ndash;</b> Student user</li>
- * </ul>
- * <p>
- * <li><b>These roles are critical for authorization logic and should be kept in sync
- * with the application's access control policies.
- * </p>
- */
-
-/*
-Error handling template for Muraribranch:
-Map<String, Object> claims = functionsService.checkJwtAuthAfterLogin(authorizationHeader);
-        //Check if the JWT is valid
-        String status = (String) claims.get("status");
-        if (status.equals("S")) {
-            //JWT is valid, proceed with business logic
-            Map<String, Object> response = new HashMap<>();
-
-
-        }
-        else{
-            //JWT is invalid, return error response
-            return ResponseEntity.status(401).body(claims);
-        }
-*/
-
-//ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
 public class ControllerSuperAdmin {
     private final FunctionsClass functionsClassService;
@@ -305,6 +284,18 @@ public class ControllerSuperAdmin {
             return ResponseEntity.status(401).body(claims);
         }
     }
+
+    /**
+     * <b>View All Teachers Endpoint for Super Admin</b>
+     * <p>
+     * This endpoint allows a Super Admin to view all teachers in the system.
+     * The request must include a valid JWT in the Authorization header.
+     *
+     * @param authorizationHeader The JWT token for Super Admin authentication, passed in the Authorization header.
+     * @return A response entity with status 'S' and a list of teacher details if successful,
+     *         or status 'E' and an error message if the operation fails.
+     * @throws Exception If an error occurs during the process.
+     */
     @GetMapping("/SuperAdmin/viewAllTeachers")
     public ResponseEntity<Map<String,Object>> viewAllTeachers(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception{
         Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
@@ -323,6 +314,20 @@ public class ControllerSuperAdmin {
 
         }
     }
+
+    /**
+     * <b>Add or Update Teacher Endpoint for Super Admin</b>
+     * <p>
+     * This endpoint allows a Super Admin to add or update teacher details.
+     * The request must include a valid JWT in the Authorization header.
+     * The teacher details should be provided in the request body as a map.
+     *
+     * @param authorizationHeader The JWT token for Super Admin authentication, passed in the Authorization header.
+     * @param faculty A map containing the details of the teacher to add or update.
+     * @return A response entity with status 'S' and a success message if the operation is successful,
+     *         or status 'E' and an error message if the operation fails.
+     * @throws Exception If an error occurs during the process.
+     */
    @PostMapping("/SuperAdmin/addOrUpdateTeacher")
     public ResponseEntity<Map<String,Object>> addOrUpdateFaculty(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object>faculty) throws Exception {
        Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
@@ -346,6 +351,20 @@ public class ControllerSuperAdmin {
            return ResponseEntity.status(401).body(claims);
        }
    }
+
+   /**
+    * <b>Delete Teacher Endpoint for Super Admin</b>
+    * <p>
+    * This endpoint allows a Super Admin to delete a teacher from the system.
+    * The request must include a valid JWT in the Authorization header.
+    * The teacher's email should be provided in the request body.
+    *
+    * @param authorizationHeader The JWT token for Super Admin authentication, passed in the Authorization header.
+    * @param request A map containing the email of the teacher to be deleted.
+    * @return A response entity with status 'S' and a success message if the operation is successful,
+    *         or status 'E' and an error message if the operation fails.
+    * @throws Exception If an error occurs during the process.
+    */
    @PostMapping("/SuperAdmin/deleteTeacher")
     public ResponseEntity<Map<String,Object>> deleteFaculty(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,String> request) throws Exception {
        Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
@@ -369,6 +388,14 @@ public class ControllerSuperAdmin {
            return ResponseEntity.status(401).body(claims);
        }
    }
+
+    /**
+     * <b>Delete Students Endpoint for Super Admin</b>
+     * @param authorizationHeader
+     * @param request
+     * @return A response entity with status 'S' and a success message if the operation is successful,
+     * @throws Exception
+     */
     @PostMapping("/SuperAdmin/deleteStudents")
     public ResponseEntity<Map<String,Object>> deleteStudents(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request) throws Exception {
         Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);

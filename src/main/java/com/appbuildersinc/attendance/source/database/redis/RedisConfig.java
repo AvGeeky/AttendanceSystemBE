@@ -26,15 +26,4 @@ public class RedisConfig {
         return new LettuceConnectionFactory(cfg, clientConfig);
     }
 
-//    @Bean
-//    public RedisTemplate<String, String> stringRedisTemplate(RedisConnectionFactory factory) {
-//        RedisTemplate<String, String> tpl = new RedisTemplate<>();
-//        tpl.setConnectionFactory(factory);
-//        tpl.setKeySerializer(new StringRedisSerializer());
-//        tpl.setValueSerializer(new StringRedisSerializer());
-//        tpl.setHashKeySerializer(new StringRedisSerializer());
-//        tpl.setHashValueSerializer(new StringRedisSerializer());
-//        tpl.afterPropertiesSet();
-//        return tpl;
-//    }
 }

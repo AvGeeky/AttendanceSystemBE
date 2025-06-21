@@ -11,8 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-//DATABASE ONLY ACCESSIBLE HERE
-//BUSINESS LOGIC HERE????
+
+//BUSINESS LOGIC HERE
 
 @Service
 public class FunctionsFaculty {
@@ -162,7 +162,7 @@ public class FunctionsFaculty {
 
     }
 
-    public List<Map<String,Object>> getAllLogicalGroupings(String dept) {
+    public List<Map<String,Object>> getAllLogicalGroupings() {
         Set<Map<String, Object>> deptLG = new HashSet<>();
         deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings());
         return new ArrayList<>(deptLG);
