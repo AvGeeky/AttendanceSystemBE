@@ -20,7 +20,7 @@ import java.util.*;
 /**
  * <b>Standard HTTP Error Response Codes:</b>
  * <ul>
- *    <b>RETURN STATUS 'E' FOR ALL ERRORS. STATUS 'S' FOR ALL SUCCESS</b>
+ *    <b>STATUS 'E' FOR ALL ERRORS. STATUS 'S' FOR ALL SUCCESS</b>
  *   <li><b>400 Bad Request:</b> Required data not passed / JWT not passed.</li>
  *   <li><b>401 Unauthorized:</b> Authentication is required or has failed.</li>
  *   <li><b>403 Forbidden:</b> The user does not have permission to access the resource.</li>
@@ -35,9 +35,9 @@ import java.util.*;
  * <ul>
  *   <li><b>FACULTY</b> &ndash;</b> Standard faculty member</li>
  *   <li><b>ADDITIONAL ROLE (addnl_role)</b></li>
- *   <li><b>CLASS_ADVISOR (C)</b> &ndash;</b> Faculty member and serving as a Class Advisor</li>
+ *   <li><b>CLASS_ADVISOR (A)</b> &ndash;</b> Faculty member and serving as a Class Advisor</li>
  *   <li><b>MENTOR (M) &ndash;</b> Faculty member and serving as a Mentor</li>
- *   <li><b>BOTH (CM) </b> Faculty member and serving as a Mentor & Class Advisor</li>
+ *   <li><b>BOTH (MA) </b> Faculty member and serving as a Mentor & Class Advisor</li>
  *   <li><b>STUDENT</b>   &ndash;</b> Student user</li>
  * </ul>
  * <p>
@@ -69,9 +69,6 @@ import java.util.*;
  * </ul>
  */
 
-
-
-//ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
 public class ControllerFaculty {
     private final FunctionsClass functionsMiscService;
@@ -106,6 +103,15 @@ public class ControllerFaculty {
     }
 
 
+
+    /**
+     * Refreshes the timetable for the faculty by merging their classes.
+     * Requires a valid JWT in the Authorization header.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @return A ResponseEntity containing the merged timetable or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @GetMapping("/faculty/refreshTimetable")
     public ResponseEntity<Map<String, Object>> refreshTimetable(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                 String authorizationHeader) throws Exception {
@@ -133,6 +139,16 @@ public class ControllerFaculty {
     }
 
 
+
+    /**
+     * Creates or updates a class for the faculty.
+     * Requires a valid JWT in the Authorization header and class details in the request body.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @param requestBody         The class details in the request body.
+     * @return A ResponseEntity containing the status of the operation or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @PostMapping("/faculty/createOrUpdateClass")
     public ResponseEntity<Map<String, Object>> createClass(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                            String authorizationHeader,
@@ -178,6 +194,16 @@ public class ControllerFaculty {
         }
     }
 
+
+
+    /**
+     * Drops a class assigned to the faculty.
+     * Requires a valid JWT in the Authorization header and class details in the request body.
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @param requestBody         The class details in the request body.
+     * @return A ResponseEntity containing the status of the operation or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @PostMapping("/faculty/dropClass")
     public ResponseEntity<Map<String, Object>> dropClass(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                          String authorizationHeader,
@@ -216,6 +242,17 @@ public class ControllerFaculty {
         }
     }
 
+
+
+    /**
+     * Transfers a class to another faculty member.
+     * Requires a valid JWT in the Authorization header and class details in the request body.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @param requestBody         The class details in the request body.
+     * @return A ResponseEntity containing the status of the operation or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @PostMapping("/faculty/transferClass")
     public ResponseEntity<Map<String, Object>> transferClass(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                              String authorizationHeader,
@@ -256,6 +293,17 @@ public class ControllerFaculty {
         }
     }
 
+
+
+    /**
+     * Retrieves details of a specific class for the faculty.
+     * Requires a valid JWT in the Authorization header and class details in the request body.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @param requestBody         The class details in the request body.
+     * @return A ResponseEntity containing the class details or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @GetMapping("/faculty/getClassDetails")
     public ResponseEntity<Map<String, Object>> getClassDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                String authorizationHeader,
@@ -296,6 +344,16 @@ public class ControllerFaculty {
     }
 
 
+
+
+    /**
+     * Retrieves all logical groupings.
+     * Requires a valid JWT in the Authorization header.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @return A ResponseEntity containing the logical groupings or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @GetMapping("/faculty/getAllLogicalGroupings")
     public ResponseEntity<Map<String, Object>> getAllLogicalGroupings(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                       String authorizationHeader) throws Exception {
@@ -305,7 +363,7 @@ public class ControllerFaculty {
         if (status.equals("S")) {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
-            List<Map<String, Object>> logicalGroupings = functionsFacultyService.getAllLogicalGroupings(claims.get("dept").toString());
+            List<Map<String, Object>> logicalGroupings = functionsFacultyService.getAllLogicalGroupings();
             response.put("status", "S");
             response.put("message", "Logical groupings retrieved successfully!");
             response.put("logical_groupings", logicalGroupings);
@@ -316,6 +374,17 @@ public class ControllerFaculty {
         }
     }
 
+
+
+    /**
+     * Updates the mentee list for the faculty and returns the updated details.
+     * Requires a valid JWT in the Authorization header and mentee list in the request body.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @param requestBody         The request body containing the mentee list and reset flag.
+     * @return A ResponseEntity containing the status of the operation and updated mentee details or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @PostMapping("/faculty/updateMenteeListAndReturnDetails")
     public ResponseEntity<Map<String, Object>> updateMenteeListAndReturnDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                                 String authorizationHeader,
@@ -353,6 +422,16 @@ public class ControllerFaculty {
         }
     }
 
+
+
+    /**
+     * Sets the email for the faculty and sends an OTP to that email.
+     * Requires a valid faculty email.
+     *
+     * @param email The faculty email to set.
+     * @return A ResponseEntity containing the status of the operation and JWT with OTP claim or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @PostMapping("/faculty/setEmail")
     public ResponseEntity<Map<String, Object>> setEmail(@RequestParam String email) throws Exception {
         Map<String, Object> response = new HashMap<>();
@@ -373,6 +452,17 @@ public class ControllerFaculty {
     }
 
 
+
+
+    /**
+     * Verifies the OTP sent to the faculty's email.
+     * Requires a valid JWT in the Authorization header and OTP as a request parameter.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @param otp                 The OTP to verify.
+     * @return A ResponseEntity containing the status of the operation and new JWT if successful or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @PostMapping("/faculty/verifyOtp")
     public ResponseEntity<Map<String, Object>> verifyOtp(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
                                                          @RequestParam String otp) throws Exception {
@@ -419,6 +509,17 @@ public class ControllerFaculty {
     }
 
 
+
+
+    /**
+     * Updates the password for the faculty after OTP verification.
+     * Requires a valid JWT in the Authorization header and new password as a request parameter.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @param password            The new password to set.
+     * @return A ResponseEntity containing the status of the operation and new JWT if successful or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @PostMapping("/faculty/updatePassword")
     public ResponseEntity<Map<String, Object>> updatePassword(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
                                                               @RequestParam String password) throws Exception {
@@ -463,6 +564,17 @@ public class ControllerFaculty {
         }
     }
 
+
+
+    /**
+     * Logs in the faculty using email and password.
+     * If successful, returns a JWT and user details.
+     *
+     * @param email    The faculty email to log in.
+     * @param password The faculty password to log in.
+     * @return A ResponseEntity containing the status of the login operation and user details or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @PostMapping("/faculty/login")
     public ResponseEntity<Map<String, Object>> login(@RequestParam String email,
                                                      @RequestParam String password
@@ -517,6 +629,16 @@ public class ControllerFaculty {
     }
 
 
+
+
+    /**
+     * Retrieves the details of the faculty user.
+     * Requires a valid JWT in the Authorization header.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @return A ResponseEntity containing the user details or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @GetMapping("/faculty/getDetails")
     public ResponseEntity<Map<String, Object>> getDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                           String authorizationHeader) throws Exception {
@@ -547,6 +669,17 @@ public class ControllerFaculty {
         }
     }
 
+
+
+    /**
+     * Sets the details of the faculty user.
+     * Requires a valid JWT in the Authorization header and user details in the request body.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @param requestBody         The user details in the request body.
+     * @return A ResponseEntity containing the status of the operation or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @PostMapping("/faculty/setDetails")
     public ResponseEntity<Map<String, Object>> setDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                           String authorizationHeader,
@@ -580,6 +713,16 @@ public class ControllerFaculty {
         }
     }
 
+
+
+    /**
+     * Retrieves the list of mentees for the faculty.
+     * Requires a valid JWT in the Authorization header.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @return A ResponseEntity containing the list of mentees or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @GetMapping("/faculty/getMentorListAttendance")
     public ResponseEntity<Map<String, Object>> getMentorListAttendance(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
@@ -607,6 +750,16 @@ public class ControllerFaculty {
 
     }
 
+
+
+    /**
+     * Retrieves the list of advisors for the faculty.
+     * Requires a valid JWT in the Authorization header.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @return A ResponseEntity containing the list of advisors or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @GetMapping("/faculty/getAdvisorListAttendance")
     public ResponseEntity<Map<String, Object>> getAdvisorListAttendance(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
@@ -635,6 +788,17 @@ public class ControllerFaculty {
 
     }
 
+
+
+    /**
+     * Retrieves student attendance by class code for the faculty.
+     * Requires a valid JWT in the Authorization header and class code in the request body.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @param request             The request body containing the class code.
+     * @return A ResponseEntity containing the student attendance details or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @GetMapping("/faculty/getStudentAttendanceByClassCode")
     public ResponseEntity<Map<String, Object>> getStudentAttendanceByClassCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String, String> request) throws Exception {
 
@@ -662,6 +826,17 @@ public class ControllerFaculty {
         }
     }
 
+
+
+    /**
+     * Retrieves lecture attendance by class code for the faculty.
+     * Requires a valid JWT in the Authorization header and class code in the request body.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @param request             The request body containing the class code.
+     * @return A ResponseEntity containing the lecture attendance details or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @GetMapping("/faculty/getLectureAttendanceByClassCode")
     public ResponseEntity<Map<String, Object>> getLectureAttendanceByClassCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String, String> request) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
@@ -690,6 +865,17 @@ public class ControllerFaculty {
 
     }
 
+
+
+    /**
+     * Flips the attendance status of a student for a specific lecture.
+     * Requires a valid JWT in the Authorization header and class code, register number, and lecture number in the request body.
+     *
+     * @param authorizationHeader The JWT token in the Authorization header.
+     * @param request             The request body containing class code, register number, and lecture number.
+     * @return A ResponseEntity containing the status of the operation or an error message.
+     * @throws Exception If there is an error during processing.
+     */
     @PostMapping("/faculty/flipAttendance")
     public ResponseEntity<Map<String, Object>> flipAttendance(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String, String> request) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);

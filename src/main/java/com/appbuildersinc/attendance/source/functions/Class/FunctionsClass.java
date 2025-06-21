@@ -12,8 +12,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-//DATABASE ONLY ACCESSIBLE HERE
-//BUSINESS LOGIC HERE????
+
+//BUSINESS LOGIC HERE
 
 @Service
 public class FunctionsClass {

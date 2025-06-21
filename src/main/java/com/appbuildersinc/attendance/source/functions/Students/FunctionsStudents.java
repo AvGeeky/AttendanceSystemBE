@@ -14,8 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-//DATABASE ONLY ACCESSIBLE HERE
-//BUSINESS LOGIC HERE????
+
+//BUSINESS LOGIC HERE
 
 @Service
 public class FunctionsStudents {
@@ -198,37 +198,6 @@ public class FunctionsStudents {
         }
       return result;
     }
-    /*
-    public Map<String, Map<String, Map<String, Integer>>> getAttendance(List<String> classcodes, String email) {
-        Map<String, Map<String, Map<String, Integer>>> result = new HashMap<>();
-        Map<String, Object> student = studentDB.getStudentDetailsByEmail(email);
-        if (classcodes == null) {
-            classcodes = (List<String>) student.get("registeredClasses");
-        }
-        String registerNumber = (String) student.get("registerNumber");
 
-        for (String classcode : classcodes) {
-            Map<String, Object> classdetail = classDB.getAllClassDetails(classcode);
-            Map<String, Map<String, Integer>> classattendance = (Map<String, Map<String, Integer>>) classdetail.get("attendance");
-            if (classattendance == null) {
-                result.put(classcode, Collections.emptyMap());
-                continue;
-            }
-            Map<String, Map<String, Integer>> processedAttendance = new HashMap<>();
-            for (String lectureno : classattendance.keySet()) {
-                Map<String, Integer> value = classattendance.get(lectureno);
-                if (value == null) continue;
-                Map<String, Integer> detail = new HashMap<>();
-                detail.put("date", value.get("date"));
-                detail.put("time", value.get("time"));
-                // If registerNumber not present, treat as absent (0) or null
-                detail.put("present", value.getOrDefault(registerNumber, 0));
-                processedAttendance.put(lectureno, detail);
-            }
-            result.put(classcode, processedAttendance);
-        }
-        return result;
-    }
-    */
 
 }

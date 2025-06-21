@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 @Service
 public class StudentjwtUtil {
-//    private final Dotenv dotenv = Dotenv.configure().filename("apiee.env").load();
+// StudentjwtUtil is a utility class for creating, signing, parsing, and validating JSON Web Tokens (JWTs) using HMAC SHA-256 algorithm
     private final String HMAC_SECRET = System.getenv("JWT_HMAC_SECRET");
     private final int EXPIRATION_MINUTES =  Integer.parseInt(System.getenv("JWT_EXPIRATION_MINUTES"));
     public Map<String,Object> createClaims(String email,Boolean authorised, String dept, String regno){

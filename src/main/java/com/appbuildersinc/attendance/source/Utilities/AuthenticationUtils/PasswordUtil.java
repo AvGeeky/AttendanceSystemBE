@@ -10,7 +10,7 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
-
+// PasswordUtil is a utility class for securely hashing and verifying passwords using PBKDF2 with HMAC-SHA256.
 public class PasswordUtil {
 
     private static final int SALT_LENGTH = 16; // 16 bytes = 128 bits
@@ -90,18 +90,5 @@ public class PasswordUtil {
     }
 
 
-    // Test the functions
-//    public static void main(String[] args) {
-//        String password = "SecurePassword123";
-//        String hashedPassword = hashPassword(password);
-//
-//        System.out.println("Stored Hash: " + hashedPassword);
-//
-//        boolean isMatch = verifyPassword("SecurePassword123", hashedPassword);
-//        System.out.println("Password match: " + isMatch);
-//
-//        boolean isWrongMatch = verifyPassword("WrongPassword", hashedPassword);
-//        System.out.println("Wrong password match: " + isWrongMatch);
-//    }
 }
 

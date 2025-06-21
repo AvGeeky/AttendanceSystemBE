@@ -29,23 +29,6 @@ import java.util.*;
  *   <li><b>403 Forbidden:</b> The user does not have permission to access the resource.</li>
  *   <li><b>503 Service Unavailable:</b> The server is currently unable to handle the request.</li>
  * </ul>
-
-
- * <li><b>ROLES DEFINITION FOR JWT CLAIMS
-
- * The following roles are used throughout the application to define user access
- * and permissions within the JWT claims structure:
- * <ul>
- *   <li><b>FACULTY</b> &ndash;</b> Standard faculty member</li>
- *   <li><b>ADDITIONAL ROLE (addnl_role)</b></li>
- *   <li><b>CLASS_ADVISOR (C)</b> &ndash;</b> Faculty member and serving as a Class Advisor</li>
- *   <li><b>MENTOR (M) &ndash;</b> Faculty member and serving as a Mentor</li>
- *   <li><b>BOTH (CM) </b> Faculty member and serving as a Mentor & Class Advisor</li>
- *   <li><b>STUDENT</b>   &ndash;</b> Student user</li>
- * </ul>
- * <p>
- * <li><b>These roles are critical for authorization logic and should be kept in sync
- * with the application's access control policies.
  * </p>
  * <hr>
  * <b>Attendance Controller Endpoints Overview</b>
@@ -99,7 +82,6 @@ import java.util.*;
  */
 
 
-//ONLY JWT, AUTHENTICATION AND RETURNING VALUES HERE. CALL functionsService FOR BUSINESS LOGIC!!
 @RestController
 public class ControllerAttendance {
     private final FunctionsClass functionsClassService;
@@ -139,6 +121,14 @@ public class ControllerAttendance {
         this.redisService = redisService;
     }
 
+    /**
+     * Faculty creates a substitution code for a class and date.
+     * @param authorizationHeader JWT token in the header
+     * @param classCode Class code for which to create the substitution code
+     * @param dateOfUse Date of use for the substitution code (yyyy-MM-dd)
+     * @return ResponseEntity with status, substitution code, or error message
+     * @throws Exception if any error occurs
+     */
     @PostMapping("/faculty/createSubstitutionCode")
     public ResponseEntity<Map<String,Object>> createSubstitutionCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
                                                                      @RequestParam String classCode,
@@ -168,6 +158,13 @@ public class ControllerAttendance {
             }
     }
 
+    /**
+     * Fetch class code from a substitution code.
+     * @param authorizationHeader JWT token in the header
+     * @param substitutionCode Substitution code to fetch class code
+     * @return ResponseEntity with status, class code, or error message
+     * @throws Exception if any error occurs
+     */
     @GetMapping("/faculty/fetchClassCodeFromSubstitutionCode")
     public ResponseEntity<Map<String,Object>> fetchClassCodeFromSubstitutionCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
                                                                      @RequestParam String substitutionCode
@@ -195,6 +192,14 @@ public class ControllerAttendance {
         }
     }
 
+    /**
+     * Faculty generates QR codes for attendance.
+     * @param authorizationHeader JWT token in the header
+     * @param subCode Optional substitution code
+     * @param classCode Class code for which to generate QR codes
+     * @return ResponseEntity with status, message, and generated QR codes
+     * @throws Exception if any error occurs
+     */
     @PostMapping("/faculty/qr/generateQRCode")
     public ResponseEntity<Map<String,Object>> generateQRCode(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                String authorizationHeader,
@@ -241,6 +246,14 @@ public class ControllerAttendance {
         }
     }
 
+    /**
+     * Student submits scanned QR code and digest for attendance verification.
+     * @param authorizationHeader JWT token in the header
+     * @param digest HMAC digest of the QR code
+     * @param qrCode Scanned QR code submitted by the student
+     * @return ResponseEntity with status and message
+     * @throws Exception if any error occurs
+     */
     @PostMapping("/student/qr/sendCode")
     public ResponseEntity<Map<String,Object>> sendCode(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                              String authorizationHeader,
@@ -279,6 +292,14 @@ public class ControllerAttendance {
         }
     }
 
+    /**
+     * Faculty generates a single passcode for attendance.
+     * @param authorizationHeader JWT token in the header
+     * @param subCode Optional substitution code
+     * @param classCode Class code for which to generate the passcode
+     * @return ResponseEntity with status, message, and generated passcode
+     * @throws Exception if any error occurs
+     */
     @PostMapping("/faculty/passcode/generateCode")
     public ResponseEntity<Map<String,Object>> generateCode(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                              String authorizationHeader,
@@ -324,6 +345,14 @@ public class ControllerAttendance {
         }
     }
 
+    /**
+     * Student submits passcode and digest for attendance verification.
+     * @param authorizationHeader JWT token in the header
+     * @param digest HMAC digest of the passcode
+     * @param passcode Passcode submitted by the student
+     * @return ResponseEntity with status and message
+     * @throws Exception if any error occurs
+     */
     @PostMapping("/student/passcode/sendCode")
     public ResponseEntity<Map<String,Object>> sendPasscode(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                        String authorizationHeader,
@@ -362,6 +391,14 @@ public class ControllerAttendance {
         }
     }
 
+    /**
+     * Fetch live attendance data for a class with versioning.
+     * @param authorizationHeader JWT token in the header
+     * @param classCode Class code for which to fetch attendance
+     * @param version Optional version parameter to check for updates
+     * @return ResponseEntity with status, version, verified count, and attendance record
+     * @throws Exception if any error occurs
+     */
     @GetMapping("/faculty/liveAttendanceViewWithVersion")
     public ResponseEntity<Map<String,Object>> liveAttendanceWebhook(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                              String authorizationHeader,
@@ -399,6 +436,14 @@ public class ControllerAttendance {
         }
     }
 
+    /**
+     * Confirm attendance and close the session.
+     * @param authorizationHeader JWT token in the header
+     * @param classCode Class code for which to confirm attendance
+     * @param subCode Optional substitution code
+     * @return ResponseEntity with status and message
+     * @throws Exception if any error occurs
+     */
     @PostMapping("/faculty/qrpasscode/confirmAttendanceClose")
     public ResponseEntity<Map<String,Object>> confirmAttendanceClose(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                     String authorizationHeader,
@@ -453,6 +498,15 @@ public class ControllerAttendance {
             return ResponseEntity.ok(response);
 
     }
+
+    /**
+     * Get all student details for a class.
+     * @param authorizationHeader JWT token in the header
+     * @param subCode Optional substitution code
+     * @param classCode Class code for which to fetch student details
+     * @return ResponseEntity with status and student details
+     * @throws Exception if any error occurs
+     */
     @PostMapping("/faculty/getAllStudentDetails")
     public ResponseEntity<Map<String, Object>> getAllStudentDetails(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestParam(required = false) String subCode, @RequestParam String classCode) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
@@ -474,6 +528,15 @@ public class ControllerAttendance {
             return ResponseEntity.status(401).body(claims);
         }
     }
+
+    /**
+     * Save manual attendance for a class.
+     * @param authorizationHeader JWT token in the header
+     * @param request Request body containing classCode, present, absent lists
+     * @param subCode Optional substitution code
+     * @return ResponseEntity with status and message
+     * @throws Exception if any error occurs
+     */
     @PostMapping("/faculty/saveManualAttendance")
     public ResponseEntity<Map<String,Object>> saveManualAttendance(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request, @RequestParam (required = false) String subCode) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
