@@ -146,10 +146,14 @@ public class FunctionsLogicalGrouping {
                 userdb.updateClassAdvisorListByEmail(advisorEmail, regNumbers, groupcode);
             }
         }
-
+        boolean updated = false;
         // Delegate insert/update to DB layer
-        boolean updated = logicalGroupingDB.insertOrUpdateLogicalGroupingToDB(
-                doc, degree, dept, passout, section, classCodes, groupcode);
+        if (isNew){
+            updated = logicalGroupingDB.insertLogicalGroupingToDB(doc);
+        }
+        else {
+            updated = logicalGroupingDB.updateLogicalGroupingInDB(doc, groupcode);
+        }
 
         List<String> existingClassCodes = new ArrayList<>();
         for (String classCode : classCodes) {

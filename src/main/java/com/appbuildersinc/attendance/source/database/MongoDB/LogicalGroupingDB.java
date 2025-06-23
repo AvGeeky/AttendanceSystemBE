@@ -55,6 +55,24 @@ public class LogicalGroupingDB {
         }
     }
 
+    public boolean updateLogicalGroupingInDB(Document doc, String groupcode) {
+        Document query = new Document("groupcode", groupcode);
+        Document existing = collection.find(query).first();
+
+        if (existing != null) {
+            // Update existing group
+            return collection.updateOne(query, new Document("$set", doc)).getModifiedCount() > 0;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean insertLogicalGroupingToDB(Document doc) {
+        collection.insertOne(doc);
+        return true;
+    }
+
+
     public List<Map<String, Object>> viewalllogicalgroupings() {
         List<Map<String, Object>> groupings = new ArrayList<>();
         for (Document doc : collection.find()) {
