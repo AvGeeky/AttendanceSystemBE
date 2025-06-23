@@ -19,7 +19,7 @@ target/
 *.iml
 *.ipr
 .env*
-redis-setup/redis/redis.conf
+redis-setup_dev/redis/redis.conf
 
 ### NetBeans ###
 /nbproject/private/
