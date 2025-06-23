@@ -1,6 +1,7 @@
 package com.appbuildersinc.attendance.source.database.redis;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.*;
@@ -10,13 +11,14 @@ import org.springframework.data.redis.connection.lettuce.*;
 @Configuration
 public class RedisConfig {
 
-//    static Dotenv dotenv = Dotenv.configure()
-//            .filename("apiee.env")
-//            .load();
+    @Value("${spring.data.redis.host}")
+    private String host;
 
-    private final String host = System.getenv("REDIS_HOST");
-    private final int port = Integer.parseInt(System.getenv("REDIS_PORT"));
-    private final String password = System.getenv("REDIS_PASSWORD");
+    @Value("${spring.data.redis.port}")
+    private int port;
+
+    @Value("${spring.data.redis.password}")
+    private String password;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -25,5 +27,4 @@ public class RedisConfig {
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder().build();
         return new LettuceConnectionFactory(cfg, clientConfig);
     }
-
 }
