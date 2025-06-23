@@ -1,5 +1,16 @@
 FROM redis:7.4.3-alpine
 
-COPY redis.conf /usr/local/etc/redis/redis.conf
+ARG REDIS_PASSWORD
+ENV REDIS_PASSWORD=${REDIS_PASSWORD}
 
-CMD [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+# Properly inject Redis config with newlines
+RUN printf "%s\n" \
+  "bind 0.0.0.0" \
+  "protected-mode yes" \
+  "save 60 100" \
+  "appendonly yes" \
+  "dir /data" \
+  "requirepass ${REDIS_PASSWORD}" \
+  > /usr/local/etc/redis/redis.conf
+
+CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
