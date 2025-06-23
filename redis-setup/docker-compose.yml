@@ -1,7 +1,7 @@
 services:
   redis:
     build: ./redis  # Points to folder with Dockerfile + redis.conf
-    container_name: redis
+    container_name: redis-development
     ports:
       - "6379:6379"
     volumes:
