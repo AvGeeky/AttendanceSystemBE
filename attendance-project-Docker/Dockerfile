@@ -9,6 +9,7 @@ COPY target/attendance.jar app.jar
 
 # App listens on port 8443
 EXPOSE 8443
-
+ENV TZ=Asia/Kolkata
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Run the Spring Boot jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
