@@ -31,7 +31,7 @@ public class SubstitutionDB {
     static {
         try {
             MongoClientSettings settings = MongoClientSettings.builder()
-                    .applyConnectionString(new ConnectionString(uri + "/?serverSelectionTimeoutMS=60000"))
+                    .applyConnectionString(new ConnectionString(uri))
                     .build();
             mongoClient = MongoClients.create(settings);
             database = mongoClient.getDatabase("AttendEz");
