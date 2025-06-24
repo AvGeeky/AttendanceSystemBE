@@ -1,0 +1,12 @@
+mongorestore \
+  --uri="mongodb://admin:securepass123@localhost:27017/AttendEz?authSource=admin" \
+  dump/AttendEz
+
+
+
+---
+
+
+mongodump \
+  --uri="mongodb+srv://murari2310237:3Sv9JnOHvAHxJInt@attendezweb.hz9nys8.mongodb.net/?retryWrites=true&w=majority&appName=AttendEzweb" \
+  --out=dump
