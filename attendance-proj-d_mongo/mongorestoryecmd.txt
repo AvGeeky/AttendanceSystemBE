@@ -8,5 +8,5 @@ mongorestore \
 
 
 mongodump \
-  --uri="mongodb+srv://murari2310237:3Sv9JnOHvAHxJInt@attendezweb.hz9nys8.mongodb.net/?retryWrites=true&w=majority&appName=AttendEzweb" \
+  --uri="..." \
   --out=dump
