@@ -10,7 +10,7 @@ COPY target/attendance.jar app.jar
 # App listens on port 8443
 EXPOSE 8443
 
-# Set Timezone to Asia/Kolkata (or change as needed)
+# Set Timezone to Asia/Kolkata
 ENV TZ=Asia/Kolkata
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 

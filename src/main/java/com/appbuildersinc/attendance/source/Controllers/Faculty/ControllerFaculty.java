@@ -300,14 +300,15 @@ public class ControllerFaculty {
      * Requires a valid JWT in the Authorization header and class details in the request body.
      *
      * @param authorizationHeader The JWT token in the Authorization header.
-     * @param requestBody         The class details in the request body.
+     * @param classCode
+     * @param groupCode
      * @return A ResponseEntity containing the class details or an error message.
      * @throws Exception If there is an error during processing.
      */
     @GetMapping("/faculty/getClassDetails")
     public ResponseEntity<Map<String, Object>> getClassDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                String authorizationHeader,
-                                                               @RequestBody Map<String, Object> requestBody) throws Exception {
+                                                               @RequestParam String classCode, @RequestParam String groupCode) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
 
         //Check if the JWT is valid
@@ -316,8 +317,9 @@ public class ControllerFaculty {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
 
-            String classCode = (String) requestBody.get("classCode");
-            String logicalGroupingCode = (String) requestBody.get("groupCode");
+
+
+            String logicalGroupingCode = groupCode;
             if (classCode == null || classCode.isEmpty() || logicalGroupingCode == null || logicalGroupingCode.isEmpty()) {
                 response.put("status", "E");
                 response.put("message", "Invalid request body. Please provide valid class details.");
@@ -799,7 +801,7 @@ public class ControllerFaculty {
      * @return A ResponseEntity containing the student attendance details or an error message.
      * @throws Exception If there is an error during processing.
      */
-    @GetMapping("/faculty/getStudentAttendanceByClassCode")
+    @PostMapping("/faculty/getStudentAttendanceByClassCode")
     public ResponseEntity<Map<String, Object>> getStudentAttendanceByClassCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String, String> request) throws Exception {
 
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
@@ -837,7 +839,7 @@ public class ControllerFaculty {
      * @return A ResponseEntity containing the lecture attendance details or an error message.
      * @throws Exception If there is an error during processing.
      */
-    @GetMapping("/faculty/getLectureAttendanceByClassCode")
+    @PostMapping("/faculty/getLectureAttendanceByClassCode")
     public ResponseEntity<Map<String, Object>> getLectureAttendanceByClassCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String, String> request) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         String status = (String) claims.get("status");
