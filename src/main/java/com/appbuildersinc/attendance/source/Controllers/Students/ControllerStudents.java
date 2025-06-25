@@ -220,7 +220,7 @@ public class ControllerStudents {
      * @return ResponseEntity with attendance details or error message.
      * @throws Exception if there is an error during processing.
      */
-    @GetMapping("/student/getAttendance")
+    @PostMapping("/student/getAttendance")
     public ResponseEntity <Map<String,Object>> getAttendanceDetails(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request) throws Exception {
 
         Map<String, Object> claims = functionsStudentsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
