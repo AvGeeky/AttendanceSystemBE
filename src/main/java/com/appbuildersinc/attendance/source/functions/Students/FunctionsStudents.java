@@ -3,6 +3,7 @@ package com.appbuildersinc.attendance.source.functions.Students;
 import com.appbuildersinc.attendance.source.Utilities.Email.emailUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPairUtil;
+import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
 import com.appbuildersinc.attendance.source.database.MongoDB.ClassDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
@@ -24,12 +25,12 @@ public class FunctionsStudents {
     private final StudentDB studentDB;
     private emailUtil emailclass;
     private final KeyPairUtil keyclass;
-    private final FacultyJwtUtil jwtclass;
+    private final StudentjwtUtil jwtclass;
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
 
     @Autowired
-    public FunctionsStudents(FacultyDB userdb, ClassDB classDB, StudentDB studentDB, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass) {
+    public FunctionsStudents(FacultyDB userdb, ClassDB classDB, StudentDB studentDB, StudentjwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass) {
         this.userdb = userdb;
         this.classDB = classDB;
         this.studentDB = studentDB;
@@ -56,7 +57,10 @@ public class FunctionsStudents {
         }
 
         Map<String, Object> claims = jwtclass.parseJwt(jwt);
-        Object error = claims.get("error");
+        Object errObj = claims.get("error");
+        String error = (errObj != null) ? errObj.toString().trim() : "";
+
+
 
         // Check if the JWT is expired or invalid
         if ("Token expired".equals(error)) {
@@ -64,15 +68,15 @@ public class FunctionsStudents {
             response.put("message", "Login Expired. Please re-login.");
             return response;
         }
+        if ("Invalid token".equalsIgnoreCase(error)) {
+            //System.out.println("Invalid token2");
+            response.put("status", "TO");
+            response.put("message", "Invalid Login Token. Please re-login.");
+            return response;
+        }
         if (!claims.get("role").equals("STUDENT")) {
             response.put("status", "E");
             response.put("message", "NOT AUTHORIZED.");
-            return response;
-        }
-
-        if ("Invalid token".equals(error)) {
-            response.put("status", "TO");
-            response.put("message", "Invalid Login Token. Please re-login.");
             return response;
         }
 

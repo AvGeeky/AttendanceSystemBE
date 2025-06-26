@@ -111,7 +111,7 @@ public class LogicalGroupingDB {
         List<String> registernumbers=(List<String>)group.get("registernumbers");
         Boolean done=registernumbers.remove(registernumber);
         if(done){
-            System.out.println("Register number removed from grouping");
+            //System.out.println("Register number removed from grouping");
             return collection.updateOne(query,new Document("$set",new Document("registernumbers",registernumbers))).getModifiedCount()>0;
         }
         else{
