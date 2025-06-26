@@ -138,6 +138,10 @@ public class FunctionsFaculty {
     }
 
     public boolean updateMenteeList(String email, List<String> menteeList, String reset) {
+       Map<String,Object> faculty =facultyDB.getUserDetailsByEmail(email);
+       if(((String)faculty.get("mentor")).equals("False")){
+           return false;
+       }
         return facultyDB.updateMenteeListByEmail(email, menteeList, reset);
     }
 
