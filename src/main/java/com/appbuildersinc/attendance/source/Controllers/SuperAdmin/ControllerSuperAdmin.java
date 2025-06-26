@@ -138,7 +138,7 @@ public class ControllerSuperAdmin {
 
             if(studentDbClass.insertStudentsByAdmin(studlist,dept)){
                 response.put("status","S");
-                response.put("message","inserted student details successfully");
+                response.put("message","inserted all new students and their details successfully");
                 return ResponseEntity.ok(response);
             }
             else{
@@ -410,7 +410,7 @@ public class ControllerSuperAdmin {
             }
             else{
                 response.put("status","E");
-                response.put("message","student details not deleted");
+                response.put("message","Student details not deleted successfully. Check register numbers or some other error occurred");
                 return ResponseEntity.status(503).body(response);
             }
         }
