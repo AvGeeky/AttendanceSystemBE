@@ -62,7 +62,8 @@ public class FunctionsSuperAdmin {
         }
 
         Map<String, Object> claims = adminjwtclass.parseJwt(jwt);
-        Object error = claims.get("error");
+        Object errObj = claims.get("error");
+        String error = (errObj != null) ? errObj.toString().trim() : "";
 
         // Check if the JWT is expired or invalid
         if ("Token expired".equals(error)) {
@@ -70,15 +71,14 @@ public class FunctionsSuperAdmin {
             response.put("message", "Login Expired. Please re-login.");
             return response;
         }
-        if (!claims.get("role").equals("ADMIN")) {
-            response.put("status", "E");
-            response.put("message", "NOT AUTHORIZED.");
-            return response;
-        }
-
         if ("Invalid token".equals(error)) {
             response.put("status", "TO");
             response.put("message", "Invalid Login Token. Please re-login.");
+            return response;
+        }
+        if (!claims.get("role").equals("ADMIN")) {
+            response.put("status", "E");
+            response.put("message", "NOT AUTHORIZED.");
             return response;
         }
 

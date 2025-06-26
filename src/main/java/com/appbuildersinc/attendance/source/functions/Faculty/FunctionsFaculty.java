@@ -59,7 +59,8 @@ public class FunctionsFaculty {
         }
 
         Map<String, Object> claims = jwtclass.parseJwt(jwt);
-        Object error = claims.get("error");
+        Object errObj = claims.get("error");
+        String error = (errObj != null) ? errObj.toString().trim() : "";
 
         // Check if the JWT is expired or invalid
         if ("Token expired".equals(error)) {
@@ -88,7 +89,8 @@ public class FunctionsFaculty {
         }
 
         Map<String, Object> claims = jwtclass.parseJwt(jwt);
-        Object error = claims.get("error");
+        Object errObj = claims.get("error");
+        String error = (errObj != null) ? errObj.toString().trim() : "";
 
         // Check if the JWT is expired or invalid
         if ("Token expired".equals(error)) {
@@ -96,17 +98,18 @@ public class FunctionsFaculty {
             response.put("message", "Login Expired. Please re-login.");
             return response;
         }
-        if (!claims.get("role").equals("FACULTY")) {
-            response.put("status", "E");
-            response.put("message", "NOT AUTHORIZED.");
-            return response;
-        }
+
         if ("Invalid token".equals(error)) {
             response.put("status", "TO");
             response.put("message", "Invalid Login Token. Please re-login.");
             return response;
         }
 
+        if (!claims.get("role").equals("FACULTY")) {
+            response.put("status", "E");
+            response.put("message", "NOT AUTHORIZED.");
+            return response;
+        }
         //return the claims if valid
         if ((boolean)claims.get("authorised")) {
             claims.put("status", "S");

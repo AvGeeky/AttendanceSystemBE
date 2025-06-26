@@ -268,7 +268,7 @@ public class FunctionsAttendance {
         overlap.retainAll(absentSet); // this keeps only common elements
 
         if (!overlap.isEmpty()) {
-            System.err.println("Error: Students marked both present and absent: " + overlap);
+           // System.err.println("Error: Students marked both present and absent: " + overlap);
             return false;
         }
 
@@ -278,7 +278,7 @@ public class FunctionsAttendance {
 
         for (String regno : allStudents) {
             if (!regnoHmacMapping.containsKey(regno)) {
-                System.err.println("Error: Unregistered student: " + regno);
+                //System.err.println("Error: Unregistered student: " + regno);
                 return false;
             }
         }
