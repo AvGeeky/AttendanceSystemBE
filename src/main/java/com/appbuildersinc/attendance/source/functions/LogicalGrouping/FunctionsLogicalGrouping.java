@@ -48,6 +48,12 @@ public class FunctionsLogicalGrouping {
         if (advisorEmail != null && !userdb.isEmailAllowed(advisorEmail)) {
             return false; // Invalid advisor email
         }
+        List<String> regNumbers = (List<String>) group.get("registernumbers");
+        for (String regNo : regNumbers) {
+            if (!studentdb.doesRegisterNumberExist(regNo)) {
+                return false; // Invalid register number
+            }
+        }
 
         boolean isElective = (advisorEmail == null);
 
@@ -56,7 +62,7 @@ public class FunctionsLogicalGrouping {
             classCodes.set(i, classCodes.get(i) + section);
         }
 
-        List<String> regNumbers = (List<String>) group.get("registernumbers");
+
 
         // Build groupcode
         String electiveName = "";
