@@ -186,8 +186,7 @@ public class AsyncEmailSenderUtil {
                     <strong>Faculty:</strong> %s<br>
                     <strong>Email:</strong> %s<br>
                     <strong>Credits:</strong> %s<br>
-                    <strong>Passout Year:</strong> %s<br>
-                    <strong>Total Students:</strong> %s
+                    <strong>Passout Year:</strong> %s
                 </p>
                 <hr style='border:none;border-top:1px solid #DDDDDD;margin:24px 0;'>
                 <h3 style='color:#0055A4;font-size:1.2rem;margin-bottom:12px;'>Timetable</h3>
