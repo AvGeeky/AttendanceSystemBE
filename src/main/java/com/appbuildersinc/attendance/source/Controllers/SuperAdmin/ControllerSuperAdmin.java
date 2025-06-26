@@ -215,7 +215,7 @@ public class ControllerSuperAdmin {
             }
             else{
                 response.put("status","E");
-                response.put("message","logical grouping not inserted or updated successfully. Either all class codes are not present in the timetable/no changes made or some other error occurred");
+                response.put("message","logical grouping not inserted or updated successfully. Either all class codes are not present in the timetable/no changes made/teacher not present or some other error occurred");
                 return ResponseEntity.status(503).body(response);
             }
 

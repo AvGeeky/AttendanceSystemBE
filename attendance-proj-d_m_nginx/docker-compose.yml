@@ -1,0 +1,75 @@
+services:
+  redis:
+    build:
+      context: ./redis-setup
+      dockerfile: Dockerfile
+      args:
+        REDIS_PASSWORD: ${REDIS_PASSWORD}
+    container_name: attendance-redis-v3
+    expose:
+      - "6379"
+    volumes:
+      - redis-data:/data
+    restart: always
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "sh", "-c", "redis-cli -a \"$REDIS_PASSWORD\" ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    networks: [backend]
+
+  mongodb:
+    build:
+      context: ./mongo-setup
+      dockerfile: Dockerfile
+    container_name: attendance-mongo-v3
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    healthcheck:
+      test: [ "CMD", "mongosh", "--username", "${MONGO_USERNAME}", "--password", "${MONGO_PASSWORD}", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks: [backend]
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: attendance-app-v3
+    expose:
+      - "8443"
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    networks: [backend]
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: attendance-nginx-v3
+    ports:
+      - "8443:80"  # Expose port 80 of the nginx container to port 8443 on the host
+    depends_on:
+      - app
+    networks: [backend]
+volumes:
+  redis-data:
+  mongo-data:
+networks:
+  backend:

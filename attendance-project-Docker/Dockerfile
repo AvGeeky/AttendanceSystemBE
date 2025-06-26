@@ -1,5 +1,5 @@
 # Use official Eclipse Temurin JDK 24 base image 
-FROM eclipse-temurin:24-jdk
+FROM eclipse-temurin:21-jdk
 
 # Set working directory
 WORKDIR /app
