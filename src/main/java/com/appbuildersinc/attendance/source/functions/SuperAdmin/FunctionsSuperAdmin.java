@@ -108,10 +108,12 @@ public class FunctionsSuperAdmin {
         }
     }
     public Boolean deleteStudent(List<String> registernumbers){
-        for(String registernumber:registernumbers){
-            if (!studentdb.doesRegisterNumberExist(registernumber)){
+        for(String registernumber:registernumbers) {
+            if (!studentdb.doesRegisterNumberExist(registernumber)) {
                 return false;
             }
+        } //FOR IDEMPOTENCY OF DELETES
+        for(String registernumber:registernumbers){
             Map<String,Object> studentdetails=studentdb.getStudentDetailsByRegisterNumber(registernumber);
             List<String> registeredclasses=(List<String>)studentdetails.get("registeredClasses");
 

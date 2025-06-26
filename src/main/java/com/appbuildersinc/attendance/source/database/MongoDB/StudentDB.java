@@ -73,28 +73,32 @@ public class StudentDB {
                 query, update, new com.mongodb.client.model.UpdateOptions().upsert(true));
         return result.getModifiedCount() > 0 || result.getUpsertedId() != null;
     }
-    public Boolean insertStudentsByAdmin( List<Map <String,String>> studlist,String dept) throws Exception {
-        List<Document> studentdocs=new ArrayList<>();
-        for(Map<String,String> studlist1:studlist) {
-           Document doc = new Document("email", studlist1.get("email"))
-                   .append("name", studlist1.get("name"))
-                   .append("registerNumber", studlist1.get("registerNumber"))
-                   .append("department", dept)
-                   .append("passout", studlist1.get("passout"))
-                   .append("course", studlist1.get("course"))
-                   .append("degree", studlist1.get("degree"))
-                   .append("digitalid", studlist1.get("digitalid"))
-                   .append("hmacpasscode", generateHmacPasscode(studlist1.get("email")));
-           studentdocs.add(doc);
-       }
-       if(!studentdocs.isEmpty()){
-           collection.insertMany(studentdocs);
-           return true;
-       }
-       else{
-           return false;
-       }
+    public Boolean insertStudentsByAdmin(List<Map<String, String>> studlist, String dept) throws Exception {
+        List<Document> studentdocs = new ArrayList<>();
+        for (Map<String, String> stud : studlist) {
+            String regNo = stud.get("registerNumber");
+            if (regNo == null || doesRegisterNumberExist(regNo)) {
+                continue;
+            }
+            Document doc = new Document("email", stud.get("email"))
+                    .append("name", stud.get("name"))
+                    .append("registerNumber", regNo)
+                    .append("department", dept)
+                    .append("passout", stud.get("passout"))
+                    .append("course", stud.get("course"))
+                    .append("degree", stud.get("degree"))
+                    .append("digitalid", stud.get("digitalid"))
+                    .append("hmacpasscode", generateHmacPasscode(stud.get("email")));
+            studentdocs.add(doc);
+        }
+        if (!studentdocs.isEmpty()) {
+            collection.insertMany(studentdocs);
+            return true;
+        } else {
+            return false;
+        }
     }
+
     public List<Map<String,Object>> getListOfAllStudentDetails(String dept){
            List <Map<String,Object>> students =new ArrayList<>();
            Document doc1=new Document("department",dept);
