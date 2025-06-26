@@ -162,6 +162,12 @@ public class ControllerStudents {
         String email = payload.getEmail();
 
         Map<String,Object> details = studentDbClass.getStudentDetailsByEmail(email);
+        if (details == null || details.isEmpty()) {
+            //  If student details are not found, return error
+            response.put("status", "E");
+            response.put("message", "Student not registered. Please contact the administration.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // 401
+        }
         Map<String, Object> claims = studentjwtUtil.createClaims(email, true,details.get("department").toString(),details.get("registerNumber").toString());
         String jwt = studentjwtUtil.signJwt(claims);
         String hmacPasscode = (String) details.get("hmacpasscode");
