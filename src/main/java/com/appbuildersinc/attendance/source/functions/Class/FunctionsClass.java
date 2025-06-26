@@ -68,6 +68,12 @@ public class FunctionsClass {
     {
 
         Map<String, Object> logicalGrouping = logicalGroupingDB.getLogicalGroupingByCode(groupCode);
+        if (logicalGrouping == null) {
+            return false; // Group code not found
+        }
+        if (!((List<String>) logicalGrouping.get("class-code")).contains(classCode)) {
+            return false; // Class code not found in the logical grouping
+        }
 
         String passoutYear = (String) logicalGrouping.get("passout");
 

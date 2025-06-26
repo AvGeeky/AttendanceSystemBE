@@ -184,7 +184,7 @@ public class ControllerFaculty {
             } else {
                 //Error in creating class
                 response.put("status", "E");
-                response.put("message", "Error in creating / updating class. Make sure you are not creating a duplicate class already taken by another teacher.");
+                response.put("message", "Error in creating / updating class. Make sure you are not creating a duplicate class already taken by another teacher or selecting a classcode not in the logical group.");
                 return ResponseEntity.status(503).body(response);
             }
 
