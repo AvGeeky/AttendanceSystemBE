@@ -290,6 +290,9 @@ public class FunctionsFaculty {
         if (advisordetails == null) {
             return null;
         }
+        if(advisordetails.isEmpty()){
+            return null;
+        }
         Map<String, List<Map<String, Object>>> result = new HashMap<>();
         for (String groupcode : advisordetails.keySet()) {
             List<Map<String, Object>> groupList = new ArrayList<>();
