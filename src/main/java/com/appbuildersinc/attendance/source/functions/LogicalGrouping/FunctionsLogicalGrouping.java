@@ -48,12 +48,13 @@ public class FunctionsLogicalGrouping {
         if (advisorEmail != null && !userdb.isEmailAllowed(advisorEmail)) {
             return false; // Invalid advisor email
         }
-        List<String> regNumbers = (List<String>) group.get("registernumbers");
-        for (String regNo : regNumbers) {
+        Set<String> regNumbersSet = new HashSet<>((List<String>) group.get("registernumbers"));
+        for (String regNo : regNumbersSet) {
             if (!studentdb.doesRegisterNumberExist(regNo)) {
                 return false; // Invalid register number
             }
         }
+        List<String> regNumbers = new ArrayList<>(regNumbersSet);
 
         boolean isElective = (advisorEmail == null);
 
@@ -67,9 +68,15 @@ public class FunctionsLogicalGrouping {
         // Build groupcode
         String electiveName = "";
         if (isElective) {
+            if (section == null || section.isEmpty()) {
+                section = String.valueOf(classCodes.getFirst());
+            }
             for (String eleccode : classCodes) {
                 electiveName += eleccode;
             }
+        }
+        if (!isElective && section == null) {
+            section = "NULL"; // Default section if not provided
         }
         String groupcode = isElective ? dept + electiveName + passout : dept + passout + section;
         Map<String, Object> oldLG = logicalGroupingDB.getLogicalGroupingByCode(groupcode);
