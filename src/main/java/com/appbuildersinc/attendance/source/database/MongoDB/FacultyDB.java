@@ -167,7 +167,7 @@ public class FacultyDB {
                    .append("position",(String)teacher.get("position"))
                    .append("name",(String)teacher.get("name"))
                    .append("mentor",(String)teacher.get("mentor"))
-                   .append("class_advisor",(String)teacher.get("advisor"));
+                   .append("class_advisor","True");
 
             collection.insertOne(doc2);
            return true;
@@ -181,8 +181,8 @@ public class FacultyDB {
                    .append("faculty_email",(String)teacher.get("email"))
                    .append("position",(String)teacher.get("position"))
                    .append("name",(String)teacher.get("name"))
-                   .append("mentor",(String)teacher.get("mentor"))
-                   .append("class_advisor",(String)teacher.get("advisor"));
+                   .append("mentor",(String)teacher.get("mentor"));
+
            return collection.updateOne(doc,new Document("$set", doc3)).getModifiedCount()>0;
        }
     }

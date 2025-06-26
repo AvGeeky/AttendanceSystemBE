@@ -740,7 +740,7 @@ public class ControllerFaculty {
                 return ResponseEntity.ok(response);
             } else {
                 response.put("status", "E");
-                response.put("message", "this teacher is not a mentor");
+                response.put("message", "this teacher is not a mentor or mentee list not there");
                 return ResponseEntity.status(503).body(response);
             }
 
