@@ -42,6 +42,9 @@ public class StudentDB {
     }
     public Map<String,Object> getStudentDetailsByEmail(String email){
         Document query=new Document("email",email);
+        if (query == null || email == null || email.isEmpty()) {
+            return null; // Return null if query is empty or email is null/empty
+        }
         return collection.find(query).first();
     }
 
