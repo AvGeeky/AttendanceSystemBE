@@ -298,13 +298,13 @@ public class ControllerSuperAdmin {
      * @throws Exception If an error occurs during the process.
      */
     @GetMapping("/SuperAdmin/viewAllTeachers")
-    public ResponseEntity<Map<String,Object>> viewAllTeachers(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception{
+    public ResponseEntity<Map<String,Object>> viewAllTeachers(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestParam String department) throws Exception{
         Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response=new HashMap<>();
             String dept=(String)claims.get("dept");
-            List<Map<String,Object>> teacherlist= userdbclass.viewAllTeachers(dept);
+            List<Map<String,Object>> teacherlist= userdbclass.viewAllTeachers(department);
             response.put("status","S");
             response.put("details",teacherlist);
             response.put("message","Faculty details retrieved succesfully!");
