@@ -324,7 +324,8 @@ public class ControllerAttendance {
             if (redisService.isAttendanceTrackingActive(classCode)){
                 response.put("status", "NA");
                 response.put("message", "Attendance tracking is already active for this class.");
-                response.put("codes", redisService.getSingleAttendanceCodes(classCode));
+                List<Object> codeSingle = new ArrayList<>(redisService.getSingleAttendanceCodes(classCode));
+                response.put("codes", codeSingle.get(0));
                 return ResponseEntity.ok(response);
             }
             //generate codes for attendance and initialise redis databases
