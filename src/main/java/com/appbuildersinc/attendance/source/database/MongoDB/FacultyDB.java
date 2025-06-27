@@ -41,13 +41,13 @@ public class FacultyDB {
         }
     }
     // Method to add details of a new faculty member
-    public boolean updateUserDocumentByEmail(String emailId, String name, String department, String position, String mentor) {
+    public boolean updateUserDocumentByEmail(String emailId, String name, String department, String position) {
         Document query = new Document("faculty_email", emailId);
         Document updateFields = new Document()
                 .append("name", name)
                 .append("department", department)
-                .append("position", position)
-                .append("mentor", mentor);
+                .append("position", position);
+
         Document update = new Document("$set", updateFields);
         return collection.updateOne(query, update).getModifiedCount() > 0;
     }

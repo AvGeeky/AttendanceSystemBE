@@ -696,8 +696,8 @@ public class ControllerFaculty {
             boolean succ = userdbclass.updateUserDocumentByEmail((String) claims.get("email"),
                     (String) requestBody.get("name"),
                     (String) requestBody.get("department"),
-                    (String) requestBody.get("position"),
-                    (String) requestBody.get("mentor"));
+                    (String) requestBody.get("position"));
+
             if (succ) {
                 response.put("status", "S");
                 response.put("message", "User details updated successfully!");
