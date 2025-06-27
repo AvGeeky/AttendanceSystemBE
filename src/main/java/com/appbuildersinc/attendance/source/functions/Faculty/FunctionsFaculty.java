@@ -169,9 +169,9 @@ public class FunctionsFaculty {
 
     }
 
-    public List<Map<String,Object>> getAllLogicalGroupings() {
+    public List<Map<String,Object>> getAllLogicalGroupings(String dept) {
         Set<Map<String, Object>> deptLG = new HashSet<>();
-        deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings());
+        deptLG.addAll(logicalGroupingDB.viewalllogicalgroupings(dept));
         return new ArrayList<>(deptLG);
     }
 

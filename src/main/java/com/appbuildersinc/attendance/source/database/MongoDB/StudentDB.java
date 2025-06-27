@@ -99,13 +99,16 @@ public class StudentDB {
         }
     }
 
-    public List<Map<String,Object>> getListOfAllStudentDetails(String dept){
+    public List<Map<String,Object>> getListOfAllStudentDetails(List<String> depts){
            List <Map<String,Object>> students =new ArrayList<>();
-           Document doc1=new Document("department",dept);
-           for(Document doc: collection.find(doc1)){
-               students.add(new HashMap<>(doc));
-           }
-           return students;
+         for(String dept:depts) {
+             Document doc1 = new Document("department", dept);
+             for (Document doc : collection.find(doc1)) {
+                 students.add(new HashMap<>(doc));
+             }
+         }
+         return students;
+
     }
     public boolean addClassToRegisteredClasses(String regno, String className) {
         Document query = new Document("registerNumber", regno);

@@ -73,13 +73,13 @@ public class LogicalGroupingDB {
     }
 
 
-    public List<Map<String, Object>> viewalllogicalgroupings() {
+   /* public List<Map<String, Object>> viewalllogicalgroupings() {
         List<Map<String, Object>> groupings = new ArrayList<>();
         for (Document doc : collection.find()) {
             groupings.add(new HashMap<>(doc));
         }
         return groupings;
-    }
+    }*/
 
     public List<Map<String, Object>> viewalllogicalgroupings(String dept) {
         List<Map<String, Object>> groupings = new ArrayList<>();
