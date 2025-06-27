@@ -268,6 +268,11 @@ public class FunctionsFaculty {
         if(menteedetails ==null){
             return null;
         }
+        else{
+            if(menteedetails.isEmpty()){
+                return null;
+            }
+        }
         for (String registerno : menteedetails.keySet()) {
             if (!studentdb.doesRegisterNumberExist(registerno)){
                 continue;
