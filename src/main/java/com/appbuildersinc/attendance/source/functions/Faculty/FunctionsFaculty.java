@@ -393,6 +393,9 @@ public class FunctionsFaculty {
                 else{
                     Map<String, Object> classdetail = classDB.getAllClassDetails(classcode);
                     Map<String, Object> classattendance = (Map<String,Object>) classdetail.get("attendance");
+                    if(classattendance==null){
+                        return false;
+                    }
                     String lecture="lecture."+lecturenumber;
                     if(classattendance.get(lecture)==null){
                        // System.out.println("error3");
