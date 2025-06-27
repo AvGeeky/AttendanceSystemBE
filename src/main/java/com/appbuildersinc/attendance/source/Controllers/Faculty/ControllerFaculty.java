@@ -161,7 +161,7 @@ public class ControllerFaculty {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
             String name = (String) requestBody.get("name");
-            String dept = (String) requestBody.get("dept");
+            String dept = (String)claims.get("dept");
             String classCode = (String) requestBody.get("classCode");
             String logicalGroupingCode = (String) requestBody.get("groupCode");
             String credits = (String) requestBody.get("credits");
