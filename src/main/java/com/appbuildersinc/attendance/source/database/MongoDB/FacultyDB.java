@@ -146,7 +146,10 @@ public class FacultyDB {
     }
 
     public List<Map<String,Object>> viewAllTeachers(String dept){
-       Document query=new Document("department",dept);
+        if(dept==""){
+            return null;
+        }
+        Document query=new Document("department",dept);
        List<Map<String,Object>> teacherlist=new ArrayList<>();
        for(Document doc2:collection.find(query)){
            doc2.remove("password");

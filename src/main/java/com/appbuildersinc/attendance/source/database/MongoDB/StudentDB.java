@@ -101,6 +101,12 @@ public class StudentDB {
 
     public List<Map<String,Object>> getListOfAllStudentDetails(List<String> depts){
            List <Map<String,Object>> students =new ArrayList<>();
+           if(depts==null){
+               return null;
+           }
+           if(depts.size()==0){
+               return null;
+           }
          for(String dept:depts) {
              Document doc1 = new Document("department", dept);
              for (Document doc : collection.find(doc1)) {
