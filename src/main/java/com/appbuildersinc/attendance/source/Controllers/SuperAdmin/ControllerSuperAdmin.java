@@ -163,15 +163,16 @@ public class ControllerSuperAdmin {
      *         or status 'E' and an error message if the operation fails.
      * @throws Exception If an error occurs during the process.
      */
-    @GetMapping("/SuperAdmin/viewAllStudents")
-    public ResponseEntity<Map<String,Object>> addStudents(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception {
+    @PostMapping("/SuperAdmin/viewAllStudents")
+    public ResponseEntity<Map<String,Object>> viewStudents(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request) throws Exception {
         Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
         String status=(String)claims.get("status");
 
         if(status.equals("S")){
             List<Map<String,Object>> list=new ArrayList<>();
             Map<String,Object> response=new HashMap<>();
-            list=studentDbClass.getListOfAllStudentDetails((String)claims.get("dept"));
+            List<String> depts=(List<String>)request.get("depts");
+            list=studentDbClass.getListOfAllStudentDetails(depts);
             for(Map<String,Object> l:list){
                 l.remove("_id");
                 l.remove("hmacpasscode");

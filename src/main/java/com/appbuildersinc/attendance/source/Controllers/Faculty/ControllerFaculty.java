@@ -358,14 +358,14 @@ public class ControllerFaculty {
      */
     @GetMapping("/faculty/getAllLogicalGroupings")
     public ResponseEntity<Map<String, Object>> getAllLogicalGroupings(@RequestHeader(HttpHeaders.AUTHORIZATION)
-                                                                      String authorizationHeader) throws Exception {
+                                                                      String authorizationHeader,@RequestParam String department) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
-            List<Map<String, Object>> logicalGroupings = functionsFacultyService.getAllLogicalGroupings();
+            List<Map<String, Object>> logicalGroupings = functionsFacultyService.getAllLogicalGroupings(department);
             response.put("status", "S");
             response.put("message", "Logical groupings retrieved successfully!");
             response.put("logical_groupings", logicalGroupings);
