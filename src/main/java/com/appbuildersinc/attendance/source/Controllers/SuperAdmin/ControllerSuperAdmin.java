@@ -168,19 +168,27 @@ public class ControllerSuperAdmin {
         Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
         String status=(String)claims.get("status");
 
-        if(status.equals("S")){
-            List<Map<String,Object>> list=new ArrayList<>();
-            Map<String,Object> response=new HashMap<>();
-            List<String> depts=(List<String>)request.get("depts");
-            list=studentDbClass.getListOfAllStudentDetails(depts);
-            for(Map<String,Object> l:list){
-                l.remove("_id");
-                l.remove("hmacpasscode");
+        if(status.equals("S")) {
+            List<Map<String, Object>> list = new ArrayList<>();
+            Map<String, Object> response = new HashMap<>();
+            List<String> depts = (List<String>) request.get("depts");
+            list = studentDbClass.getListOfAllStudentDetails(depts);
+            if (list != null) {
+                for (Map<String, Object> l : list) {
+                    l.remove("_id");
+                    l.remove("hmacpasscode");
+                }
+                response.put("status", "S");
+                response.put("details", list);
+                response.put("message", "student details retrieved sucessfuly");
+                return ResponseEntity.ok(response);
             }
-            response.put("status","S");
-            response.put("details",list);
-            response.put("message","student details retrieved sucessfuly");
-            return ResponseEntity.ok(response);
+            else{
+                response.put("status","E");
+                response.put("message","department list is null or empty");
+                return ResponseEntity.status(503).body(response);
+            }
+
         }
         else{
             return ResponseEntity.status(401).body(claims);
@@ -303,12 +311,21 @@ public class ControllerSuperAdmin {
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response=new HashMap<>();
-            String dept=(String)claims.get("dept");
+            //String dept=(String)claims.get("dept");
+            System.out.println(department);
             List<Map<String,Object>> teacherlist= userdbclass.viewAllTeachers(department);
-            response.put("status","S");
-            response.put("details",teacherlist);
-            response.put("message","Faculty details retrieved succesfully!");
-            return ResponseEntity.ok(response);
+            if(teacherlist!=null) {
+                response.put("status", "S");
+                response.put("details", teacherlist);
+                response.put("message", "Faculty details retrieved succesfully!");
+                return ResponseEntity.ok(response);
+            }
+            else{
+                response.put("status","E");
+                response.put("message","department would have passed as null");
+                return ResponseEntity.status(503).body(response);
+            }
+
         }
         else{
             return ResponseEntity.status(401).body(claims);
