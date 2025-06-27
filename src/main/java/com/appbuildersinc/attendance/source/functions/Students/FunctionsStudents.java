@@ -162,14 +162,19 @@ public class FunctionsStudents {
     public Map<String,Map<String,Map<String,Integer>>> getAttendance(List<String> classcodes, String email) {
         Map<String, Map<String, Map<String,Integer>>> result = new HashMap<>();
         Map<String, Object> student = studentDB.getStudentDetailsByEmail(email);
+        List<String> classcodesstudlist = (List<String>) student.get("registeredClasses");
+        if(classcodesstudlist==null){
+            return null;
+        }
         if (classcodes == null) {
 
-            classcodes = (List<String>) student.get("registeredClasses");
+            classcodes =classcodesstudlist;
 
 
         }
         else {
-            List<String> classcodesstudlist = (List<String>) student.get("registeredClasses");
+            //List<String> classcodesstudlist = (List<String>) student.get("registeredClasses");
+
             for (String classcode : classcodes) {
                 if (classcodesstudlist.indexOf(classcode)==-1){
                     return null;
