@@ -163,14 +163,18 @@ public class FunctionsStudents {
         Map<String, Map<String, Map<String,Integer>>> result = new HashMap<>();
         Map<String, Object> student = studentDB.getStudentDetailsByEmail(email);
         List<String> classcodesstudlist = (List<String>) student.get("registeredClasses");
-        if(classcodesstudlist==null){
+
+        if(classcodesstudlist==null ||classcodesstudlist.isEmpty()){
             return null;
         }
         if (classcodes == null) {
 
             classcodes =classcodesstudlist;
+            System.out.println(classcodes);
 
-
+        }
+        else if(classcodes.isEmpty()){
+            return null;
         }
         else {
             //List<String> classcodesstudlist = (List<String>) student.get("registeredClasses");

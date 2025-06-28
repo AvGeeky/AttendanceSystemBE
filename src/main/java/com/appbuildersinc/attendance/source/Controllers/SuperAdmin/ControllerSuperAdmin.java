@@ -5,6 +5,7 @@ import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.Passwo
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
+import com.appbuildersinc.attendance.source.Utilities.jsonVerifier.JsonVerifier;
 import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
@@ -58,9 +59,9 @@ public class ControllerSuperAdmin {
     private final StudentDB studentDbClass;
     private final SuperAdminDB SuperAdminDbClass;
     private final LogicalGroupingDB logicalGroupingDbClass;
-
+    private final JsonVerifier  jsonverifier;
     @Autowired
-    public ControllerSuperAdmin(FunctionsLogicalGrouping functionsLogicalGroupingService, FunctionsSuperAdmin fsa, FunctionsClass functionsClassService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
+    public ControllerSuperAdmin(FunctionsLogicalGrouping functionsLogicalGroupingService, FunctionsSuperAdmin fsa, FunctionsClass functionsClassService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, JsonVerifier jsonverifier) {
         this.functionsClassService = functionsClassService;
         this.functionsLogicalGroupingService= functionsLogicalGroupingService;
         this.functionsSuperAdminService = fsa;
@@ -72,6 +73,7 @@ public class ControllerSuperAdmin {
         this.adminjwtUtil=adminutil;
         this.SuperAdminDbClass=SuperAdminDbClass;
         this.logicalGroupingDbClass = logicalGroupingDbClass;
+        this.jsonverifier = jsonverifier;
     }
 
     @GetMapping("/test/genHash")
@@ -216,6 +218,10 @@ public class ControllerSuperAdmin {
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response=new HashMap<>();
+            Map<String,Object> bodycheck =jsonverifier.jsonbodycheck(List.of("degree","class-code", "passout","section","registernumbers","timetable"),group);
+            if(((String)bodycheck.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(bodycheck);
+            }
             boolean done=functionsLogicalGroupingService.insertLogicalGrouping(group,(String)claims.get("dept"),(String)claims.get("email"));
             if(done){
                 response.put("status","S");
@@ -275,6 +281,10 @@ public class ControllerSuperAdmin {
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response=new HashMap<>();
+            Map<String,Object> requestbody=jsonverifier.jsonbodycheck(List.of("groupid"),groupid);
+            if(((String)requestbody.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(requestbody);
+            }
             Boolean done=functionsLogicalGroupingService.deleteLogicalGroup((String)claims.get("dept"),(String)groupid.get("groupid"));
             if(done){
                 response.put("status","S");
@@ -314,15 +324,18 @@ public class ControllerSuperAdmin {
             //String dept=(String)claims.get("dept");
             System.out.println(department);
             List<Map<String,Object>> teacherlist= userdbclass.viewAllTeachers(department);
-            if(teacherlist!=null) {
+            System.out.println("Teacher list: " + teacherlist);
+
+            if(teacherlist!=null && !(teacherlist.isEmpty())) {
                 response.put("status", "S");
                 response.put("details", teacherlist);
                 response.put("message", "Faculty details retrieved succesfully!");
                 return ResponseEntity.ok(response);
             }
+
             else{
                 response.put("status","E");
-                response.put("message","department would have passed as null");
+                response.put("message","department would have passed as null or no such dept exisits ");
                 return ResponseEntity.status(503).body(response);
             }
 
@@ -353,6 +366,10 @@ public class ControllerSuperAdmin {
        if(status.equals("S")){
            Map<String,Object> response=new HashMap<>();
            String dept=(String)claims.get("dept");
+           Map<String,Object>bodycheck=jsonverifier.jsonbodycheck(List.of("email", "position", "name", "mentor"), faculty);
+           if(((String)bodycheck.get("status")).equals("E")){
+               return ResponseEntity.status(400).body(bodycheck);
+           }
            boolean done=userdbclass.addorUpdateTeachers(dept,faculty);
            if(done){
                response.put("Status","S");
@@ -383,12 +400,16 @@ public class ControllerSuperAdmin {
     *         or status 'E' and an error message if the operation fails.
     * @throws Exception If an error occurs during the process.
     */
-   @PostMapping("/SuperAdmin/deleteTeacher")
-    public ResponseEntity<Map<String,Object>> deleteFaculty(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,String> request) throws Exception {
+   @DeleteMapping("/SuperAdmin/deleteTeacher")
+    public ResponseEntity<Map<String,Object>> deleteFaculty(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request) throws Exception {
        Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
        String status=(String)claims.get("status");
        if(status.equals("S")){
            Map<String,Object> response=new HashMap<>();
+           Map<String,Object> bodycheck=jsonverifier.jsonbodycheck(List.of("email"),request);
+           if(((String)bodycheck.get("status")).equals("E")){
+               return ResponseEntity.status(400).body(bodycheck);
+           }
            boolean done=functionsSuperAdminService.deleteTeacher((String)request.get("email"));
 
            if(done){
@@ -414,12 +435,16 @@ public class ControllerSuperAdmin {
      * @return A response entity with status 'S' and a success message if the operation is successful,
      * @throws Exception
      */
-    @PostMapping("/SuperAdmin/deleteStudents")
+    @DeleteMapping("/SuperAdmin/deleteStudents")
     public ResponseEntity<Map<String,Object>> deleteStudents(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> request) throws Exception {
         Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response =new HashMap<>();
+            Map<String,Object> bodycheck=jsonverifier.jsonbodycheck(List.of("registernumbers"),request);
+            if(((String)bodycheck.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(bodycheck);
+            }
             Boolean done=functionsSuperAdminService.deleteStudent((List<String>)request.get("registernumbers"));
             if(done){
                 response.put("status","S");

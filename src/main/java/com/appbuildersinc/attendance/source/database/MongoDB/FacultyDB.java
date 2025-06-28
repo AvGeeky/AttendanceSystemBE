@@ -146,9 +146,11 @@ public class FacultyDB {
     }
 
     public List<Map<String,Object>> viewAllTeachers(String dept){
-        if(dept==""){
+        if (dept == null || dept.trim().isEmpty()) {
             return null;
         }
+
+        System.out.println("dept"+dept);
         Document query=new Document("department",dept);
        List<Map<String,Object>> teacherlist=new ArrayList<>();
        for(Document doc2:collection.find(query)){
