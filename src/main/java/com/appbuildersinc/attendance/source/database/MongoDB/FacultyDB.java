@@ -142,7 +142,8 @@ public class FacultyDB {
     // Method to get user name by email
     public String getUserNameByEmail(String email) {
         Document query = new Document("faculty_email", email);
-        return collection.find(query).first().getString("name");
+        Document user = collection.find(query).first();
+        return user != null ? user.getString("name") : null;
     }
 
     public List<Map<String,Object>> viewAllTeachers(String dept){
@@ -150,7 +151,7 @@ public class FacultyDB {
             return null;
         }
 
-        System.out.println("dept"+dept);
+       // System.out.println("dept"+dept);
         Document query=new Document("department",dept);
        List<Map<String,Object>> teacherlist=new ArrayList<>();
        for(Document doc2:collection.find(query)){

@@ -1,7 +1,6 @@
 package com.appbuildersinc.attendance.source.functions.Students;
 
 import com.appbuildersinc.attendance.source.Utilities.Email.emailUtil;
-import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPairUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
@@ -47,7 +46,7 @@ public class FunctionsStudents {
     public String googleClientId = System.getenv("GOOGLE_CLIENT_ID");
 
 
-    public Map<String, Object> checkJwtAuthAfterLoginStudent(String jwt) throws Exception {
+    public Map<String, Object> checkJwtAuthAfterLoginStudent(String jwt) {
         HashMap<String, Object> response = new HashMap<>();
         // Check if the JWT is null or empty
         if (jwt == null) {
@@ -144,7 +143,7 @@ public class FunctionsStudents {
         return result;
     }
 
-    public static Map<String, List<Map<String, Object>>> mergeTimetables(List<Map<String, List<Map<String, Object>>>> timetables) {
+    public Map<String, List<Map<String, Object>>> mergeTimetables(List<Map<String, List<Map<String, Object>>>> timetables) {
         Map<String, List<Map<String, Object>>> merged = new HashMap<>();
 
         for (Map<String, List<Map<String, Object>>> timetable : timetables) {
@@ -164,13 +163,14 @@ public class FunctionsStudents {
         Map<String, Object> student = studentDB.getStudentDetailsByEmail(email);
         List<String> classcodesstudlist = (List<String>) student.get("registeredClasses");
 
+
         if(classcodesstudlist==null ||classcodesstudlist.isEmpty()){
             return null;
         }
         if (classcodes == null) {
 
             classcodes =classcodesstudlist;
-            System.out.println(classcodes);
+           // System.out.println(classcodes);
 
         }
         else if(classcodes.isEmpty()){
@@ -180,7 +180,7 @@ public class FunctionsStudents {
             //List<String> classcodesstudlist = (List<String>) student.get("registeredClasses");
 
             for (String classcode : classcodes) {
-                if (classcodesstudlist.indexOf(classcode)==-1){
+                if (!classcodesstudlist.contains(classcode)){
                     return null;
                 }
             }
@@ -190,7 +190,7 @@ public class FunctionsStudents {
         for (String classcode : classcodes) {
             Map<String, Object> classdetail = classDB.getAllClassDetails(classcode);
             //System.out.println(classdetail);
-            Map<String,Map<String,Integer>> classattendance=new HashMap<>();
+            Map<String,Map<String,Integer>> classattendance;
             //System.out.println("classcode"+classcode);
             classattendance = (Map<String, Map<String, Integer>>) classdetail.get("attendance");
             if (classattendance == null) {

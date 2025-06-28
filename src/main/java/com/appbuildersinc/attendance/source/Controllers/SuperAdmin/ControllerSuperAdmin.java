@@ -77,26 +77,28 @@ public class ControllerSuperAdmin {
     }
 
     @GetMapping("/test/genHash")
-    public ResponseEntity<String> generateHash(@RequestParam String password) throws Exception {
+    public ResponseEntity<String> generateHash(@RequestParam String password) {
         return ResponseEntity.ok((PasswordUtil.hashPassword(password)));
     }
 
     /**
-     * <b>Login Endpoint for Super Admin</b>
-     * <p>
-     * This endpoint allows the Super Admin to log in using their email and password.
-     * It returns a JWT token upon successful authentication.
+     * Endpoint: `/SuperAdmin/login`
+     * Allows the Super Admin to log in using their email and password.
+     * Expects a JSON body with `email` and `password` fields.
+     * Returns a JWT token and user details upon successful authentication.
      *
-     * @param email    The email of the Super Admin.
-     * @param password The password of the Super Admin.
-     * @return A response entity containing the status, message, and JWT token if login is successful.
-     * @throws Exception If an error occurs during the login process.
+     * @param credentials A map containing `email` and `password` keys.
+     * @return ResponseEntity with status, message, user details, and JWT token if login is successful.
      */
-    @GetMapping("/SuperAdmin/login")
-    public ResponseEntity<Map<String,Object>> adminlogin(@RequestParam String email,
-                                                    @RequestParam String password
-                                                        ) throws Exception {
-        Map <String,Object> response=new HashMap();
+    @PostMapping("/SuperAdmin/login")
+    public ResponseEntity<Map<String,Object>> adminlogin(@RequestBody Map<String,Object> credentials) {
+        Map <String,Object> response=new HashMap<>();
+        Map<String,Object> bodycheck = jsonverifier.jsonbodycheck(List.of("email","password"),credentials);
+        if(((String)bodycheck.get("status")).equals("E")){
+            return ResponseEntity.status(400).body(bodycheck);
+        }
+        String email=(String)credentials.get("email");
+        String password=(String)credentials.get("password");
         if(functionsSuperAdminService.attemptloginadmin(email,password)){
             response.put("status","S");
             response.put("message","Login Successful!");
@@ -171,7 +173,7 @@ public class ControllerSuperAdmin {
         String status=(String)claims.get("status");
 
         if(status.equals("S")) {
-            List<Map<String, Object>> list = new ArrayList<>();
+            List<Map<String, Object>> list;
             Map<String, Object> response = new HashMap<>();
             List<String> depts = (List<String>) request.get("depts");
             list = studentDbClass.getListOfAllStudentDetails(depts);
@@ -275,7 +277,7 @@ public class ControllerSuperAdmin {
             return ResponseEntity.status(401).body(claims);
         }
     }
-    @PostMapping("/SuperAdmin/deleteGrouping")
+    @DeleteMapping("/SuperAdmin/deleteGrouping")
     public ResponseEntity<Map<String,Object>> deletegrouping(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody Map<String,Object> groupid) throws Exception {
         Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
         String status=(String)claims.get("status");
@@ -321,10 +323,10 @@ public class ControllerSuperAdmin {
         String status=(String)claims.get("status");
         if(status.equals("S")){
             Map<String,Object> response=new HashMap<>();
-            //String dept=(String)claims.get("dept");
-            System.out.println(department);
+
+            //System.out.println(department);
             List<Map<String,Object>> teacherlist= userdbclass.viewAllTeachers(department);
-            System.out.println("Teacher list: " + teacherlist);
+            //System.out.println("Teacher list: " + teacherlist);
 
             if(teacherlist!=null && !(teacherlist.isEmpty())) {
                 response.put("status", "S");
