@@ -173,37 +173,38 @@ public class AsyncEmailSenderUtil {
         }
 
         return String.format("""
-        <div style='background:linear-gradient(135deg,#e0e7ff 0%%,#f7f9fa 100%%);padding:40px 0;font-family:Segoe UI,Arial,sans-serif; background-image: url("data:image/svg+xml,%%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%%3E%%3Ccircle cx='50' cy='50' r='40' fill='%%23E6F4EA' /%%3E%%3C/svg%%3E"); background-repeat: repeat;'>
-            <div style='max-width:540px;margin:auto;background:#FFFFFF;border-radius:18px;box-shadow:0 4px 24px rgba(0,0,0,0.1);padding:40px 32px;'>
-                <div style='text-align:center;margin-bottom:24px;'>
-                    <h3 style='color:#0055A4;font-size:2rem;margin:0 0 8px 0;'>A Class has been transferred to you.</h3>
-                    <h2 style='color:#0055A4;font-size:2rem;margin:0 0 8px 0;'>Class Details - %s</h2>
-                </div>
-                <p style='font-size:16px;color:#333;margin-bottom:20px;'>
-                    <strong>Subject:</strong> %s<br>
-                    <strong>Class Code:</strong> %s<br>
-                    <strong>Department:</strong> %s<br>
-                    <strong>Faculty:</strong> %s<br>
-                    <strong>Email:</strong> %s<br>
-                    <strong>Credits:</strong> %s<br>
-                    <strong>Passout Year:</strong> %s
-                </p>
-                <hr style='border:none;border-top:1px solid #DDDDDD;margin:24px 0;'>
-                <h3 style='color:#0055A4;font-size:1.2rem;margin-bottom:12px;'>Timetable</h3>
-                <ul style='list-style:none;padding:0;color:#444;font-size:15px;line-height:1.6;'>
-                    %s
-                </ul>
-                <hr style='border:none;border-top:1px solid #DDDDDD;margin:24px 0;'>
-                <h3 style='color:#0055A4;font-size:1.2rem;margin-bottom:12px;'>Registered Students</h3>
-                <div style='background-color:#F4F6F8;padding:16px;border-radius:10px;font-size:14px;color:#222;'>
-                    %s
-                </div>
-                <p style='color:#999;font-size:12px;text-align:center;margin-top:30px;'>
-                    Sent by AttendEz App &copy; 2025. Please do not reply directly to this email.
-                </p>
-            </div>
+<div style='background:linear-gradient(135deg,#e0e7ff 0%%,#f7f9fa 100%%);padding:40px 0;font-family:Segoe UI,Arial,sans-serif; background-image: url("data:image/svg+xml,%%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%%3E%%3Ccircle cx='50' cy='50' r='40' fill='%%23E6F4EA' /%%3E%%3C/svg%%3E"); background-repeat: repeat;'>
+    <div style='max-width:540px;margin:auto;background:#FFFFFF;border-radius:18px;box-shadow:0 4px 24px rgba(0,0,0,0.1);padding:40px 32px;'>
+        <div style='text-align:center;margin-bottom:24px;'>
+            <h3 style='color:#0055A4;font-size:2rem;margin:0 0 8px 0;'>A Class has been transferred to you.</h3>
+            <h2 style='color:#0055A4;font-size:2rem;margin:0 0 8px 0;'>Class Details - %s</h2>
         </div>
-        """,
+        <p style='font-size:16px;color:#333;margin-bottom:20px;'>
+            <strong>Subject:</strong> %s<br>
+            <strong>Class Code:</strong> %s<br>
+            <strong>Department:</strong> %s<br>
+            <strong>Faculty:</strong> %s<br>
+            <strong>Email:</strong> %s<br>
+            <strong>Credits:</strong> %s<br>
+            <strong>Passout Year:</strong> %s<br>
+            <strong>No. of Students:</strong> %d
+        </p>
+        <hr style='border:none;border-top:1px solid #DDDDDD;margin:24px 0;'>
+        <h3 style='color:#0055A4;font-size:1.2rem;margin-bottom:12px;'>Timetable</h3>
+        <ul style='list-style:none;padding:0;color:#444;font-size:15px;line-height:1.6;'>
+            %s
+        </ul>
+        <hr style='border:none;border-top:1px solid #DDDDDD;margin:24px 0;'>
+        <h3 style='color:#0055A4;font-size:1.2rem;margin-bottom:12px;'>Registered Students</h3>
+        <div style='background-color:#F4F6F8;padding:16px;border-radius:10px;font-size:14px;color:#222;'>
+            %s
+        </div>
+        <p style='color:#999;font-size:12px;text-align:center;margin-top:30px;'>
+            Sent by AttendEz App &copy; 2025. Please do not reply directly to this email.
+        </p>
+    </div>
+</div>
+""",
                 details.get("groupCode"),
                 details.get("className"),
                 details.get("classCode"),
@@ -212,7 +213,7 @@ public class AsyncEmailSenderUtil {
                 details.get("facultyEmail"),
                 details.get("credits"),
                 details.get("passoutYear"),
-                details.get("noOfStudents"),
+                regNumbers.size(),
                 timetableHtml.toString(),
                 regListBuilder.toString()
         );

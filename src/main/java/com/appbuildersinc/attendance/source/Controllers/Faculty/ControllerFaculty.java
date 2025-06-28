@@ -264,18 +264,14 @@ public class ControllerFaculty {
         if (status.equals("S")) {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
-
-            String classCode = (String) requestBody.get("classCode");
-            String logicalGroupingCode = (String) requestBody.get("groupCode");
-            String newFacultyEmail = (String) requestBody.get("newFacEmail");
-            if (classCode == null || classCode.isEmpty() || logicalGroupingCode == null || logicalGroupingCode.isEmpty() || newFacultyEmail == null || newFacultyEmail.isEmpty()) {
-                response.put("status", "E");
-                response.put("message", "Invalid request body. Please provide valid class details.");
-                return ResponseEntity.status(400).body(response);
+            Map<String,Object> resp = jsonverifier.jsonbodycheck(List.of("classCode","newFacEmail"),requestBody);
+            if (((String) resp.get("status")).equals("E")) {
+                return ResponseEntity.status(400).body(resp);
             }
+            String classCode = (String) requestBody.get("classCode");
+            String newFacultyEmail = (String) requestBody.get("newFacEmail");
 
-
-            boolean succ = functionsFacultyService.transferClass(classCode, logicalGroupingCode, newFacultyEmail);
+            boolean succ = functionsFacultyService.transferClass(classCode,newFacultyEmail);
             if (succ) {
                 response.put("status", "S");
                 response.put("message", "Class transferred successfully!");
@@ -324,6 +320,7 @@ public class ControllerFaculty {
             }
 
             Map<String, Object> details = classDB.getAllClassDetails(classCode);
+            details.remove("regnoHMACMap");
             if (details != null) {
                 response.put("status", "S");
                 response.put("message", "Class fetched successfully!");
@@ -437,14 +434,18 @@ public class ControllerFaculty {
 
     /**
      * Sets the email for the faculty and sends an OTP to that email.
-     * Requires a valid faculty email.
-     *
-     * @param email The faculty email to set.
+     * Requires a valid faculty email
+     * @param credentials  The json contiaining faculty email to set.
      * @return A ResponseEntity containing the status of the operation and JWT with OTP claim or an error message.
      * @throws Exception If there is an error during processing.
      */
     @PostMapping("/faculty/setEmail")
-    public ResponseEntity<Map<String, Object>> setEmail(@RequestParam String email) throws Exception {
+    public ResponseEntity<Map<String, Object>> setEmail(@RequestBody Map<String,Object> credentials) throws Exception {
+        Map<String,Object> bodycheck = jsonverifier.jsonbodycheck(List.of("email"),credentials);
+        if(((String)bodycheck.get("status")).equals("E")){
+            return ResponseEntity.status(400).body(bodycheck);
+        }
+        String email=(String)credentials.get("email");
         Map<String, Object> response = new HashMap<>();
         if (functionsFacultyService.isEmailAllowed(email)) {
             String enc_otp = functionsFacultyService.sendMailReturnOtp(email);
@@ -470,19 +471,24 @@ public class ControllerFaculty {
      * Requires a valid JWT in the Authorization header and OTP as a request parameter.
      *
      * @param authorizationHeader The JWT token in the Authorization header.
-     * @param otp                 The OTP to verify.
+     * @param credentials                 The OTP to verify.
      * @return A ResponseEntity containing the status of the operation and new JWT if successful or an error message.
      * @throws Exception If there is an error during processing.
      */
     @PostMapping("/faculty/verifyOtp")
     public ResponseEntity<Map<String, Object>> verifyOtp(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
-                                                         @RequestParam String otp) throws Exception {
+                                                         @RequestBody Map<String,Object> credentials) throws Exception {
 
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthBeforeLogin(authorizationHeader);
 
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
+            Map<String,Object> bodycheck = jsonverifier.jsonbodycheck(List.of("otp"),credentials);
+            if(((String)bodycheck.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(bodycheck);
+            }
+            String otp=(String)credentials.get("otp");
             //JWT is valid, proceed with Business Logic
             String jwt;
             HashMap<String, Object> response = new HashMap<>();
@@ -531,20 +537,24 @@ public class ControllerFaculty {
      * Requires a valid JWT in the Authorization header and new password as a request parameter.
      *
      * @param authorizationHeader The JWT token in the Authorization header.
-     * @param password            The new password to set.
+     * @param credentials            The new password to set.
      * @return A ResponseEntity containing the status of the operation and new JWT if successful or an error message.
      * @throws Exception If there is an error during processing.
      */
     @PostMapping("/faculty/updatePassword")
     public ResponseEntity<Map<String, Object>> updatePassword(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
-                                                              @RequestParam String password) throws Exception {
+                                                              @RequestBody Map<String,Object> credentials) throws Exception {
         //Check if the JWT is valid
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthBeforeLogin(authorizationHeader);
-
 
         String status = (String) claims.get("status");
 
         if (status.equals("S")) {
+            Map<String,Object> bodycheck = jsonverifier.jsonbodycheck(List.of("password"),credentials);
+            if(((String)bodycheck.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(bodycheck);
+            }
+            String password=(String)credentials.get("password");
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
 
@@ -588,21 +598,25 @@ public class ControllerFaculty {
 
     /**
      * Logs in the faculty using email and password.
+     * Expects a JSON body with \`email\` and \`password\` fields.
      * If successful, returns a JWT and user details.
      *
-     * @param email    The faculty email to log in.
-     * @param password The faculty password to log in.
+     * @param credentials Map containing \`email\` and \`password\` keys.
      * @return A ResponseEntity containing the status of the login operation and user details or an error message.
      * @throws Exception If there is an error during processing.
      */
     @PostMapping("/faculty/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestParam String email,
-                                                     @RequestParam String password
-    ) throws Exception {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String,Object> credentials) throws Exception {
+
+        Map<String,Object> bodycheck = jsonverifier.jsonbodycheck(List.of("email","password"),credentials);
+        if(((String)bodycheck.get("status")).equals("E")){
+            return ResponseEntity.status(400).body(bodycheck);
+        }
+        String email=(String)credentials.get("email");
+        String password=(String)credentials.get("password");
 
         Map<String, Object> response = new HashMap<>();
         if (functionsFacultyService.attemptLogin(email, password)) {
-
 
             //Login successful
             response.put("status", "S");

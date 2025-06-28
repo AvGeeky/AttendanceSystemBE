@@ -176,7 +176,7 @@ public class FunctionsFaculty {
     }
 
 
-    public boolean transferClass (String classCode, String groupCode, String newFacEmail){
+    public boolean transferClass (String classCode, String newFacEmail){
         String oldFacEmail = classDB.getFacultyEmailFromClass(classCode);
         String newFacName = facultyDB.getUserNameByEmail(newFacEmail);
         if (!facultyDB.removeClassFromFacultyClasses(oldFacEmail,classCode)){
@@ -248,7 +248,7 @@ public class FunctionsFaculty {
         return result;
     }
 
-    public static Map<String, List<Map<String, Object>>> mergeTimetables(List<Map<String, List<Map<String, Object>>>> timetables) {
+    public Map<String, List<Map<String, Object>>> mergeTimetables(List<Map<String, List<Map<String, Object>>>> timetables) {
         Map<String, List<Map<String, Object>>> merged = new HashMap<>();
 
         for (Map<String, List<Map<String, Object>>> timetable : timetables) {
