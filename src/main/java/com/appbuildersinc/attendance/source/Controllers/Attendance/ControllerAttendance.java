@@ -4,6 +4,7 @@ import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPai
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
+import com.appbuildersinc.attendance.source.Utilities.jsonVerifier.JsonVerifier;
 import com.appbuildersinc.attendance.source.database.MongoDB.*;
 import com.appbuildersinc.attendance.source.database.redis.RedisService;
 import com.appbuildersinc.attendance.source.functions.Attendance.FunctionsAttendance;
@@ -100,10 +101,10 @@ public class ControllerAttendance {
     private final StudentjwtUtil studentjwtUtil;
     private final SuperAdminjwtUtil adminjwtUtil;
     private final RedisService redisService;
-
+    private final JsonVerifier jsonverifier;
 
     @Autowired
-    public ControllerAttendance(FunctionsAttendance fa, FunctionsFaculty functionsFacultyService, FacultyDB userdbutil, ClassDB classDB, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService, FunctionsStudents functionsStudentsService, SubstitutionDB substitutionDBclass, RedisService redisService) {
+    public ControllerAttendance(FunctionsAttendance fa, FunctionsFaculty functionsFacultyService, FacultyDB userdbutil, ClassDB classDB, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService, FunctionsStudents functionsStudentsService, SubstitutionDB substitutionDBclass, RedisService redisService, JsonVerifier jsonverifier) {
         this.functionsFacultyService = functionsFacultyService;
         this.classDB = classDB;
         this.functionsClassService = functionsClassService;
@@ -119,6 +120,7 @@ public class ControllerAttendance {
         this.functionsStudentsService = functionsStudentsService;
         this.substitutionDBclass = substitutionDBclass;
         this.redisService = redisService;
+        this.jsonverifier = jsonverifier;
     }
 
     /**
@@ -544,6 +546,16 @@ public class ControllerAttendance {
         String status = (String) claims.get("status");
         if(status.equals("S")){
             Map<String, Object> response = new HashMap<>();
+            if(((String)request.get("classCode"))==null||((String)request.get("classCode")).isEmpty()||request.get("present")==null||request.get("absent")==null){
+                response.put("status","E");
+                response.put("message","input body given is not proper");
+                return ResponseEntity.status(400).body(response);
+            }
+            if((subCode!=null) && subCode.isEmpty()){
+                response.put("status","E");
+                response.put("message","subcode is an empty string here");
+                return ResponseEntity.status(400).body(response);
+            }
             Boolean done=functionsAttendanceService.SaveManualAttendance((String)request.get("classCode"),(String)claims.get("email"),subCode,(List<String>)request.get("present"),(List<String>)request.get("absent"));
             if(done){
                 if (subCode != null) {

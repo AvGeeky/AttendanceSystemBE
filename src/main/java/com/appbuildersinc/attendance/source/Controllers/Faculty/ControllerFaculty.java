@@ -4,6 +4,7 @@ import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPai
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
+import com.appbuildersinc.attendance.source.Utilities.jsonVerifier.JsonVerifier;
 import com.appbuildersinc.attendance.source.database.MongoDB.*;
 import com.appbuildersinc.attendance.source.functions.Attendance.FunctionsAttendance;
 import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
@@ -84,9 +85,9 @@ public class ControllerFaculty {
     private final LogicalGroupingDB logicalGroupingDbClass;
     private final FunctionsClass functionsClassService;
     private final FunctionsAttendance functionsAttendanceService;
-
+    private final JsonVerifier jsonverifier;
     @Autowired
-    public ControllerFaculty(FunctionsFaculty fs, FunctionsClass functionsMiscService, FacultyDB userdbutil, ClassDB classDB, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService, FunctionsAttendance functionsAttendanceService) {
+    public ControllerFaculty(FunctionsFaculty fs, FunctionsClass functionsMiscService, FacultyDB userdbutil, ClassDB classDB, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService, FunctionsAttendance functionsAttendanceService, JsonVerifier jsonverifier) {
         this.functionsMiscService = functionsMiscService;
         this.functionsFacultyService = fs;
         this.userdbclass = userdbutil;
@@ -100,6 +101,7 @@ public class ControllerFaculty {
         this.logicalGroupingDbClass = logicalGroupingDbClass;
         this.functionsClassService = functionsClassService;
         this.functionsAttendanceService = functionsAttendanceService;
+        this.jsonverifier = jsonverifier;
     }
 
 
@@ -165,11 +167,10 @@ public class ControllerFaculty {
             String classCode = (String) requestBody.get("classCode");
             String logicalGroupingCode = (String) requestBody.get("groupCode");
             String credits = (String) requestBody.get("credits");
-            if (name == null || name.isEmpty() || classCode == null || classCode.isEmpty() || logicalGroupingCode == null || logicalGroupingCode.isEmpty()) {
-                response.put("status", "E");
-                response.put("message", "Invalid request body. Please provide valid class details.");
-                return ResponseEntity.status(400).body(response);
-            }
+           Map<String,Object> requestbody=jsonverifier.jsonbodycheck(List.of("groupCode","classCode","name","credits"),requestBody);
+           if(((String)requestbody.get("status")).equals("E")){
+               return ResponseEntity.status(400).body(requestbody);
+           }
             boolean succ = functionsClassService.createNewClass(
                     logicalGroupingCode,
                     classCode,
@@ -204,7 +205,7 @@ public class ControllerFaculty {
      * @return A ResponseEntity containing the status of the operation or an error message.
      * @throws Exception If there is an error during processing.
      */
-    @PostMapping("/faculty/dropClass")
+    @DeleteMapping("/faculty/dropClass")
     public ResponseEntity<Map<String, Object>> dropClass(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                          String authorizationHeader,
                                                          @RequestBody Map<String, Object> requestBody) throws Exception {
@@ -217,11 +218,10 @@ public class ControllerFaculty {
             Map<String, Object> response = new HashMap<>();
 
             String classCode = (String) requestBody.get("classCode");
-            String logicalGroupingCode = (String) requestBody.get("groupCode");
-            if (classCode == null || classCode.isEmpty() || logicalGroupingCode == null || logicalGroupingCode.isEmpty()) {
-                response.put("status", "E");
-                response.put("message", "Invalid request body. Please provide valid class details.");
-                return ResponseEntity.status(400).body(response);
+            //String logicalGroupingCode = (String) requestBody.get("groupCode");
+            Map<String,Object> jsonbody=jsonverifier.jsonbodycheck(List.of("classCode"),requestBody);
+            if(((String)jsonbody.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(jsonbody);
             }
 
             boolean succ = functionsClassService.dropClass(classCode);
@@ -301,14 +301,14 @@ public class ControllerFaculty {
      *
      * @param authorizationHeader The JWT token in the Authorization header.
      * @param classCode
-     * @param groupCode
+
      * @return A ResponseEntity containing the class details or an error message.
      * @throws Exception If there is an error during processing.
      */
     @GetMapping("/faculty/getClassDetails")
     public ResponseEntity<Map<String, Object>> getClassDetails(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                String authorizationHeader,
-                                                               @RequestParam String classCode, @RequestParam String groupCode) throws Exception {
+                                                               @RequestParam String classCode) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
 
         //Check if the JWT is valid
@@ -317,12 +317,9 @@ public class ControllerFaculty {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
 
-
-
-            String logicalGroupingCode = groupCode;
-            if (classCode == null || classCode.isEmpty() || logicalGroupingCode == null || logicalGroupingCode.isEmpty()) {
-                response.put("status", "E");
-                response.put("message", "Invalid request body. Please provide valid class details.");
+            if(classCode.isEmpty()){
+                response.put("status","E");
+                response.put("message","Empty String classcode");
                 return ResponseEntity.status(400).body(response);
             }
 
@@ -365,11 +362,23 @@ public class ControllerFaculty {
         if (status.equals("S")) {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
+            if(department.isEmpty()){
+                response.put("status","E");
+                response.put("message","empty string department input");
+                return ResponseEntity.status(400).body(response);
+            }
             List<Map<String, Object>> logicalGroupings = functionsFacultyService.getAllLogicalGroupings(department);
-            response.put("status", "S");
-            response.put("message", "Logical groupings retrieved successfully!");
-            response.put("logical_groupings", logicalGroupings);
-            return ResponseEntity.ok(response);
+            if(!logicalGroupings.isEmpty()) {
+                response.put("status", "S");
+                response.put("message", "Logical groupings retrieved successfully!");
+                response.put("logical_groupings", logicalGroupings);
+                return ResponseEntity.ok(response);
+            }
+            else{
+                response.put("status", "E");
+                response.put("message","wrong dept or no logical groupings of that dept exist");
+                return ResponseEntity.status(503).body(response);
+            }
         } else {
             //JWT is invalid, return error response
             return ResponseEntity.status(401).body(claims);
@@ -397,9 +406,9 @@ public class ControllerFaculty {
         if (status.equals("S")) {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
-            if (requestBody.get("mentee_list") == null || !(requestBody.get("mentee_list") instanceof List)) {
+            if (requestBody.get("mentee_list") == null || !(requestBody.get("mentee_list") instanceof List)||requestBody.get("reset")==null||((String)requestBody.get("reset")).isEmpty()) {
                 response.put("status", "E");
-                response.put("message", "Invalid mentee list format. Please provide a valid list.");
+                response.put("message", "Invalid mentee list format. Please provide a valid list or reset not given properly");
                 return ResponseEntity.status(400).body(response);
             }
             List<String> menteeList = (List<String>) requestBody.get("mentee_list");
@@ -486,7 +495,11 @@ public class ControllerFaculty {
             }
 
             int dec_otp = Integer.parseInt(keyclass.decryptString(enc_otp));
-
+            if(otp==null ||otp.isEmpty()){
+                response.put("status","E");
+                response.put("message","the otp is empty string or null");
+                return ResponseEntity.status(400).body(response);
+            }
             if (dec_otp == Integer.parseInt(otp)) {
                 response.put("status", "S");
                 response.put("message", "OTP has been successfully verified!");
@@ -538,6 +551,11 @@ public class ControllerFaculty {
             if ((boolean) claims.get("otp_auth")) {
                 //OTP is verified, proceed with setting username and password
                 String email = (String) claims.get("email");
+                if(password.isEmpty()){
+                    response.put("status","E");
+                    response.put("message","password given is an empty string");
+                    return ResponseEntity.status(400).body(response);
+                }
                 if (functionsFacultyService.hashAndUpdatePassword(email, password)) {
                     facultyJwtUtil.updateOtpAuthStatus(claims, false);
                     String jwt = facultyJwtUtil.signJwt(claims);
@@ -692,10 +710,13 @@ public class ControllerFaculty {
         if (status.equals("S")) {
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
-
+            Map<String,Object> bodycheck=jsonverifier.jsonbodycheck(List.of("name","position"),requestBody);
+            if(((String)bodycheck.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(bodycheck);
+            }
             boolean succ = userdbclass.updateUserDocumentByEmail((String) claims.get("email"),
                     (String) requestBody.get("name"),
-                    (String) requestBody.get("department"),
+                    (String) claims.get("dept"),
                     (String) requestBody.get("position"));
 
             if (succ) {
@@ -802,11 +823,15 @@ public class ControllerFaculty {
      * @throws Exception If there is an error during processing.
      */
     @PostMapping("/faculty/getStudentAttendanceByClassCode")
-    public ResponseEntity<Map<String, Object>> getStudentAttendanceByClassCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String, String> request) throws Exception {
+    public ResponseEntity<Map<String, Object>> getStudentAttendanceByClassCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String, Object> request) throws Exception {
 
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         String status = (String) claims.get("status");
         if (status.equals("S")) {
+            Map<String,Object> jsonbody=jsonverifier.jsonbodycheck(List.of("classcode"),request);
+            if(((String)jsonbody.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(jsonbody);
+            }
             Map<String, Map<String, Object>> result = functionsFacultyService.getStudentAttendanceByClassCode((String) claims.get("email"), (String) request.get("classcode"));
             Map<String, Object> response = new HashMap<>();
             if (result != null) {
@@ -840,10 +865,14 @@ public class ControllerFaculty {
      * @throws Exception If there is an error during processing.
      */
     @PostMapping("/faculty/getLectureAttendanceByClassCode")
-    public ResponseEntity<Map<String, Object>> getLectureAttendanceByClassCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String, String> request) throws Exception {
+    public ResponseEntity<Map<String, Object>> getLectureAttendanceByClassCode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String, Object> request) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         String status = (String) claims.get("status");
         if (status.equals("S")) {
+            Map<String,Object> jsonbody=jsonverifier.jsonbodycheck(List.of("classcode"),request);
+            if(((String)jsonbody.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(jsonbody);
+            }
             Map<String, Map<String, Object>> result = functionsFacultyService.getLectureAttendanceByClassCode((String) claims.get("email"), (String) request.get("classcode"));
             Map<String, Object> response = new HashMap<>();
             if (result != null) {
@@ -879,11 +908,15 @@ public class ControllerFaculty {
      * @throws Exception If there is an error during processing.
      */
     @PostMapping("/faculty/flipAttendance")
-    public ResponseEntity<Map<String, Object>> flipAttendance(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String, String> request) throws Exception {
+    public ResponseEntity<Map<String, Object>> flipAttendance(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String,Object> request) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         String status = (String) claims.get("status");
         if (status.equals("S")) {
             Map<String, Object> response = new HashMap<>();
+            Map<String,Object> jsonbody=jsonverifier.jsonbodycheck(List.of("classcode","registernumber","lecturenumber"),request);
+            if(((String)jsonbody.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(jsonbody);
+            }
             //System.out.println((String)request.get("classcode"));
             Boolean done = functionsFacultyService.flipAttendance((String) request.get("classcode"), (String) claims.get("email"), (String) request.get("registernumber"), (String) request.get("lecturenumber"));
             if (done) {

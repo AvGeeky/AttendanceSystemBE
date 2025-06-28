@@ -84,6 +84,7 @@ public class LogicalGroupingDB {
     public List<Map<String, Object>> viewalllogicalgroupings(String dept) {
         List<Map<String, Object>> groupings = new ArrayList<>();
         Document doc1 = new Document("department", dept);
+
         for (Document doc2 : collection.find(doc1)) {
             groupings.add(new HashMap<>(doc2));
         }
