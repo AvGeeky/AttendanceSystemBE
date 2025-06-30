@@ -320,8 +320,9 @@ public class ControllerFaculty {
             }
 
             Map<String, Object> details = classDB.getAllClassDetails(classCode);
-            details.remove("regnoHMACMap");
+
             if (details != null) {
+                details.remove("regnoHMACMap");
                 response.put("status", "S");
                 response.put("message", "Class fetched successfully!");
                 response.put("details", details);
@@ -943,6 +944,49 @@ public class ControllerFaculty {
                 response.put("message", "error in updating due to incorrect register-number or class-code or lecture-number");
                 return ResponseEntity.status(503).body(response);
 
+            }
+
+
+        } else {
+            return ResponseEntity.status(401).body(claims);
+        }
+
+    }
+
+
+
+
+
+    @PostMapping("/faculty/deleteLecture")
+    public ResponseEntity<Map<String, Object>> deleteLecture(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String,Object> request) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            Map<String, Object> response = new HashMap<>();
+            Map<String,Object> jsonbody=jsonverifier.jsonbodycheck(List.of("classcode","lecturenumber"),request);
+            if(((String)jsonbody.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(jsonbody);
+            }
+            int done = functionsFacultyService.deleteLectureAndShift((String) claims.get("email"),(String) request.get("classcode"), (String) request.get("lecturenumber"));
+            if (done==1) {
+                response.put("status", "S");
+                response.put("message", "Deleted the lecture successfully");
+                return ResponseEntity.ok(response);
+
+            } else {
+                response.put("status", "E");
+                if (done==-1){
+                    response.put("message", "Class-code not registered for this faculty");
+                    return ResponseEntity.status(503).body(response);
+                }
+                else if (done==-2){
+                    response.put("message", "Lecture number not found in the class");
+                    return ResponseEntity.status(503).body(response);
+                }
+                else {
+                    response.put("message", "Error in deleting lecture. Try again later.");
+                    return ResponseEntity.status(503).body(response);
+                }
             }
 
 

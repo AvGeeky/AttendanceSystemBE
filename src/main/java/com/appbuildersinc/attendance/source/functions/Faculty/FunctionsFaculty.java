@@ -316,11 +316,11 @@ public class FunctionsFaculty {
     }
     public Map<String,Map<String,Object>> getStudentAttendanceByClassCode(String email,String classcode){
         List<String> classcodes=facultyDB.getFacultyRegisteredClasses(email);
-        if(classcodes.size()==0){
+        if(classcodes.isEmpty()){
             return null;
         }
         else{
-            if(classcodes.indexOf(classcode)==-1){
+            if(!classcodes.contains(classcode)){
                 return null;
             }
             else{
@@ -343,11 +343,11 @@ public class FunctionsFaculty {
     }
     public Map<String,Map<String,Object>> getLectureAttendanceByClassCode(String email,String classcode){
         List<String> classcodes=facultyDB.getFacultyRegisteredClasses(email);
-        if(classcodes.size()==0){
+        if(classcodes.isEmpty()){
             return null;
         }
         else {
-            if (classcodes.indexOf(classcode) == -1) {
+            if (!classcodes.contains(classcode)) {
                 return null;
             }
             else{
@@ -358,6 +358,9 @@ public class FunctionsFaculty {
                 studentDetailsMap.put("map", registernomap);
                 result.put("student-details",studentDetailsMap);
                 Map<String, Object> classdetail = classDB.getAllClassDetails(classcode);
+                if (!classdetail.containsKey("attendance")) {
+                    return null; // No attendance data available
+                }
                 Map<String, Object> classattendance = (Map<String,Object>) classdetail.get("attendance");
                 for(String lectureno:classattendance.keySet()){
                     Map<String,Object> value=(Map<String,Object>)classattendance.get(lectureno);
@@ -379,12 +382,12 @@ public class FunctionsFaculty {
     }
     public Boolean flipAttendance(String classcode,String email,String registernumber,String lecturenumber){
         List<String> classcodes=facultyDB.getFacultyRegisteredClasses(email);
-        if(classcodes.size()==0){
+        if(classcodes.isEmpty()){
             //System.out.println("error1");
             return false;
         }
         else {
-            if (classcodes.indexOf(classcode) == -1) {
+            if (!classcodes.contains(classcode)) {
                 //System.out.println("error2"+classcode);
                 return false;
             }
@@ -420,21 +423,49 @@ public class FunctionsFaculty {
                         }
                     }
                 }
+            }
+        }
+    }
 
+    public int deleteLectureAndShift(String facEmail, String classCode, String lectureToDeleteString) {
+        List<String> classcodes=facultyDB.getFacultyRegisteredClasses(facEmail);
+        if (classcodes.isEmpty()) {
+            return -1; // No classes registered
+        }
+        if (!classcodes.contains(classCode)) {
+            return -1; // Class isn't found in faculty's registered classes
+        }
+        Map<String, Object> attendanceMap = classDB.getAttendance(classCode);
+        if (attendanceMap == null || attendanceMap.isEmpty()) {
+            return -2; // No attendance data found for the class
+        }
+        int lectureToDelete = Integer.parseInt(lectureToDeleteString);
+        String deleteKey = "lecture." + lectureToDelete;
+        if (!attendanceMap.containsKey(deleteKey)) {
+            return -2; // Lecture to delete doesn't exist
+        }
+        attendanceMap.remove(deleteKey);
 
+        // Shift all later lectures up by 1
+        int i = lectureToDelete + 1;
+        while (true) {
+            String currentKey = "lecture." + i;
+            String prevKey = "lecture." + (i - 1);
 
-
+            if (!attendanceMap.containsKey(currentKey)) {
+                break;
             }
 
-
-
-
-
+            // Shift this lecture up
+            attendanceMap.put(prevKey, attendanceMap.get(currentKey));
+            attendanceMap.remove(currentKey);
+            i++;
         }
-
-
-
-
+        boolean d = classDB.updateAttendance(classCode, attendanceMap);
+        if (!d) {
+            return -3; // Failed to update attendance
+        }
+        else return 1; // Successfully deleted lecture and shifted others
     }
 
 

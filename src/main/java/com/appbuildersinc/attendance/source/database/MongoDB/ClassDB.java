@@ -301,6 +301,7 @@ public class ClassDB {
     }
 
 
+
     public Map<String, String> getregistermap(String classcode) {
         Document query = new Document("classCode", classcode);
         Document result = collection.find(query).first();
@@ -308,6 +309,19 @@ public class ClassDB {
             return null;
         }
         return (Map<String, String>) result.get("regnoNameMap");
+    }
+
+    public Map<String, Object> getAttendance(String classCode) {
+        try {
+            Document query = new Document("classCode", classCode);
+            Document existing = collection.find(query).first();
+            if (existing == null) return null;
+            Document attendanceDoc = (Document) existing.get("attendance");
+            if (attendanceDoc == null) return null;
+            return (Map<String, Object>) attendanceDoc;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public Boolean updateAttendance(String classcode, Map<String, Object> classattendance) {

@@ -34,7 +34,7 @@ public class FunctionsAttendance {
     private static final int CODE_LENGTH = 6;
     private static final String DELIMITER = "~";
 
-    private final ClassDB classDB;
+    private final ClassDB classdb;
     private final SubstitutionDB substitutionDBclass;
     private final FacultyDB userdb;
     private emailUtil emailclass;
@@ -45,8 +45,8 @@ public class FunctionsAttendance {
     private final FunctionsStudents functionstudenclass;
     final RedisService redisService;
     @Autowired
-    public FunctionsAttendance(ClassDB classDB, SubstitutionDB substitutionDBclass, FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, FunctionsStudents functionstudenclass, RedisService redisService) {
-        this.classDB = classDB;
+    public FunctionsAttendance(ClassDB classdb, SubstitutionDB substitutionDBclass, FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, FunctionsStudents functionstudenclass, RedisService redisService) {
+        this.classdb = classdb;
         this.substitutionDBclass = substitutionDBclass;
         this.userdb = userdb;
         this.emailclass =emailutil;
@@ -67,7 +67,7 @@ public class FunctionsAttendance {
         }
 
         // If not authorized by subCode, check faculty email
-        String facultyEmail = classDB.getFacultyEmailFromClass(classCode);
+        String facultyEmail = classdb.getFacultyEmailFromClass(classCode);
         return facultyEmail != null && facultyEmail.equalsIgnoreCase(email);
     }
 
@@ -150,7 +150,7 @@ public class FunctionsAttendance {
 
         List<String> classCodes = generateAttendanceCodes(classCode);
 
-        Map<String,Object> regNoHmacMapping = classDB.getClassRegNoHmacMapping(classCode);
+        Map<String,Object> regNoHmacMapping = classdb.getClassRegNoHmacMapping(classCode);
 
         redisService.storeHmacKeys(classCode,regNoHmacMapping);
 
@@ -166,7 +166,7 @@ public class FunctionsAttendance {
         CloseAttendanceWithoutSaving(classCode);
         String singleAttendanceCode = generateSingleAttendanceCode(classCode);
 
-        Map<String,Object> regNoHmacMapping = classDB.getClassRegNoHmacMapping(classCode);
+        Map<String,Object> regNoHmacMapping = classdb.getClassRegNoHmacMapping(classCode);
 
         redisService.storeHmacKeys(classCode,regNoHmacMapping);
 
@@ -183,7 +183,6 @@ public class FunctionsAttendance {
         redisService.deleteVerifiedStudents(classCode);
         redisService.deleteStudentHMACMappings(classCode);
         redisService.deleteStudentNamesForClass(classCode);
-
         redisService.deleteActiveClassCodes(classCode);
         redisService.deleteActiveSingleClassCode(classCode);
     }
@@ -193,7 +192,7 @@ public class FunctionsAttendance {
                 redisService.getHmacKeyMapForClass(classCode),
                 redisService.getVerifiedStudents(classCode)
         );
-        classDB.addAttendanceRecord(classCode,lectureRecord);
+        classdb.addAttendanceRecord(classCode,lectureRecord);
         redisService.deleteVerifiedStudents(classCode);
         redisService.deleteStudentHMACMappings(classCode);
         redisService.deleteStudentNamesForClass(classCode);
@@ -251,7 +250,7 @@ public class FunctionsAttendance {
     }
     public Map<String,String> getAllStudentDetails(String classCode,String subCode,String email){
        if(isAuthorizedViaSubcodeOrEmail(classCode,email,subCode)){
-            Map<String,String> result= classDB.getregistermap(classCode);
+            Map<String,String> result= classdb.getregistermap(classCode);
            return result;
 
        }
@@ -291,13 +290,12 @@ public class FunctionsAttendance {
         if(isAuthorizedViaSubcodeOrEmail(classCode,email,subCode)){
             Set<String> presentSet = new HashSet<>(present);
             Set<String> absentSet = new HashSet<>(absent);
-            Map<String, Object> regnoHmacMapping = classDB.getClassRegNoHmacMapping(classCode);
+            Map<String, Object> regnoHmacMapping = classdb.getClassRegNoHmacMapping(classCode);
             if (!checkIfAllStudentsRegisteredAndNotOverlapping(classCode, presentSet, absentSet, regnoHmacMapping)) {
                 return false; // Not all students are registered in the class
             }
             // Proceed to save attendance
-            Map<String,Object> classdetails=classDB.getAllClassDetails(classCode);
-            Map<String,Object> attendance=(Map<String,Object>)classdetails.get("attendance");
+            Map<String,Object> attendance= classdb.getAttendance(classCode);
             if (attendance==null){
                 attendance = new HashMap<>();
             }
@@ -322,13 +320,17 @@ public class FunctionsAttendance {
             }
 
             attendance.put(lecturekey,lecturerecord);
-            return classDB.updateAttendance(classCode, attendance);
+            return classdb.updateAttendance(classCode, attendance);
         }
         else{
             return false;
         }
 
     }
+
+
+
+
 
 
 }
