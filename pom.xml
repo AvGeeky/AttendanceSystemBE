@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.appbuildersinc</groupId>
 	<artifactId>attendance</artifactId>
-	<version>0.3.0-BETA</version>
+	<version>0.3.1-BETA</version>
 	<name>Smart Attendance Project</name>
 	<description>Attendance application with smart anti-proxy features and add ons</description>
 	<url/>
@@ -52,6 +52,22 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-core</artifactId>
+			<version>10.1.42</version> <!-- Secure version -->
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-websocket</artifactId>
+			<version>10.1.42</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-el</artifactId>
+			<version>10.1.42</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-pdf-document-reader</artifactId>
