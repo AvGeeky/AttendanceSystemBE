@@ -225,16 +225,18 @@ public class ControllerAttendance {
             }
 
             if (redisService.isAttendanceTrackingActive(classCode)){
-                response.put("status", "NA");
-                response.put("message", "Attendance tracking is already active for this class.");
-                response.put("codes", redisService.getThreeQRCodes(classCode));
+                response.put("status", "S");
+                response.put("message", "Existing attendance tracking has been closed. New QR codes generated and synced.");
+                List<String> codesForQr = functionsAttendanceService.initialiseQRAttendanceAndReturnCodes(classCode);
+                response.put("codes", codesForQr);
+                redisService.storeQRAttendanceCodesWithWindow(classCode, codesForQr);
                 return ResponseEntity.ok(response);
             }
             //generate QR codes for attendance and initialise redis databases
             List<String> codesForQr = functionsAttendanceService.initialiseQRAttendanceAndReturnCodes(classCode);
 
             response.put("status","S");
-            response.put("message", "QR codes generated successfully.");
+            response.put("message", "QR codes generated and synced successfully.");
             response.put("codes", codesForQr);
 
             redisService.storeQRAttendanceCodesWithWindow(classCode, codesForQr);
@@ -577,6 +579,8 @@ public class ControllerAttendance {
         }
 
     }
+
+
 
 
 
