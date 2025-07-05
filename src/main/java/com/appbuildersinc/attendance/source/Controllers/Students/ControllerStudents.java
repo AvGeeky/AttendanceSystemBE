@@ -9,6 +9,7 @@ import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
+import com.appbuildersinc.attendance.source.database.redis.RedisService;
 import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import com.appbuildersinc.attendance.source.functions.Students.FunctionsStudents;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -59,9 +60,10 @@ public class ControllerStudents {
     private final SuperAdminDB SuperAdminDbClass;
     private final LogicalGroupingDB logicalGroupingDbClass;
     private final JsonVerifier jsonVerifier;
+    private final RedisService redisService;
 
     @Autowired
-    public ControllerStudents(FunctionsStudents fsu, FunctionsClass functionsService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, JsonVerifier jsonVerifier) {
+    public ControllerStudents(FunctionsStudents fsu, FunctionsClass functionsService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, JsonVerifier jsonVerifier, RedisService redisService) {
         this.functionsMiscService = functionsService;
         this.functionsStudentsService = fsu;
         this.userdbclass = userdbutil;
@@ -73,6 +75,7 @@ public class ControllerStudents {
         this.SuperAdminDbClass=SuperAdminDbClass;
         this.logicalGroupingDbClass = logicalGroupingDbClass;
         this.jsonVerifier = jsonVerifier;
+        this.redisService = redisService;
     }
 
 
@@ -108,6 +111,11 @@ public class ControllerStudents {
             if(email == null || email.isBlank()){
                 response.put("status", "E");
                 response.put("message", "Email not provided in request body.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response); // 400
+            }
+            if (redisService.doesStudentOtpExist(email)){
+                response.put("status", "E");
+                response.put("message", "OTP already sent to this email. Please wait 1 minute before requesting again.");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response); // 400
             }
             Map<String,Object> details = studentDbClass.getStudentDetailsByEmail(email);
