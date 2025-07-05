@@ -10,12 +10,17 @@ import com.appbuildersinc.attendance.source.functions.Attendance.FunctionsAttend
 import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
 import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -102,6 +107,134 @@ public class ControllerFaculty {
         this.functionsClassService = functionsClassService;
         this.functionsAttendanceService = functionsAttendanceService;
         this.jsonverifier = jsonverifier;
+    }
+
+    /**
+     * Returns a JWT refresh cookie for the faculty after login.
+     * @param authorizationHeader JWT token in the header
+     * @return ResponseEntity with status and message
+     * @throws Exception if any error occurs
+     * This endpoint is used to set a secure HTTP-only cookie for the faculty after successful login.
+     */
+    @PostMapping("/faculty/returnHTTPRefreshCookie")
+    public ResponseEntity<Map<String, Object>> returnHTTPRefreshCookie(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, HttpServletResponse response) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            //JWT is valid, proceed with business logic
+            System.out.println("hi");
+            String email = (String) claims.get("email");
+            String enc_email = keyclass.encryptString(email);
+            Cookie cookie = new Cookie("identity", enc_email);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(60 * 60 * 24 * 300); // 300 days
+            cookie.setAttribute("SameSite", "Strict");
+            response.addCookie(cookie);
+            return ResponseEntity.ok(Map.of("message", "cookie set", "status", "S"));
+        } else {
+            //JWT is invalid, return error response
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
+    @PostMapping("/faculty/refreshJWTWithCookie")
+    public ResponseEntity<Map<String,Object>> refreshJWTWithCookie(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @CookieValue(value = "identity", required = false) String encryptedIdentity)
+            throws Exception {
+        Map<String, Object> claims = facultyJwtUtil.parseJwtAllowExpired(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("error");
+        if (status != null && status.equalsIgnoreCase("TO")){
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            if (encryptedIdentity == null) {
+                response.put("status", "E");
+                response.put("message", "No identity cookie found.");
+                return ResponseEntity.status(400).body(response);
+            }
+            String facEmail = claims.get("email").toString();
+            String email = keyclass.decryptString(encryptedIdentity);
+            if (!email.equals(facEmail)) {
+                response.put("status", "E");
+                response.put("message", "Email mismatch with cookie.");
+                return ResponseEntity.status(403).body(response);
+            }
+            Map<String, Object> newClaims = facultyJwtUtil.createClaims(email, true, "", false, claims.get("addnl_role").toString(), claims.get("dept").toString());
+            String newJwt = facultyJwtUtil.signJwt(newClaims);
+            response.put("status", "S");
+            response.put("token", newJwt);
+            response.put("message", "JWT refreshed successfully.");
+            return ResponseEntity.ok(response);
+        } else {
+            if (status != null && status.equalsIgnoreCase("invalid token")){
+                return ResponseEntity.status(400).body(Map.of("status", "E", "message", "Invalid JWT token passed."));
+            }
+            return ResponseEntity.status(400).body(Map.of("status", "E", "message", "JWT token not expired"));
+        }
+
+
+
+    }
+
+    @PostMapping("/faculty/refreshJWTWithEncEmail")
+    public ResponseEntity<Map<String,Object>> refreshJWTWithEncEmail(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestParam String encEmail)
+            throws Exception {
+        Map<String, Object> claims = facultyJwtUtil.parseJwtAllowExpired(authorizationHeader);
+        //Check if the JWT is valid
+        String status = (String) claims.get("error");
+        if (status != null && status.equalsIgnoreCase("TO")){
+            //JWT is valid, proceed with business logic
+            Map<String, Object> response = new HashMap<>();
+            if (encEmail == null) {
+                response.put("status", "E");
+                response.put("message", "No identity encrypted email found.");
+                return ResponseEntity.status(400).body(response);
+            }
+            String facEmail = claims.get("email").toString();
+            // 1. Get the string safely
+            encEmail = encEmail.trim()
+                    .replace(" ", "+")              // convert spaces back to '+'
+                    .replaceAll("[\\r\\n\"]", "");  // remove newlines, quotes
+
+            // 2. Pad if needed
+            int mod = encEmail.length() % 4;
+            if (mod != 0) {
+                encEmail += "=".repeat(4 - mod);
+            }
+            byte[] decodedBytes = java.util.Base64.getUrlDecoder().decode(encEmail);
+            encEmail = new String(decodedBytes, StandardCharsets.UTF_8);
+            String email_dept = keyclass.decryptString(encEmail);
+            String[] parts = email_dept.split("~");
+            if (parts.length != 2) {
+                response.put("status", "E");
+                response.put("message", "Invalid encrypted email format.");
+                return ResponseEntity.status(400).body(response);
+            }
+            String email = parts[0];
+            String dept = parts[1];
+            if (!email.equals(facEmail) || !dept.equals(claims.get("dept").toString())) {
+                response.put("status", "E");
+                response.put("message", "Email mismatch with cookie.");
+                return ResponseEntity.status(403).body(response);
+            }
+
+            Map<String, Object> newClaims = facultyJwtUtil.createClaims(email, true, "", false, claims.get("addnl_role").toString(), claims.get("dept").toString());
+            String newJwt = facultyJwtUtil.signJwt(newClaims);
+            response.put("status", "S");
+            response.put("token", newJwt);
+            response.put("message", "JWT refreshed successfully.");
+            return ResponseEntity.ok(response);
+        } else {
+            if (status != null && status.equalsIgnoreCase("invalid token")){
+                return ResponseEntity.status(400).body(Map.of("status", "E", "message", "Invalid JWT token passed."));
+            }
+            return ResponseEntity.status(400).body(Map.of("status", "E", "message", "JWT token not expired"));
+        }
+
+
+
     }
 
 
@@ -649,6 +782,9 @@ public class ControllerFaculty {
             response.put("email", details.get("faculty_email"));
             response.put("position", details.get("position"));
 
+            String encEmail = keyclass.encryptString(email + "~" + details.get("department").toString());
+            encEmail = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(encEmail.getBytes(StandardCharsets.UTF_8));
+            response.put("encEmail", encEmail);
 
             String jwt = facultyJwtUtil.signJwt(claims);
             response.put("token", jwt);

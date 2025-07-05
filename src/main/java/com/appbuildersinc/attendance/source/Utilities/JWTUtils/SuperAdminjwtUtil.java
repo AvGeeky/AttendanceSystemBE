@@ -10,7 +10,7 @@ import java.util.Map;
 public class SuperAdminjwtUtil {
 // SuperAdminjwtUtil is a utility class for creating, signing, parsing, and validating JSON Web Tokens (JWTs) using HMAC SHA-256 algorithm
     private final String HMAC_SECRET = System.getenv("JWT_HMAC_SECRET");
-    private final int EXPIRATION_MINUTES =  Integer.parseInt(System.getenv("JWT_EXPIRATION_MINUTES"));
+    private final int EXPIRATION_MINUTES =  Integer.parseInt(System.getenv("JWT_EXPIRATION_MINUTES_SUPERADMIN"));
     public Map<String,Object> createClaims(String email,String dept,Boolean authorised){
         Map<String,Object> claims =new HashMap<>();
         claims.put("email",email);

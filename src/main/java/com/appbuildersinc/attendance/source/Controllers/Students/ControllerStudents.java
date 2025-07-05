@@ -4,6 +4,7 @@ import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPai
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
+import com.appbuildersinc.attendance.source.Utilities.jsonVerifier.JsonVerifier;
 import com.appbuildersinc.attendance.source.database.MongoDB.LogicalGroupingDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
@@ -57,9 +58,10 @@ public class ControllerStudents {
     private final StudentDB studentDbClass;
     private final SuperAdminDB SuperAdminDbClass;
     private final LogicalGroupingDB logicalGroupingDbClass;
+    private final JsonVerifier jsonVerifier;
 
     @Autowired
-    public ControllerStudents(FunctionsStudents fsu, FunctionsClass functionsService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass) {
+    public ControllerStudents(FunctionsStudents fsu, FunctionsClass functionsService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, JsonVerifier jsonVerifier) {
         this.functionsMiscService = functionsService;
         this.functionsStudentsService = fsu;
         this.userdbclass = userdbutil;
@@ -70,6 +72,7 @@ public class ControllerStudents {
         this.adminjwtUtil=adminutil;
         this.SuperAdminDbClass=SuperAdminDbClass;
         this.logicalGroupingDbClass = logicalGroupingDbClass;
+        this.jsonVerifier = jsonVerifier;
     }
 
 
@@ -98,6 +101,56 @@ public class ControllerStudents {
         }
     }
 
+    @PostMapping ("/student/setEmail")
+    public ResponseEntity<Map<String,Object>> setEmail( @RequestBody Map<String,String> request) throws Exception {
+            String email = request.get("email");
+            Map<String,Object> response = new HashMap<>();
+            if(email == null || email.isBlank()){
+                response.put("status", "E");
+                response.put("message", "Email not provided in request body.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response); // 400
+            }
+            Map<String,Object> details = studentDbClass.getStudentDetailsByEmail(email);
+            if (details == null || details.isEmpty()) {
+                //  If student details are not found, return error
+                response.put("status", "E");
+                response.put("message", "Student not registered. Please contact the administration.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // 401
+            }
+            functionsStudentsService.sendOtp(email);
+            response.put("status", "S");
+            response.put("message", "OTP sent to email. Please verify to complete the process.");
+            return ResponseEntity.ok(response); // 200
+    }
+
+    @PostMapping ("/student/verifyOTPAndLogin")
+    public ResponseEntity<Map<String,Object>> verifyOTPAndLogin( @RequestBody Map<String,Object> request) throws Exception {
+        Map<String,Object> response = new HashMap<>();
+        Map<String,Object> requestbody = jsonVerifier.jsonbodycheck(List.of("email","otp"),request);
+        if(((String)requestbody.get("status")).equals("E")){
+            return ResponseEntity.status(400).body(requestbody);
+        }
+        String email = request.get("email").toString();
+        String otp = request.get("otp").toString();
+        boolean verified = functionsStudentsService.verifyOtp(email,otp);
+        if(!verified){
+            response.put("status", "E");
+            response.put("message", "Invalid OTP. Please try again.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // 401
+        }
+        Map<String,Object> details = studentDbClass.getStudentDetailsByEmail(email);
+        Map<String, Object> claims = studentjwtUtil.createClaims(email, true,details.get("department").toString(),details.get("registerNumber").toString());
+        String jwt = studentjwtUtil.signJwt(claims);
+        String hmacPasscode = (String) details.get("hmacpasscode");
+        response.put("status", "S");
+        response.put("email", email);
+        response.put("name", details.get("name"));
+        response.put("hmacpasscode", hmacPasscode);
+        response.put("message", "Login successful");
+        response.put("token", jwt);
+        return ResponseEntity.ok(response); // 200
+
+    }
 
 
 
