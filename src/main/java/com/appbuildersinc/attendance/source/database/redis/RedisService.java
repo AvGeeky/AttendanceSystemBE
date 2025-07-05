@@ -168,7 +168,11 @@ public class RedisService {
 
     public void addStudentLoginOtp(String otp, String email) {
         String markedKey = "login:otp:" + email;
-        redisTemplate.opsForValue().set(markedKey, otp, Duration.ofMinutes(5));
+        redisTemplate.opsForValue().set(markedKey, otp, Duration.ofMinutes(1));
+    }
+    public boolean doesStudentOtpExist(String email) {
+        String key = "login:otp:" + email;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 
 
