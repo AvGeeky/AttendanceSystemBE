@@ -11,6 +11,8 @@ import com.appbuildersinc.attendance.source.functions.Attendance.FunctionsAttend
 import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
 import com.appbuildersinc.attendance.source.functions.Students.FunctionsStudents;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.format.annotation.DateTimeFormat;
@@ -122,6 +124,9 @@ public class ControllerAttendance {
         this.redisService = redisService;
         this.jsonverifier = jsonverifier;
     }
+
+
+
 
     /**
      * Faculty creates a substitution code for a class and date.
@@ -504,6 +509,28 @@ public class ControllerAttendance {
 
     }
 
+    @GetMapping("/student/getStudentHmacPasscode")
+    public ResponseEntity<Map<String, Object>> getStudentHmacPasscode(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception {
+        Map<String, Object> claims = functionsStudentsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            Map<String, Object> response = new HashMap<>();
+            String hmacpasscode = studentDbClass.getHMACPasscode(claims.get("registerNumber").toString());
+            if (hmacpasscode != null) {
+                response.put("status", "S");
+                response.put("hmac", hmacpasscode);
+                response.put("message", "HMAC Passcode retrieved successfully.");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("status","E");
+                response.put("message","error in retrieving Passcode");
+                return ResponseEntity.status(503).body(response);
+            }
+        } else {
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
+
     /**
      * Get all student details for a class.
      * @param authorizationHeader JWT token in the header
@@ -522,7 +549,7 @@ public class ControllerAttendance {
             if (result != null) {
                 response.put("status", "S");
                 response.put("details", result);
-                response.put("message", "all student details retrieving successfully");
+                response.put("message", "all student details retrieved successfully");
                 return ResponseEntity.ok(response);
             } else {
                 response.put("status","E");

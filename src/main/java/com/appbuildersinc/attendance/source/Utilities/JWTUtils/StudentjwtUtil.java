@@ -10,7 +10,7 @@ import java.util.Map;
 public class StudentjwtUtil {
 // StudentjwtUtil is a utility class for creating, signing, parsing, and validating JSON Web Tokens (JWTs) using HMAC SHA-256 algorithm
     private final String HMAC_SECRET = System.getenv("JWT_HMAC_SECRET");
-    private final int EXPIRATION_MINUTES =  Integer.parseInt(System.getenv("JWT_EXPIRATION_MINUTES"));
+    private final int EXPIRATION_MINUTES =  Integer.parseInt(System.getenv("JWT_EXPIRATION_MINUTES_STUDENT"));
     public Map<String,Object> createClaims(String email,Boolean authorised, String dept, String regno){
         Map<String,Object> claims =new HashMap<>();
         claims.put("email",email);

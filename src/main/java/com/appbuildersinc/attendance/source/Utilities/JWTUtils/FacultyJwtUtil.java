@@ -13,7 +13,7 @@ import java.util.Map;
 public class FacultyJwtUtil {
 
     String HMAC_SECRET = System.getenv("JWT_HMAC_SECRET");
-    private final int EXPIRATION_MINUTES =  Integer.parseInt(System.getenv("JWT_EXPIRATION_MINUTES"));
+    private final int EXPIRATION_MINUTES =  Integer.parseInt(System.getenv("JWT_EXPIRATION_MINUTES_FACULTY"));
 
     // Create initial claims map
     public Map<String, Object> createClaims(String email,
@@ -34,12 +34,6 @@ public class FacultyJwtUtil {
     // Update methods (modify the claims map)
     public void updateAddnlRole(Map<String, Object> claims, String addnl_role) {
         claims.put("addnl_role", addnl_role);
-    }
-    public void updateAuthorised(Map<String, Object> claims, boolean authorised) {
-        claims.put("authorised", authorised);
-    }
-    public void updateEmail(Map<String, Object> claims, String email) {
-        claims.put("email", email);
     }
     public void updateEncOtp(Map<String, Object> claims, String enc_otp) {
         claims.put("enc_otp", enc_otp);
@@ -78,4 +72,25 @@ public class FacultyJwtUtil {
             return error;
         }
     }
+
+    public Map<String, Object> parseJwtAllowExpired(String jwt) {
+        try {
+            Claims claims = Jwts.parser()
+                    .setSigningKey(HMAC_SECRET)
+                    .parseClaimsJws(jwt)
+                    .getBody();
+            return new HashMap<>(claims);
+        } catch (ExpiredJwtException e) {
+            // Token expired, but still signed correctly — we return the claims
+            Claims claims = e.getClaims();
+            Map<String, Object> response = new HashMap<>(claims);
+            response.put("error", "TO");
+            return response;
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Invalid token");
+            return error;
+        }
+    }
+
 }

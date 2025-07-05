@@ -166,6 +166,25 @@ public class RedisService {
         return result != null ? result : Collections.emptySet();
     }
 
+    public void addStudentLoginOtp(String otp, String email) {
+        String markedKey = "login:otp:" + email;
+        redisTemplate.opsForValue().set(markedKey, otp, Duration.ofMinutes(5));
+    }
+
+
+    public String getAndDeleteStudentOtp(String email) {
+        String markedKey = "login:otp:" + email;
+
+        String otp = (String) redisTemplate.opsForValue().get(markedKey);
+
+        if (otp != null) {
+            redisTemplate.delete(markedKey);
+        }
+
+        return otp;
+    }
+
+
 
     public long getVerifiedStudentCount(String classId) {
         String markedKey = "attendance:marked:" + classId;

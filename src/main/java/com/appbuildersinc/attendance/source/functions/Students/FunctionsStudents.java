@@ -10,6 +10,7 @@ import com.appbuildersinc.attendance.source.database.MongoDB.StudentDB;
 import com.appbuildersinc.attendance.source.database.MongoDB.SuperAdminDB;
 
 
+import com.appbuildersinc.attendance.source.database.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,9 +28,10 @@ public class FunctionsStudents {
     private final StudentjwtUtil jwtclass;
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
+    private final RedisService redisService;
 
     @Autowired
-    public FunctionsStudents(FacultyDB userdb, ClassDB classDB, StudentDB studentDB, StudentjwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass) {
+    public FunctionsStudents(FacultyDB userdb, ClassDB classDB, StudentDB studentDB, StudentjwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, RedisService redisService) {
         this.userdb = userdb;
         this.classDB = classDB;
         this.studentDB = studentDB;
@@ -38,6 +40,7 @@ public class FunctionsStudents {
         this.jwtclass = jwtutil;
         this.admindb = admindb;
         this.adminjwtclass = adminjwtclass;
+        this.redisService = redisService;
     }
 
 //    static Dotenv dotenv = Dotenv.configure()
@@ -142,6 +145,16 @@ public class FunctionsStudents {
 
         return result;
     }
+
+    public void sendOtp(String email) {
+        int otp = emailclass.sendMail(email);
+        redisService.addStudentLoginOtp(String.valueOf(otp),email);
+    }
+    public boolean verifyOtp(String email, String otp) {
+        String redisOtp = redisService.getAndDeleteStudentOtp(email);
+        return otp.equalsIgnoreCase(redisOtp);
+    }
+
 
     public Map<String, List<Map<String, Object>>> mergeTimetables(List<Map<String, List<Map<String, Object>>>> timetables) {
         Map<String, List<Map<String, Object>>> merged = new HashMap<>();

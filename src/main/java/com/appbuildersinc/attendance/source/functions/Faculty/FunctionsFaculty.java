@@ -95,7 +95,7 @@ public class FunctionsFaculty {
         // Check if the JWT is expired or invalid
         if ("Token expired".equals(error)) {
             response.put("status", "TO");
-            response.put("message", "Login Expired. Please re-login.");
+            response.put("message", "Login Expired. Please refresh JWT.");
             return response;
         }
 

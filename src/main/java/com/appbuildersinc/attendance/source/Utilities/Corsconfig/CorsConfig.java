@@ -9,6 +9,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         // Disable Spring CORS entirely
+        //Handled by Nginx
     }
 }
 
