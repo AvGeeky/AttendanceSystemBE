@@ -59,9 +59,7 @@ public class FunctionsLogicalGrouping {
         boolean isElective = (advisorEmail == null);
 
         List<String> classCodes = (List<String>) group.get("class-code");
-        for (int i = 0; i < classCodes.size(); i++) {
-            classCodes.set(i, classCodes.get(i) + section);
-        }
+
 
 
 
@@ -81,25 +79,34 @@ public class FunctionsLogicalGrouping {
         String groupcode = isElective ? dept + electiveName + passout : dept + passout + section;
         Map<String, Object> oldLG = logicalGroupingDB.getLogicalGroupingByCode(groupcode);
         boolean isNew = oldLG == null;
-
-        // Timetable validation
-        Map<String, List<Map<String, Object>>> timetable = (Map<String, List<Map<String, Object>>>) group.get("timetable");
-
-        for (List<Map<String, Object>> periods : timetable.values()) {
-            for (Map<String, Object> period : periods) {
-                String code = (String) period.get("classCode");
-                if (code != null && !code.equals("_")) {
-                    period.put("classCode", code + section);
-                }
+        if (isNew){
+            for (int i = 0; i < classCodes.size(); i++) {
+                classCodes.set(i, classCodes.get(i) + section);
             }
         }
 
-        // Validation 1 Are there any foreign classCodes?
-        for (List<Map<String, Object>> periods : timetable.values()) {
-            for (Map<String, Object> period : periods) {
-                String code = (String) period.get("classCode");
-                if (!code.equals("_") && !classCodes.contains(code)) {
-                    return false;
+        // Timetable validation
+        Map<String, List<Map<String, Object>>> timetable = (Map<String, List<Map<String, Object>>>) group.get("timetable");
+        //System.out.println(timetable);
+        if (isNew) {
+            for (List<Map<String, Object>> periods : timetable.values()) {
+                for (Map<String, Object> period : periods) {
+                    String code = (String) period.get("classCode");
+                    if (code != null && !code.equals("_")) {
+                        period.put("classCode", code + section);
+                    }
+                }
+            }
+
+            // Validation 1 Are there any foreign classCodes?
+            for (List<Map<String, Object>> periods : timetable.values()) {
+                for (Map<String, Object> period : periods) {
+                   // System.out.println(period + " period");
+                    String code = (String) period.get("classCode");
+                    if (!code.equals("_") && !classCodes.contains(code)) {
+                      //  System.out.println("Foreign class code found: " + code);
+                        return false;
+                    }
                 }
             }
         }
@@ -116,7 +123,11 @@ public class FunctionsLogicalGrouping {
                 }
                 if (found) break;
             }
-            if (!found) return false;
+
+            if (!found) {
+                //System.out.println("Class code not found in timetable: " + code);
+                return false;
+            }
         }
 
         // Flags for changes
@@ -144,6 +155,9 @@ public class FunctionsLogicalGrouping {
 
         if (timetableChanged) {
             doc.append("timetable", timetable);
+            for (String classCode : classCodes) {
+                classDB.saveRefreshedClassTimetable(classCode, timetable);
+            }
         }
 
         if (!isElective) {
