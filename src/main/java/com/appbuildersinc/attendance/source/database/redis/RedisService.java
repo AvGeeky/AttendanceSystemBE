@@ -12,17 +12,20 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
 public class RedisService {
-    public static final int DEFAULT_TTL_HOURS = 1; // FOR VERIFIED STUD AND FAST LOOKUP
-    public static final int DEFAULT_TTL_CODE_SECONDS = 60; // FOR CODE LOOKUPS
-    private static final String VERSION_PREFIX = "attendance:version:";
-    private static final Duration VERSION_TTL = Duration.ofHours(1);
-    private static final long MIN_INTERVAL_MS = 1000; // 1 second between bumps
+    public final int DEFAULT_TTL_HOURS = 1; // FOR VERIFIED STUD AND FAST LOOKUP
+    //public final int DEFAULT_TTL_CODE_SECONDS = 60; // FOR CODE LOOKUPS
+    private final int DEFAULT_TTL_CODE_SECONDS_SERVER = Integer.parseInt(System.getenv("DEFAULT_TTL_CODE_SECONDS_SERVER"));
+    private final int DEFAULT_TTL_CODE_SECONDS_FRONTEND = Integer.parseInt(System.getenv("DEFAULT_TTL_CODE_SECONDS_FRONTEND"));
+    private final String VERSION_PREFIX = "attendance:version:";
+    private final Duration VERSION_TTL = Duration.ofHours(1);
+    private final long MIN_INTERVAL_MS = 1000; // 1 second between bumps
 
     private final Map<String, Long> lastBumpTime = new ConcurrentHashMap<>();
 
@@ -243,8 +246,12 @@ public class RedisService {
         Map<String, String> codeWithWindows = new HashMap<>();
 
         for (int i = 0; i < 3; i++) {
-            long start = currentMillis + (i * DEFAULT_TTL_CODE_SECONDS * 1000);
-            long end = start + DEFAULT_TTL_CODE_SECONDS * 1000;
+            long start = currentMillis + (i * DEFAULT_TTL_CODE_SECONDS_FRONTEND * 1000);
+            long end = start + (DEFAULT_TTL_CODE_SECONDS_SERVER) * 1000;
+//            System.out.println("Start Time: " + Instant.ofEpochMilli(start).toString());
+//            System.out.println("End Time: " + Instant.ofEpochMilli(end).toString());
+
+
 
             String jsonWindow = String.format("{\"start\":%d,\"end\":%d}", start, end);
             codeWithWindows.put(codes.get(i), jsonWindow);
@@ -252,8 +259,8 @@ public class RedisService {
 
         redisTemplate.opsForHash().putAll(redisKey, codeWithWindows);
 
-        // Set TTL to cover total duration (3 * DEFAULT_TTL_CODE_SECONDS)
-        redisTemplate.expire(redisKey, Duration.ofSeconds(DEFAULT_TTL_CODE_SECONDS * 3));
+        // Set TTL to cover total duration (3 * DEFAULT_TTL_CODE_SECONDS_SERVER)
+        redisTemplate.expire(redisKey, Duration.ofSeconds(DEFAULT_TTL_CODE_SECONDS_SERVER * 3));
     }
 
     //for qr
