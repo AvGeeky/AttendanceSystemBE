@@ -48,7 +48,7 @@ services:
       dockerfile: Dockerfile
     container_name: attendance-app-v3
     expose:
-      - "8443"
+      - "8080"
     env_file:
       - .env
     depends_on:
@@ -64,7 +64,7 @@ services:
       dockerfile: Dockerfile
     container_name: attendance-nginx-v3
     ports:
-      - "8443:80"  # Expose port 80 of the nginx container to port 8443 on the host
+      - "80:80"  # Expose port 80 of the nginx container to port 8443 on the host
     depends_on:
       - app
     networks: [backend]
