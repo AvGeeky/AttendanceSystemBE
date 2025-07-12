@@ -130,6 +130,23 @@ public class FacultyDB {
         Document result = collection.find(query).first();
         return result != null;
     }
+    // Method to get user details by email
+    public boolean isFacultyMentor(String email) {
+        Document query = new Document("faculty_email", email);
+        query = collection.find(query).first();
+        if (query.isEmpty()) {
+            return false; // Return null if the email is empty
+        }
+        String mentorField = query.getString("mentor");
+        if ((mentorField != null) && !mentorField.isEmpty()) {
+            if (mentorField.equalsIgnoreCase("true")) {
+                return true; // Return true if the mentor field is true
+            } else {
+                return false; // Return null if the mentor field is false
+            }
+        }
+        else return false; // Return null if the mentor field is not present
+    }
 
 
 

@@ -162,6 +162,10 @@ public class FunctionsFaculty {
         }
         return response;
     }
+    public boolean isFacultyMentor(String email) {
+        return facultyDB.isFacultyMentor(email);
+    }
+
     public Map<String,Object> getAdvisorList(String email){
 
         Map<String,Object> advisorlist=facultyDB.getAdvisorList(email);

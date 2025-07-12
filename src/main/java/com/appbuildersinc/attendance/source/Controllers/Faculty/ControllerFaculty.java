@@ -553,7 +553,7 @@ public class ControllerFaculty {
             } else {
                 //Error in updating mentee list
                 response.put("status", "E");
-                response.put("message", "Error in updating mentee list. Please try again.");
+                response.put("message", "This teacher is not a mentor, contact admin / error in updating db. Please try again later.");
                 return ResponseEntity.status(503).body(response);
             }
 
@@ -903,16 +903,22 @@ public class ControllerFaculty {
         //Check if the JWT is valid
         String status = (String) claims.get("status");
         if (status.equals("S")) {
+            if (!functionsFacultyService.isFacultyMentor((String) claims.get("email"))){
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "NM");
+                response.put("message", "this teacher is not a mentor");
+                return ResponseEntity.status(503).body(response);
+            }
             Map<String, Map<String, Object>> result = functionsFacultyService.getMentorListAttendance((String) claims.get("email"));
             Map<String, Object> response = new HashMap<>();
             if (result != null) {
                 response.put("status", "S");
                 response.put("details", result);
-                response.put("message", "mentees attendance retrieved sucessfully");
+                response.put("message", "mentees attendance retrieved successfully");
                 return ResponseEntity.ok(response);
             } else {
-                response.put("status", "E");
-                response.put("message", "this teacher is not a mentor or mentee list not there");
+                response.put("status", "MLNT");
+                response.put("message", "Mentee list not present. Please set the mentee list first.");
                 return ResponseEntity.status(503).body(response);
             }
 
