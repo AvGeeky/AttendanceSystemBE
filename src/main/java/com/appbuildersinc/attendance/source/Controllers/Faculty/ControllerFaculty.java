@@ -554,7 +554,7 @@ public class ControllerFaculty {
                 //Error in updating mentee list
                 response.put("status", "E");
                 response.put("message", "This teacher is not a mentor, contact admin / error in updating db. Please try again later.");
-                return ResponseEntity.status(503).body(response);
+                return ResponseEntity.status(400).body(response);
             }
 
 
@@ -907,7 +907,7 @@ public class ControllerFaculty {
                 Map<String, Object> response = new HashMap<>();
                 response.put("status", "NM");
                 response.put("message", "this teacher is not a mentor");
-                return ResponseEntity.status(503).body(response);
+                return ResponseEntity.status(400).body(response);
             }
             Map<String, Map<String, Object>> result = functionsFacultyService.getMentorListAttendance((String) claims.get("email"));
             Map<String, Object> response = new HashMap<>();
@@ -919,7 +919,7 @@ public class ControllerFaculty {
             } else {
                 response.put("status", "MLNT");
                 response.put("message", "Mentee list not present. Please set the mentee list first.");
-                return ResponseEntity.status(503).body(response);
+                return ResponseEntity.status(400).body(response);
             }
 
 
