@@ -334,6 +334,18 @@ public class ControllerAttendance {
                 response.put("status", "NA");
                 response.put("message", "Attendance tracking is already active for this class.");
                 List<Object> codeSingle = new ArrayList<>(redisService.getSingleAttendanceCodes(classCode));
+                if (codeSingle.isEmpty()){
+                    functionsAttendanceService.CloseAttendanceWithoutSaving(classCode);
+                    String passcode = functionsAttendanceService.initialiseSingleCodeAttendanceAndReturnCode(classCode);
+
+                    response.put("status","S");
+                    response.put("message", "QR Event closed and new passcode generated.");
+                    response.put("codes", passcode);
+
+                    redisService.storeSingleAttendanceCode(classCode, passcode);
+
+                    return ResponseEntity.ok(response);
+                }
                 response.put("codes", codeSingle.get(0));
                 return ResponseEntity.ok(response);
             }
@@ -376,10 +388,10 @@ public class ControllerAttendance {
             String registerNumber = claims.get("registerNumber").toString();
             //JWT is valid, proceed with business logic
             Map<String, Object> response = new HashMap<>();
-            String classCode = functionsAttendanceService.extractClassCode(passcode);
+            String classCode = functionsAttendanceService.extractClassCodeFromRedis(passcode);
             if (!redisService.isSingleAttendanceCodeValid(classCode,passcode)) {
                 response.put("status", "E");
-                response.put("message", "Invalid passcode code or class code.");
+                response.put("message", "Invalid passcode code.");
                 return ResponseEntity.status(404).body(response);
             }
             if (!functionsAttendanceService.verifyDigest(passcode,
