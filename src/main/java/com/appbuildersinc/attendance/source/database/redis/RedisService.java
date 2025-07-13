@@ -199,19 +199,19 @@ public class RedisService {
         return count != null ? count : 0;
     }
 
-    public List<String> getThreeQRCodes(String classCode) {
-        String redisKey = "attendance:codes:" + classCode;
-
-        // Fetch all code -> window JSON entries
-        Map<Object, Object> entries = redisTemplate.opsForHash().entries(redisKey);
-
-        // Sort by "start" time and return just the codes
-        return entries.entrySet().stream()
-                .map(entry -> Map.entry(entry.getKey().toString(), entry.getValue().toString()))
-                .sorted(Comparator.comparingLong(e -> extractStartTime(e.getValue())))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-    }
+//    public List<String> getThreeQRCodes(String classCode) {
+//        String redisKey = "attendance:codes:" + classCode;
+//
+//        // Fetch all code -> window JSON entries
+//        Map<Object, Object> entries = redisTemplate.opsForHash().entries(redisKey);
+//
+//        // Sort by "start" time and return just the codes
+//        return entries.entrySet().stream()
+//                .map(entry -> Map.entry(entry.getKey().toString(), entry.getValue().toString()))
+//                .sorted(Comparator.comparingLong(e -> extractStartTime(e.getValue())))
+//                .map(Map.Entry::getKey)
+//                .collect(Collectors.toList());
+//    }
 
     // Helper method to extract the "start" value from the JSON string
     private long extractStartTime(String json) {
@@ -310,6 +310,21 @@ public class RedisService {
         return redisTemplate.opsForHash().hasKey(redisKey, code);
     }
 
+    public void addClassCodePasscodeMapping(String classcode, String passcode) {
+        String markedKey = "attendance:mapping:" + passcode;
+        redisTemplate.opsForValue().set(markedKey, classcode, Duration.ofHours(DEFAULT_TTL_HOURS));
+    }
+    public String getClassCodeForPasscode(String passcode) {
+        String markedKey = "attendance:mapping:" + passcode;
+        return redisTemplate.opsForValue().get(markedKey);
+    }
+    public void deleteClassCodePasscodeMapping(String passcode) {
+        String markedKey = "attendance:mapping:" + passcode;
+        if (redisTemplate.hasKey(markedKey)) {
+            redisTemplate.delete(markedKey);
+        }
+    }
+
     public void deleteActiveClassCodes(String classCode) {
         String key = "attendance:codes:" + classCode;
         if (redisTemplate.hasKey(key)) {
@@ -318,11 +333,13 @@ public class RedisService {
     }
 
 
-    public void deleteActiveSingleClassCode(String classCode) {
+    public boolean deleteActiveSingleClassCode(String classCode) {
         String key = "attendance:scodes:" + classCode;
         if (redisTemplate.hasKey(key)) {
             redisTemplate.delete(key);
+            return true;
         }
+        return false;
     }
 
     public void deleteVerifiedStudents(String classCode) {

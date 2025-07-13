@@ -31,7 +31,7 @@ import java.util.*;
 public class FunctionsAttendance {
     private static final String CHAR_POOL = "abcdefghijklmnopqrstuvwxyz0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
-    private static final int CODE_LENGTH = 6;
+    private static final int CODE_LENGTH = 4;
     private static final String DELIMITER = "~";
 
     private final ClassDB classdb;
@@ -135,9 +135,13 @@ public class FunctionsAttendance {
     }
 
     public String generateSingleAttendanceCode(String classCode) {
-            String randomPart = generateRandomString(CODE_LENGTH);
-            String fullCode = randomPart + DELIMITER + classCode;
-            return fullCode;
+            String randomPass = generateRandomString(CODE_LENGTH);
+            redisService.addClassCodePasscodeMapping(classCode, randomPass);
+            return randomPass;
+    }
+
+    public String extractClassCodeFromRedis(String passcode) {
+        return redisService.getClassCodeForPasscode(passcode);
     }
 
     public String extractClassCode(String fullCode) {
@@ -184,7 +188,10 @@ public class FunctionsAttendance {
         redisService.deleteStudentHMACMappings(classCode);
         redisService.deleteStudentNamesForClass(classCode);
         redisService.deleteActiveClassCodes(classCode);
-        redisService.deleteActiveSingleClassCode(classCode);
+        boolean passcodeEvent = redisService.deleteActiveSingleClassCode(classCode);
+        if (passcodeEvent){
+            redisService.deleteClassCodePasscodeMapping(classCode);
+        }
     }
 
     public void SaveAttendanceAndClose(String classCode){
@@ -196,9 +203,11 @@ public class FunctionsAttendance {
         redisService.deleteVerifiedStudents(classCode);
         redisService.deleteStudentHMACMappings(classCode);
         redisService.deleteStudentNamesForClass(classCode);
-
         redisService.deleteActiveClassCodes(classCode);
-        redisService.deleteActiveSingleClassCode(classCode);
+        boolean passcodeEvent = redisService.deleteActiveSingleClassCode(classCode);
+        if (passcodeEvent){
+            redisService.deleteClassCodePasscodeMapping(classCode);
+        }
     }
 
     public String createDigest(String originalText, String HMAC_SECRET) throws Exception {
