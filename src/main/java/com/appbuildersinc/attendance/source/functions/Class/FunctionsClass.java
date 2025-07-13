@@ -74,6 +74,10 @@ public class FunctionsClass {
         if (!((List<String>) logicalGrouping.get("class-code")).contains(classCode)) {
             return false; // Class code not found in the logical grouping
         }
+        //Check if the class already exists
+        if (classDB.classExists(classCode)) {
+            return false; // Class already exists
+        }
 
         String passoutYear = (String) logicalGrouping.get("passout");
 
