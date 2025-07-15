@@ -11,8 +11,6 @@ import com.appbuildersinc.attendance.source.functions.Attendance.FunctionsAttend
 import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
 import com.appbuildersinc.attendance.source.functions.Students.FunctionsStudents;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.format.annotation.DateTimeFormat;
@@ -91,7 +89,6 @@ public class ControllerAttendance {
     private final FunctionsAttendance functionsAttendanceService;
     private final FunctionsFaculty functionsFacultyService;
     private final FunctionsStudents functionsStudentsService;
-
     private final FacultyDB userdbclass;
     private final ClassDB classDB;
     private final StudentDB studentDbClass;

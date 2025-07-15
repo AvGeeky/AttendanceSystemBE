@@ -294,7 +294,7 @@ public class ControllerStudents {
         String status = (String) claims.get("status");
         if(status.equals("S")){
            Map<String,Object> response=new HashMap<>();
-           Map<String,Map<String,Map<String,Integer>>> attendance=functionsStudentsService. getAttendance((List<String>)request.get("classcode"),(String)claims.get("email"));
+           Map<String,Map<String,Map<String,Integer>>> attendance=functionsStudentsService.getAttendance((List<String>)request.get("classcode"),(String)claims.get("email"));
            if(attendance!=null) {
                response.put("status", "S");
                response.put("attendance", attendance);
@@ -304,6 +304,7 @@ public class ControllerStudents {
            else{
                response.put("status", "E");
                response.put("message","incorrect class codes");
+               response.put("attendance", null);
                return ResponseEntity.status(503).body(response);
            }
 
