@@ -29,6 +29,7 @@ import java.util.*;
 
 @Service
 public class FunctionsAttendance {
+
     private static final String CHAR_POOL = "abcdefghijklmnopqrstuvwxyz0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int CODE_LENGTH = 4;
@@ -42,10 +43,10 @@ public class FunctionsAttendance {
     private final FacultyJwtUtil jwtclass;
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
-    private final FunctionsStudents functionstudenclass;
+
     final RedisService redisService;
     @Autowired
-    public FunctionsAttendance(ClassDB classdb, SubstitutionDB substitutionDBclass, FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, FunctionsStudents functionstudenclass, RedisService redisService) {
+    public FunctionsAttendance(ClassDB classdb, SubstitutionDB substitutionDBclass, FacultyDB userdb, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, RedisService redisService) {
         this.classdb = classdb;
         this.substitutionDBclass = substitutionDBclass;
         this.userdb = userdb;
@@ -54,7 +55,6 @@ public class FunctionsAttendance {
         this.jwtclass = jwtutil;
         this.admindb=admindb;
         this.adminjwtclass = adminjwtclass;
-        this.functionstudenclass = functionstudenclass;
         this.redisService = redisService;
 
     }
