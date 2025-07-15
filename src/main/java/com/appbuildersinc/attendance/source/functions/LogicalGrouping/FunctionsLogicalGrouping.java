@@ -5,7 +5,7 @@ import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPairUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
 import com.appbuildersinc.attendance.source.database.MongoDB.*;
-import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
+
 import org.bson.Document;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +18,7 @@ public class FunctionsLogicalGrouping {
     private final StudentDB studentdb;
     private final ClassDB classDB;
     private final LogicalGroupingDB logicalGroupingDB;
-    private final FunctionsClass functionsClass;
+
     private emailUtil emailclass;
     private final KeyPairUtil keyclass;
     private final FacultyJwtUtil jwtclass;
@@ -26,7 +26,7 @@ public class FunctionsLogicalGrouping {
     private final SuperAdminjwtUtil adminjwtclass;
 
     @Autowired
-    public FunctionsLogicalGrouping(LogicalGroupingDB logicalGroupingDB, ClassDB classDB, StudentDB studentdb, FacultyDB userdb, KeyPairUtil keyclass, FacultyJwtUtil jwtclass, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, FunctionsClass functionsClass) {
+    public FunctionsLogicalGrouping(LogicalGroupingDB logicalGroupingDB, ClassDB classDB, StudentDB studentdb, FacultyDB userdb, KeyPairUtil keyclass, FacultyJwtUtil jwtclass, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass) {
         this.userdb = userdb;
         this.logicalGroupingDB = logicalGroupingDB;
         this.keyclass = keyclass;
@@ -35,7 +35,26 @@ public class FunctionsLogicalGrouping {
         this.adminjwtclass = adminjwtclass;
         this.studentdb = studentdb;
         this.classDB = classDB;
-        this.functionsClass = functionsClass;
+    }
+
+    private boolean refreshTimeTable(String classCode, String groupCode) {
+
+        Map<String, Object> logicalGrouping = logicalGroupingDB.getLogicalGroupingByCode(groupCode);
+        Map<String, List<Map<String, Object>>> timetable =
+                (Map<String, List<Map<String, Object>>>) logicalGrouping.get("timetable");
+
+        Map<String, List<Map<String, Object>>> newTimetable = new HashMap<>();
+        for (String day : timetable.keySet()) {
+            List<Map<String, Object>> slots = timetable.get(day);
+            if (slots == null) continue;
+            for (Map<String, Object> slot : slots) {
+                if (slot == null || slot.get("classCode") == null) continue;
+                if (slot.get("classCode").equals(classCode)) {
+                    newTimetable.computeIfAbsent(day, k -> new java.util.ArrayList<>()).add(slot);
+                }
+            }
+        }
+        return classDB.saveRefreshedClassTimetable(classCode,newTimetable);
     }
 
     public boolean insertLogicalGrouping(Map<String, Object> group, String dept, String email) {
@@ -187,7 +206,7 @@ public class FunctionsLogicalGrouping {
             if (classDB.classExists(classCode)) {
                 existingClassCodes.add(classCode);
                 if (timetableChanged) {
-                    functionsClass.refreshTimeTable(classCode, groupcode);
+                    refreshTimeTable(classCode, groupcode);
                 }
                 if (registerNumbersChanged) {
                     classDB.updateRegisterNumbers(classCode, regNumbers);

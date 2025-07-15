@@ -25,7 +25,7 @@ public class FunctionsFaculty {
     private final FacultyJwtUtil jwtclass;
     private final SuperAdminDB admindb;
     private final SuperAdminjwtUtil adminjwtclass;
-    private final FunctionsStudents functionstudent;
+
     @Autowired
     public FunctionsFaculty(ClassDB cldb, StudentDB stu, FacultyDB facultyDB, FacultyJwtUtil jwtutil, emailUtil emailutil, KeyPairUtil keyutil, SuperAdminDB admindb, SuperAdminjwtUtil adminjwtclass, LogicalGroupingDB logicalGroupingDB, FunctionsStudents functionstudent) {
         this.facultyDB = facultyDB;
@@ -37,7 +37,7 @@ public class FunctionsFaculty {
         this.admindb=admindb;
         this.adminjwtclass = adminjwtclass;
         this.logicalGroupingDB = logicalGroupingDB;
-        this.functionstudent = functionstudent;
+
     }
     public boolean isEmailAllowed(String email)
     {
@@ -287,7 +287,7 @@ public class FunctionsFaculty {
                 Map<String, Object> menteeInfo = (Map<String, Object>) menteeObj;
                 //List<String> classcodes = (List<String>) menteeInfo.get("registeredClasses");
                 details.put("name",menteeInfo.get("name"));
-                details.put("attendance",functionstudent.getAttendance(null,(String)menteeInfo.get("email")));
+                details.put("attendance",getAttendance(null,(String)menteeInfo.get("email")));
                 result.put(registerno,details);
             }
         }
@@ -311,13 +311,68 @@ public class FunctionsFaculty {
                 //List<String> classcodes = (List<String>) studentdetails.get("registeredClasses");
                 details.put("name", studentdetails.get("name"));
                 details.put("registernumber", registernumber);
-                details.put("attendance", functionstudent.getAttendance(null, (String) studentdetails.get("email")));
+                details.put("attendance", getAttendance(null, (String) studentdetails.get("email")));
                 groupList.add(details);
             }
             result.put(groupcode, groupList);
         }
         return result;
     }
+
+    public Map<String,Map<String,Map<String,Integer>>> getAttendance(List<String> classcodes, String email) {
+        Map<String, Map<String, Map<String,Integer>>> result = new HashMap<>();
+        Map<String, Object> student = studentdb.getStudentDetailsByEmail(email);
+        List<String> classcodesstudlist = (List<String>) student.get("registeredClasses");
+
+
+        if(classcodesstudlist==null ||classcodesstudlist.isEmpty()){
+            return null;
+        }
+        if (classcodes == null) {
+
+            classcodes =classcodesstudlist;
+            // System.out.println(classcodes);
+
+        }
+        else if(classcodes.isEmpty()){
+            return null;
+        }
+        else {
+            //List<String> classcodesstudlist = (List<String>) student.get("registeredClasses");
+
+            for (String classcode : classcodes) {
+                if (!classcodesstudlist.contains(classcode)){
+                    return null;
+                }
+            }
+        }
+        String registerNumber = (String) student.get("registerNumber");
+
+        for (String classcode : classcodes) {
+            Map<String, Object> classdetail = classDB.getAllClassDetails(classcode);
+            //System.out.println(classdetail);
+            Map<String,Map<String,Integer>> classattendance;
+            //System.out.println("classcode"+classcode);
+            classattendance = (Map<String, Map<String, Integer>>) classdetail.get("attendance");
+            if (classattendance == null) {
+                result.put(classcode, Collections.emptyMap());
+                continue;
+            }
+            for(String lectureno:classattendance.keySet()){
+                Map<String,Integer> value=classattendance.get(lectureno);
+                Map<String,Integer> detail=new HashMap<>();
+                detail.put("date",value.get("date"));
+                detail.put("time",value.get("time"));
+                detail.put("present",value.get(registerNumber));
+                classattendance.put(lectureno,detail);
+
+
+            }
+            result.put(classcode,classattendance);
+        }
+        return result;
+    }
+
     public Map<String,Map<String,Object>> getStudentAttendanceByClassCode(String email,String classcode){
         List<String> classcodes=facultyDB.getFacultyRegisteredClasses(email);
         if(classcodes.isEmpty()){
@@ -337,7 +392,7 @@ public class FunctionsFaculty {
                     details.put("name", registernomap.get(registernumber));
                     List<String> class_code=new ArrayList<>();
                     class_code.add(classcode);
-                    details.put("attendance",functionstudent.getAttendance(class_code, (String) studentdetails.get("email")));
+                    details.put("attendance",getAttendance(class_code, (String) studentdetails.get("email")));
                     result.put(registernumber,details);
                 }
                return result;
