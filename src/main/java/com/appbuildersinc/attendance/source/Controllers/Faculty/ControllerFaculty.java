@@ -9,7 +9,6 @@ import com.appbuildersinc.attendance.source.database.MongoDB.*;
 import com.appbuildersinc.attendance.source.functions.Attendance.FunctionsAttendance;
 import com.appbuildersinc.attendance.source.functions.Faculty.FunctionsFaculty;
 import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +16,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -79,18 +75,22 @@ import java.util.*;
 public class ControllerFaculty {
     private final FunctionsClass functionsMiscService;
     private final FunctionsFaculty functionsFacultyService;
+    private final FunctionsClass functionsClassService;
+    private final FunctionsAttendance functionsAttendanceService;
+
     private final FacultyDB userdbclass;
     private final ClassDB classDB;
+    private final StudentDB studentDbClass;
+    private final SuperAdminDB SuperAdminDbClass;
+    private final LogicalGroupingDB logicalGroupingDbClass;
+
     private final KeyPairUtil keyclass;
     private final FacultyJwtUtil facultyJwtUtil;
     private final StudentjwtUtil studentjwtUtil;
     private final SuperAdminjwtUtil adminjwtUtil;
-    private final StudentDB studentDbClass;
-    private final SuperAdminDB SuperAdminDbClass;
-    private final LogicalGroupingDB logicalGroupingDbClass;
-    private final FunctionsClass functionsClassService;
-    private final FunctionsAttendance functionsAttendanceService;
+
     private final JsonVerifier jsonverifier;
+
     @Autowired
     public ControllerFaculty(FunctionsFaculty fs, FunctionsClass functionsMiscService, FacultyDB userdbutil, ClassDB classDB, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, FunctionsClass functionsClassService, FunctionsAttendance functionsAttendanceService, JsonVerifier jsonverifier) {
         this.functionsMiscService = functionsMiscService;
