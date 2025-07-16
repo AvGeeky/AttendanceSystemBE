@@ -44,7 +44,7 @@ services:
 
   app:
     build:
-      context: .
+      context: ./springBoot
       dockerfile: Dockerfile
     container_name: attendance-app-v3
     expose:
@@ -64,10 +64,24 @@ services:
       dockerfile: Dockerfile
     container_name: attendance-nginx-v3
     ports:
-      - "80:80"  # Expose port 80 of the nginx container to port 8443 on the host
+      - "80:80"   # Maps port 80 of the host to port 80 of the nginx container for HTTP traffic
     depends_on:
       - app
     networks: [backend]
+
+  cloudflared:
+    build:
+      context: ./cloudflared
+      dockerfile: Dockerfile
+    container_name: attendance-cloudflared-v3
+    depends_on:
+      - nginx
+    restart: unless-stopped
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARED_TUNNEL_KEY}
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TUNNEL_KEY}
+    networks: [ backend ]
+
 volumes:
   redis-data:
   mongo-data:

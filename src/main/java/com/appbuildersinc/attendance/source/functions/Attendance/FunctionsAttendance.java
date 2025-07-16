@@ -77,9 +77,10 @@ public class FunctionsAttendance {
             // Convert Date to a string like "2025-06-16"
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             String dateStr = sdf.format(date);
+            String timeStr = LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
 
             // Combine classCode + date string
-            String input = classCode + dateStr;
+            String input = classCode + dateStr + timeStr;
 
             // Hash using SHA-256
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
