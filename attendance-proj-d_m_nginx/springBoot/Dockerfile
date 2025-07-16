@@ -8,7 +8,7 @@ WORKDIR /app
 COPY target/attendance.jar app.jar
 
 # App listens on port 8443
-EXPOSE 8443
+EXPOSE 8080
 
 # Set Timezone to Asia/Kolkata
 ENV TZ=Asia/Kolkata

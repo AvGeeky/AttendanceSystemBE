@@ -66,22 +66,21 @@ public class FunctionsLogicalGrouping {
         // Build groupcode
         String electiveName = "";
         if (isElective) {
-            if (section == null || section.isEmpty()) {
-                section = String.valueOf(classCodes.getFirst());
-            }
             for (String eleccode : classCodes) {
                 electiveName += eleccode;
             }
         }
-        if (!isElective && section == null) {
-            section = "NULL"; // Default section if not provided
+
+        if (section == null || section.isEmpty()) {
+            section = "NULL";
         }
+
         String groupcode = isElective ? dept + electiveName + passout : dept + passout + section;
         Map<String, Object> oldLG = logicalGroupingDB.getLogicalGroupingByCode(groupcode);
         boolean isNew = oldLG == null;
         if (isNew){
             for (int i = 0; i < classCodes.size(); i++) {
-                classCodes.set(i, classCodes.get(i) + section);
+                classCodes.set(i, classCodes.get(i) + '-' + section + '-' + passout);
             }
         }
 
@@ -93,7 +92,7 @@ public class FunctionsLogicalGrouping {
                 for (Map<String, Object> period : periods) {
                     String code = (String) period.get("classCode");
                     if (code != null && !code.equals("_")) {
-                        period.put("classCode", code + section);
+                        period.put("classCode", code +'-'+ section + '-' + passout);
                     }
                 }
             }
@@ -200,7 +199,8 @@ public class FunctionsLogicalGrouping {
 
         // If register numbers changed, update student mappings
         if (!isNew && registerNumbersChanged) {
-            List<String> oldList = (List<String>) oldLG.get("registernumbers");
+            List<String> oldList = (List<String>) oldLG.getOrDefault("registernumbers", new ArrayList<>());
+
             List<String> newList = regNumbers;
 
             Set<String> oldSet = new HashSet<>(oldList);
