@@ -13,11 +13,20 @@ import com.appbuildersinc.attendance.source.database.MongoDB.FacultyDB;
 import com.appbuildersinc.attendance.source.functions.Class.FunctionsClass;
 import com.appbuildersinc.attendance.source.functions.LogicalGrouping.FunctionsLogicalGrouping;
 import com.appbuildersinc.attendance.source.functions.SuperAdmin.FunctionsSuperAdmin;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -60,8 +69,9 @@ public class ControllerSuperAdmin {
     private final SuperAdminDB SuperAdminDbClass;
     private final LogicalGroupingDB logicalGroupingDbClass;
     private final JsonVerifier  jsonverifier;
+    private final RedisTemplate<String, String> redisTemplate;
     @Autowired
-    public ControllerSuperAdmin(FunctionsLogicalGrouping functionsLogicalGroupingService, FunctionsSuperAdmin fsa, FunctionsClass functionsClassService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, JsonVerifier jsonverifier) {
+    public ControllerSuperAdmin(FunctionsLogicalGrouping functionsLogicalGroupingService, FunctionsSuperAdmin fsa, FunctionsClass functionsClassService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, JsonVerifier jsonverifier, RedisTemplate<String, String> redisTemplate) {
         this.functionsClassService = functionsClassService;
         this.functionsLogicalGroupingService= functionsLogicalGroupingService;
         this.functionsSuperAdminService = fsa;
@@ -74,7 +84,10 @@ public class ControllerSuperAdmin {
         this.SuperAdminDbClass=SuperAdminDbClass;
         this.logicalGroupingDbClass = logicalGroupingDbClass;
         this.jsonverifier = jsonverifier;
+        this.redisTemplate = redisTemplate;
     }
+
+
 
     @GetMapping("/test/genHash")
     public ResponseEntity<String> generateHash(@RequestParam String password) {
@@ -464,6 +477,95 @@ public class ControllerSuperAdmin {
         }
 
     }
+
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("pong");
+    }
+
+
+    @GetMapping("/SuperAdmin/health")
+    public ResponseEntity<Map<String, Object>> readiness(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) throws Exception {
+
+        Map<String, Object> claims = functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
+        String status = (String) claims.get("status");
+
+        if (!"S".equals(status)) {
+            return ResponseEntity.status(401).body(claims);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Mongo check
+            String mongoStatus;
+            String uri = System.getenv("API_KEY"); // Replace with actual env key name if needed
+            try (MongoClient mongoClient = MongoClients.create(
+                    MongoClientSettings.builder()
+                            .applyConnectionString(new ConnectionString(uri))
+                            .build())) {
+
+                // Use any existing database name; "admin" is often a safe choice
+                MongoDatabase db = mongoClient.getDatabase("admin");
+                Document result = db.runCommand(new Document("ping", 1));
+                mongoStatus = "UP";
+
+            } catch (Exception e) {
+                mongoStatus = "DOWN: " + e.getMessage();
+            }
+
+            // Redis check
+
+            String redisStatus;
+            String sampleKey = "attendance:codes:SAMPLECLASS";
+            String sampleKeyTTL;
+            try {
+                redisTemplate.opsForValue().set("healthcheck", "ok", Duration.ofSeconds(2));
+                redisStatus = "UP";
+                Long ttl = redisTemplate.getExpire(sampleKey);
+                sampleKeyTTL = (ttl != null ? ttl + "s" : "key not found");
+            } catch (Exception e) {
+                redisStatus = "DOWN: " + e.getMessage();
+                sampleKeyTTL = "N/A";
+            }
+
+            // System time
+            String serverTime = Instant.now().toString();
+
+            // Memory check
+            Runtime runtime = Runtime.getRuntime();
+            long free = runtime.freeMemory();
+            long total = runtime.totalMemory();
+            long used = total - free;
+            long max = runtime.maxMemory();
+
+            Map<String, Object> memoryStats = new HashMap<>();
+            memoryStats.put("usedMB", used / (1024 * 1024));
+            memoryStats.put("freeMB", free / (1024 * 1024));
+            memoryStats.put("totalMB", total / (1024 * 1024));
+            memoryStats.put("maxMB", max / (1024 * 1024));
+
+            // Final response
+            response.put("status", "S");
+            response.put("message", "Admin health diagnostics retrieved successfully.");
+            response.put("mongo", mongoStatus);
+            response.put("redis", redisStatus);
+            response.put("serverTime", serverTime);
+            response.put("sampleQRCodeTTL", sampleKeyTTL);
+            response.put("memory", memoryStats);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("status", "E");
+            response.put("message", "Unexpected error in admin health diagnostics: " + e.getMessage());
+            return ResponseEntity.status(503).body(response);
+        }
+    }
+
+
+
 }
 
 
