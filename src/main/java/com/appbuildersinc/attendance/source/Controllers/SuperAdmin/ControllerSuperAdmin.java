@@ -70,6 +70,7 @@ public class ControllerSuperAdmin {
     private final LogicalGroupingDB logicalGroupingDbClass;
     private final JsonVerifier  jsonverifier;
     private final RedisTemplate<String, String> redisTemplate;
+
     @Autowired
     public ControllerSuperAdmin(FunctionsLogicalGrouping functionsLogicalGroupingService, FunctionsSuperAdmin fsa, FunctionsClass functionsClassService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, JsonVerifier jsonverifier, RedisTemplate<String, String> redisTemplate) {
         this.functionsClassService = functionsClassService;
@@ -86,6 +87,7 @@ public class ControllerSuperAdmin {
         this.jsonverifier = jsonverifier;
         this.redisTemplate = redisTemplate;
     }
+
 
 
 
@@ -146,7 +148,7 @@ public class ControllerSuperAdmin {
      */
 
     @PostMapping("/SuperAdmin/addStudents")
-    public ResponseEntity<Map<String,Object>> addStudents(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody List<Map<String,String>> studlist) throws Exception {
+    public ResponseEntity<Map<String,Object>> addStudents( @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestBody List<Map<String,String>> studlist) throws Exception {
         Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
         String status=(String)claims.get("status");
         if(status.equals("S")){

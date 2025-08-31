@@ -9,7 +9,7 @@ services:
     expose:
       - "6379"
     volumes:
-      - redis-data:/data
+      - /attendsoftware/redis:/data
     restart: always
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
@@ -29,7 +29,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongo-data:/data/db
+      - /attendsoftware/mongodb:/data/db
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
@@ -69,7 +69,6 @@ services:
     depends_on:
       - app
     volumes:
-      # Mount certs
       - ./certs/attendez.ssn.net.crt:/etc/ssl/certs/attendez.ssn.net.crt:ro
       - ./certs/attendez.ssn.net.key:/etc/ssl/private/attendez.ssn.net.key:ro
     networks: [ backend ]
@@ -86,27 +85,15 @@ services:
     entrypoint: >
       sh -c "
       apt-get update && apt-get install -y cron && \
-      echo 'Starting immediate backup...' && \
-      mongodump --uri=\"mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb:27017/AttendEz?authSource=admin\" --out=/backups/mongo/dump_$(date +%F_%H-%M-%S) --gzip && \
-      find /backups/mongo -mindepth 1 -maxdepth 1 -type d -mtime +3 -exec rm -rf {} + && \
       echo '1 0 * * * root mongodump --uri=\"mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb:27017/AttendEz?authSource=admin\" --out=/backups/mongo/dump_`date +\\%F_\\%H-\\%M-\\%S` --gzip && find /backups/mongo -mindepth 1 -maxdepth 1 -type d -mtime +3 -exec rm -rf {} +' > /etc/cron.d/mongo-backup && \
       chmod 0644 /etc/cron.d/mongo-backup && \
       cron -f
       "
-
-
-
     networks:
       - backend
     depends_on:
       mongodb:
         condition: service_healthy
 
-
-
-
-volumes:
-  redis-data:
-  mongo-data:
 networks:
   backend:
