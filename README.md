@@ -1,5 +1,5 @@
 # Attendez
-# [Website (Hosted)](https://attendez.buildapp.in/)
+# [Website (Hosted locally inside SSN College)](https://attendez.ssn.net/)
 ⚠ **Currently Under Development**  
 Attendez is an early-stage project and is actively being built. While we're excited about its potential, it's **not ready for external contributions yet**.
 
