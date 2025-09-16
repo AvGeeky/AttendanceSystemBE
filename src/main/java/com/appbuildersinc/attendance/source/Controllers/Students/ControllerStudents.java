@@ -1,6 +1,7 @@
 package com.appbuildersinc.attendance.source.Controllers.Students;
 
 import com.appbuildersinc.attendance.source.Utilities.AuthenticationUtils.KeyPairUtil;
+import com.appbuildersinc.attendance.source.Utilities.Firebase.FirebaseAuthService;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.FacultyJwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.StudentjwtUtil;
 import com.appbuildersinc.attendance.source.Utilities.JWTUtils.SuperAdminjwtUtil;
@@ -16,6 +17,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.firebase.auth.FirebaseToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -60,9 +62,10 @@ public class ControllerStudents {
     private final LogicalGroupingDB logicalGroupingDbClass;
     private final JsonVerifier jsonVerifier;
     private final RedisService redisService;
+    private final FirebaseAuthService firebaseAuthService;
 
     @Autowired
-    public ControllerStudents(FunctionsStudents fsu, FunctionsClass functionsService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, JsonVerifier jsonVerifier, RedisService redisService) {
+    public ControllerStudents(FunctionsStudents fsu, FunctionsClass functionsService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, JsonVerifier jsonVerifier, RedisService redisService, FirebaseAuthService firebaseAuthService) {
         this.functionsMiscService = functionsService;
         this.functionsStudentsService = fsu;
         this.userdbclass = userdbutil;
@@ -75,6 +78,7 @@ public class ControllerStudents {
         this.logicalGroupingDbClass = logicalGroupingDbClass;
         this.jsonVerifier = jsonVerifier;
         this.redisService = redisService;
+        this.firebaseAuthService = firebaseAuthService;
     }
 
 
@@ -158,6 +162,74 @@ public class ControllerStudents {
         return ResponseEntity.ok(response); // 200
 
     }
+
+    @PostMapping("/student/firebaseAuth")
+    public ResponseEntity<Map<String, Object>> authenticateWithFirebase(@RequestBody Map<String, String> request) {
+        Map<String, Object> response = new HashMap<>();
+
+        // 1. Get ID token from request
+        String idToken = request.get("idToken");
+        if (idToken == null || idToken.isBlank()) {
+            response.put("status", "E");
+            response.put("message", "ID token not provided in request body.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        try {
+            // 2. Verify token using Firebase
+
+            FirebaseToken decodedToken = firebaseAuthService.verifyIdToken(idToken);
+
+            // 3. Get email & domain
+            String email = decodedToken.getEmail();
+            String hd = email != null && email.contains("@")
+                    ? email.substring(email.indexOf("@") + 1)
+                    : null;
+
+            // 4. Restrict to university domain
+            if (hd == null || !hd.equalsIgnoreCase("ssn.edu.in")) {
+                response.put("status", "E");
+                response.put("message", "Unauthorized domain. Please use a valid SSN institution email.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            // 5. Lookup student record from DB
+            Map<String, Object> details = studentDbClass.getStudentDetailsByEmail(email);
+            if (details == null || details.isEmpty()) {
+                response.put("status", "E");
+                response.put("message", "Student not registered. Please contact the administration.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            // 6. Build custom claims + local JWT
+            Map<String, Object> claims = studentjwtUtil.createClaims(
+                    email,
+                    true,
+                    details.get("department").toString(),
+                    details.get("registerNumber").toString()
+            );
+            String jwt = studentjwtUtil.signJwt(claims);
+
+            // 7. Return success response
+            String hmacPasscode = (String) details.get("hmacpasscode");
+            response.put("status", "S");
+            response.put("email", email);
+            response.put("name", decodedToken.getName());
+            response.put("picture", decodedToken.getPicture());
+            response.put("hmacpasscode", hmacPasscode);
+            response.put("message", "Login successful");
+            response.put("token", jwt);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            // Covers expired / invalid / malformed tokens
+            response.put("status", "E");
+            response.put("message", "Invalid or expired Firebase ID token.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+    }
+
 
 
 
