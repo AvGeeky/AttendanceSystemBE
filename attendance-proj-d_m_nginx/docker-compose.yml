@@ -43,9 +43,10 @@ services:
     networks: [backend]
 
   app:
-    build:
-      context: ./springBoot
-      dockerfile: Dockerfile
+#    build:
+#      context: ./springBoot
+#      dockerfile: Dockerfile
+    image: saip2005/attendez-app:1.0
     container_name: attendance-app-v3
     expose:
       - "8080"

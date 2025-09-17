@@ -528,19 +528,20 @@ public class FunctionsFaculty {
     }
     public boolean deletelecture(String email,String classcode,String lecnumber){
         List<String> classcodes=facultyDB.getFacultyRegisteredClasses(email);
-        if(classcodes.isEmpty()){
-
+        if(classcodes.isEmpty() || !classcodes.contains(classcode)){
             return false;
         }
         boolean info=classDB.classExists(classcode);
         if(info==false){
-
             return false;
         }
+        if (!lecnumber.startsWith("lecture.")) {
+            return false; // invalid format
+        }
         Map<String,Object> attendance=classDB.getAttendance(classcode);
-        System.out.println(lecnumber);
+        if(attendance == null || attendance.isEmpty()) return false;
+        //System.out.println(lecnumber);
         if(!attendance.containsKey(lecnumber)){
-
             return false;
         }
         else{
