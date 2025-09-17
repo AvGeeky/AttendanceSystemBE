@@ -1137,6 +1137,35 @@ public class ControllerFaculty {
         }
 
     }
+    @PostMapping("/faculty/deletelecture")
+    public ResponseEntity<Map<String,Object>> deletelecture(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody Map<String,Object> request) throws Exception {
+        Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
+        String status = (String) claims.get("status");
+        if (status.equals("S")) {
+            Map<String, Object> response = new HashMap<>();
+            Map<String,Object> jsonbody=jsonverifier.jsonbodycheck(List.of("classcode","lectureno"),request);
+            if(((String)jsonbody.get("status")).equals("E")){
+                return ResponseEntity.status(400).body(jsonbody);
+            }
+            boolean done=functionsFacultyService.deletelecture((String)claims.get("email"),(String)request.get("classcode"),(String)request.get("lectureno"));
+            if(done){
+                response.put("status", "S");
+                response.put("message", "Deleted the lecture successfully");
+                return ResponseEntity.ok(response);
+
+            }
+            else{
+                response.put("message","failed to delete the lecture");
+                return ResponseEntity.status(503).body(response);
+            }
+
+
+
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+        }
+    }
 
 
 }

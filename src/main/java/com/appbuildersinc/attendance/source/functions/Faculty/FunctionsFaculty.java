@@ -526,6 +526,48 @@ public class FunctionsFaculty {
         }
         else return 1; // Successfully deleted lecture and shifted others
     }
+    public boolean deletelecture(String email,String classcode,String lecnumber){
+        List<String> classcodes=facultyDB.getFacultyRegisteredClasses(email);
+        if(classcodes.isEmpty()){
+
+            return false;
+        }
+        boolean info=classDB.classExists(classcode);
+        if(info==false){
+
+            return false;
+        }
+        Map<String,Object> attendance=classDB.getAttendance(classcode);
+        System.out.println(lecnumber);
+        if(!attendance.containsKey(lecnumber)){
+
+            return false;
+        }
+        else{
+            int currentindex=Integer.parseInt(lecnumber.replace("lecture.",""));
+            int nextindex=currentindex+1;
+            attendance.remove(lecnumber);
+            if(attendance.get(("lecture."+nextindex))!=null){
+                TreeMap<String, Object> sortedAttendance = new TreeMap<>(
+                        Comparator.comparingInt(key -> Integer.parseInt(key.replace("lecture.", "")))
+                );
+                sortedAttendance.putAll(attendance);
+                int lastlec=Integer.parseInt((sortedAttendance.lastKey()).replace("lecture.",""));
+                for(int i=nextindex;i<=lastlec;i++){
+                    String lecture1="lecture."+i;
+                    Object value=sortedAttendance.remove(lecture1);
+                    String updatedlec="lecture."+(i-1);
+                    sortedAttendance.put(updatedlec,value);
+                }
+                return classDB.updateAttendance(classcode,sortedAttendance);
+            }
+            else{
+                return classDB.updateAttendance(classcode,attendance);
+            }
+
+        }
+
+    }
 
 
 }
