@@ -8,45 +8,29 @@ services:
     container_name: attendance-redis-v3
     expose:
       - "6379"
-    volumes:
-      - redis-data:/data
     restart: always
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+
+    # Huge performance stability improvement for Redis
+    ulimits:
+      nofile:
+        soft: 100000
+        hard: 100000
+
     healthcheck:
-      test: ["CMD", "sh", "-c", "redis-cli -a \"$REDIS_PASSWORD\" ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$REDIS_PASSWORD\" ping | grep PONG"]
       interval: 5s
       timeout: 3s
       retries: 5
       start_period: 3s
-    networks: [backend]
-
-  mongodb:
-    build:
-      context: ./mongo-setup
-      dockerfile: Dockerfile
-    container_name: attendance-mongo-v3
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-    healthcheck:
-      test: [ "CMD", "mongosh", "--username", "${MONGO_USERNAME}", "--password", "${MONGO_PASSWORD}", "--eval", "db.adminCommand('ping')" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    networks: [backend]
+    networks:
+      - backend
 
   app:
-#    build:
-#      context: ./springBoot
-#      dockerfile: Dockerfile
-    image: saip2005/attendez-app:1.0
+    image: saip2005/attendez-app:1.3
     container_name: attendance-app-v3
     expose:
       - "8080"
@@ -55,9 +39,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      mongodb:
-        condition: service_healthy
-    networks: [backend]
+    restart: always
+    networks:
+      - backend
 
   nginx:
     build:
@@ -65,10 +49,12 @@ services:
       dockerfile: Dockerfile
     container_name: attendance-nginx-v3
     ports:
-      - "80:80"   # Maps port 80 of the host to port 80 of the nginx container for HTTP traffic
+      - "80:80"
     depends_on:
       - app
-    networks: [backend]
+    restart: always
+    networks:
+      - backend
 
   cloudflared:
     build:
@@ -81,10 +67,57 @@ services:
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARED_TUNNEL_KEY}
     command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TUNNEL_KEY}
-    networks: [ backend ]
+    networks:
+      - backend
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus-attx
+    user: root
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana-attx
+    ports:
+      - "3000:3000"
+    restart: always
+    user: root
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASS}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - backend
+
+  redis-exporter:
+    image: oliver006/redis_exporter
+    container_name: redis-exporter-attx
+    restart: always
+    environment:
+      REDIS_ADDR: redis://attendance-redis-v3:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
 
 volumes:
   redis-data:
-  mongo-data:
+  prometheus-data:
+  grafana-data:
+
 networks:
   backend:
+    driver: bridge

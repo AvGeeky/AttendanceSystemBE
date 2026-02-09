@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "spring-boot"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["attendance-app-v3:8080"]
+
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis-exporter-attx:9121"]
