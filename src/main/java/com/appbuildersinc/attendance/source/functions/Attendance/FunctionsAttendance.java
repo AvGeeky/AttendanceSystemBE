@@ -71,33 +71,6 @@ public class FunctionsAttendance {
         return facultyEmail != null && facultyEmail.equalsIgnoreCase(email);
     }
 
-    public String calculateDistance(String lat1, String lon1, String lat2, String lon2) {
-        final double EARTH_RADIUS_METERS = 6371000.0;
-
-        try {
-            double startLat = Double.parseDouble(lat1);
-            double startLon = Double.parseDouble(lon1);
-            double endLat = Double.parseDouble(lat2);
-            double endLon = Double.parseDouble(lon2);
-
-            double dLat = Math.toRadians(endLat - startLat);
-            double dLon = Math.toRadians(endLon - startLon);
-
-            double a = Math.pow(Math.sin(dLat / 2), 2)
-                    + Math.cos(Math.toRadians(startLat))
-                    * Math.cos(Math.toRadians(endLat))
-                    * Math.pow(Math.sin(dLon / 2), 2);
-
-            double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-            double distance = EARTH_RADIUS_METERS * c;
-
-            return String.format("%.2f", distance); // distance in meters as String
-
-        } catch (NumberFormatException e) {
-            return "Invalid coordinates";
-        }
-    }
 
     public String generateSubstitutionCode(String classCode, Date date) throws NoSuchAlgorithmException {
 
@@ -216,7 +189,6 @@ public class FunctionsAttendance {
         redisService.deleteStudentHMACMappings(classCode);
         redisService.deleteStudentNamesForClass(classCode);
         redisService.deleteActiveClassCodes(classCode);
-        redisService.deleteClassLocationData(classCode);
         boolean passcodeEvent = redisService.deleteActiveSingleClassCode(classCode);
         if (passcodeEvent){
             redisService.deleteClassCodePasscodeMapping(classCode);
@@ -229,12 +201,10 @@ public class FunctionsAttendance {
                 redisService.getVerifiedStudents(classCode)
         );
         classdb.addAttendanceRecord(classCode,lectureRecord);
-
         redisService.deleteVerifiedStudents(classCode);
         redisService.deleteStudentHMACMappings(classCode);
         redisService.deleteStudentNamesForClass(classCode);
         redisService.deleteActiveClassCodes(classCode);
-        redisService.deleteClassLocationData(classCode);
         boolean passcodeEvent = redisService.deleteActiveSingleClassCode(classCode);
         if (passcodeEvent){
             redisService.deleteClassCodePasscodeMapping(classCode);

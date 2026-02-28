@@ -28,7 +28,13 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-
+import com.appbuildersinc.attendance.source.functions.TimetableParser.FunctionsTimeTableParser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 /**
  * <b>Standard HTTP Error Response Codes:</b>
  * <ul>
@@ -70,9 +76,10 @@ public class ControllerSuperAdmin {
     private final LogicalGroupingDB logicalGroupingDbClass;
     private final JsonVerifier  jsonverifier;
     private final RedisTemplate<String, String> redisTemplate;
+    private final FunctionsTimeTableParser timetableparser;
 
     @Autowired
-    public ControllerSuperAdmin(FunctionsLogicalGrouping functionsLogicalGroupingService, FunctionsSuperAdmin fsa, FunctionsClass functionsClassService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, JsonVerifier jsonverifier, RedisTemplate<String, String> redisTemplate) {
+    public ControllerSuperAdmin(FunctionsLogicalGrouping functionsLogicalGroupingService, FunctionsSuperAdmin fsa, FunctionsClass functionsClassService, FacultyDB userdbutil, FacultyJwtUtil jwtutil, KeyPairUtil keyutil, StudentjwtUtil stdjwtutil, StudentDB studdb, SuperAdminjwtUtil adminutil, SuperAdminDB SuperAdminDbClass, LogicalGroupingDB logicalGroupingDbClass, JsonVerifier jsonverifier, RedisTemplate<String, String> redisTemplate, FunctionsTimeTableParser timetableparser) {
         this.functionsClassService = functionsClassService;
         this.functionsLogicalGroupingService= functionsLogicalGroupingService;
         this.functionsSuperAdminService = fsa;
@@ -86,6 +93,7 @@ public class ControllerSuperAdmin {
         this.logicalGroupingDbClass = logicalGroupingDbClass;
         this.jsonverifier = jsonverifier;
         this.redisTemplate = redisTemplate;
+        this.timetableparser = timetableparser;
     }
 
 
@@ -565,7 +573,31 @@ public class ControllerSuperAdmin {
             return ResponseEntity.status(503).body(response);
         }
     }
+    @PostMapping("/SuperAdmin/TimeTableParser")
+    public ResponseEntity<Map<String,Object>>   timetableParser(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,@RequestParam("file") MultipartFile file)throws Exception{
+        Map<String,Object> claims=functionsSuperAdminService.checkJwtAuthAfterLoginAdmin(authorizationHeader);
+        String status=(String)claims.get("status");
+        if(status.equals("S")){
+            Map<String,Object> response=new HashMap<>();
+             Map<String, List<Map<String, String>>> result=timetableparser.extractTimetableFromPdf(file.getInputStream());
+             if(result!=null){
+                 response.put("status","S");
+                 response.put("result",result);
+                 response.put("message","Converted to json succesfully");
+                 return ResponseEntity.ok(response);
+             }
+             else{
+                 response.put("status","E");
+                 response.put("message","Not converted to json successfully");
+                 return ResponseEntity.status(503).body(response);
+             }
+        }
+        else{
+            return ResponseEntity.status(401).body(claims);
+        }
 
+
+    }
 
 
 }
