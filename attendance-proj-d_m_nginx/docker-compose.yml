@@ -30,7 +30,7 @@ services:
       - backend
 
   app:
-    image: saip2005/attendez-app:1.3
+    image: saip2005/attendez-app:1.4
     container_name: attendance-app-v3
     expose:
       - "8080"
@@ -43,6 +43,18 @@ services:
     networks:
       - backend
 
+  fastapi-app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: attendance-fastapi-v1
+    expose:
+      - "8000"
+    env_file:
+      - ./backend/.env
+    restart: always
+    networks:
+      - backend
   nginx:
     build:
       context: ./nginx
@@ -52,6 +64,7 @@ services:
       - "80:80"
     depends_on:
       - app
+      - fastapi-app
     restart: always
     networks:
       - backend
@@ -112,6 +125,8 @@ services:
         condition: service_healthy
     networks:
       - backend
+
+
 
 volumes:
   redis-data:

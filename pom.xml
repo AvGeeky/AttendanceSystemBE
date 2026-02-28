@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.appbuildersinc</groupId>
 	<artifactId>attendance</artifactId>
-	<version>1.3</version>
+	<version>1.5</version>
 	<name>Smart Attendance Project</name>
 	<description>Attendance application with smart anti-proxy features and add ons</description>
 	<url/>

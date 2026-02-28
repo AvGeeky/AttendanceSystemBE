@@ -162,6 +162,7 @@ public class RedisService {
 
     }
 
+
     public Set<String> getVerifiedStudents(String classId) {
         String markedKey = "attendance:marked:" + classId;
 
@@ -299,6 +300,59 @@ public class RedisService {
         if (redisTemplate.getExpire(redisKey) == -1) {
             redisTemplate.expire(redisKey, Duration.ofHours(1));
         }
+
+    }
+
+
+    public void storeTeacherLatLong(String lat, String longitude, String classCode) {
+        String redisKey = "attendance:gpsTeacher:" + classCode;
+
+        // Store latitude and longitude as separate fields in a hash
+        Map<String, String> coordinates = new HashMap<>();
+        coordinates.put("lat", lat);
+        coordinates.put("long", longitude);
+
+        redisTemplate.opsForHash().putAll(redisKey, coordinates);
+
+        // Set TTL of 2 minutes
+        redisTemplate.expire(redisKey, Duration.ofMinutes(2));
+    }
+
+    public Map<String, String> getTeacherLatLong(String classCode) {
+        String redisKey = "attendance:gpsTeacher:" + classCode;
+
+        Map<Object, Object> rawMap = redisTemplate.opsForHash().entries(redisKey);
+        if (rawMap == null || rawMap.isEmpty()) {
+            Map<String, String> emptyCoordinates = new HashMap<>();
+            emptyCoordinates.put("lat", null);
+            emptyCoordinates.put("long", null);
+            return emptyCoordinates;
+        }
+
+        Map<String, String> coordinates = new HashMap<>();
+        coordinates.put("lat", rawMap.get("lat") != null ? rawMap.get("lat").toString() : null);
+        coordinates.put("long", rawMap.get("long") != null ? rawMap.get("long").toString() : null);
+
+        return coordinates;
+    }
+    public void addComputedStudentDistance(String classId, String registerNumber, String distance) {
+
+        String classKey = "attendance:distances:" + classId;
+
+        redisTemplate.opsForHash().put(classKey, registerNumber, distance);
+    }
+
+    public Map<Object, Object> getAllDistancesForClass(String classId) {
+
+        return redisTemplate.opsForHash().entries("attendance:distances:" + classId);
+    }
+
+    public void deleteClassLocationData(String classCode) {
+
+        String teacherKey = "attendance:gpsTeacher:" + classCode;
+        String studentsKey = "attendance:distances:" + classCode;
+
+        redisTemplate.delete(Arrays.asList(teacherKey, studentsKey));
 
     }
 

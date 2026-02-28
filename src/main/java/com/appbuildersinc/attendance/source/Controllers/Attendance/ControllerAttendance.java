@@ -44,7 +44,7 @@ import java.util.*;
  *       <b>Input:</b> JWT in header, classCode, optional subCode. <br>
  *       <b>Output:</b> List of QR codes or error/status.
  *   </li>
- *   <li><b>/student/qr/sendCode</b> (POST): Student submits scanned QR code and digest for attendance. <br>
+ *   <li><b>/student/qr/Code</b> (POST): Student submits scanned QR code and digest for attendance. <br>
  *       <b>Input:</b> JWT in header, digest, qrCode. <br>
  *       <b>Output:</b> Attendance verification status.
  *   </li>
@@ -209,7 +209,9 @@ public class ControllerAttendance {
     public ResponseEntity<Map<String,Object>> generateQRCode(@RequestHeader(HttpHeaders.AUTHORIZATION)
                                                                String authorizationHeader,
                                                                @RequestParam(required = false) String subCode,
-                                                               @RequestParam String classCode) throws Exception {
+                                                               @RequestParam String classCode,
+                                                               @RequestParam(required= false) String latitude,
+                                                             @RequestParam(required= false) String longitude) throws Exception {
         Map<String, Object> claims = functionsFacultyService.checkJwtAuthAfterLoginFaculty(authorizationHeader);
         //Check if the JWT is valid
         String status = (String) claims.get("status");
@@ -232,6 +234,12 @@ public class ControllerAttendance {
                 response.put("message", "Existing attendance tracking has been closed. New QR codes generated and synced.");
                 List<String> codesForQr = functionsAttendanceService.initialiseQRAttendanceAndReturnCodes(classCode);
                 response.put("codes", codesForQr);
+
+                if (latitude == null || longitude == null || latitude.isEmpty() || longitude.isEmpty()) {
+                    redisService.storeQRAttendanceCodesWithWindow(classCode, codesForQr);
+                    return ResponseEntity.ok(response);
+                }
+                redisService.storeTeacherLatLong(latitude,longitude,classCode);
                 redisService.storeQRAttendanceCodesWithWindow(classCode, codesForQr);
                 return ResponseEntity.ok(response);
             }
@@ -242,7 +250,13 @@ public class ControllerAttendance {
             response.put("message", "QR codes generated and synced successfully.");
             response.put("codes", codesForQr);
 
+            if (latitude == null || longitude == null || latitude.isEmpty() || longitude.isEmpty()) {
+                redisService.storeQRAttendanceCodesWithWindow(classCode, codesForQr);
+                return ResponseEntity.ok(response);
+            }
+            redisService.storeTeacherLatLong(latitude,longitude,classCode);
             redisService.storeQRAttendanceCodesWithWindow(classCode, codesForQr);
+
 
             return ResponseEntity.ok(response);
 
@@ -261,40 +275,104 @@ public class ControllerAttendance {
      * @return ResponseEntity with status and message
      * @throws Exception if any error occurs
      */
+//    @PostMapping("/student/qr/sendCode")
+//    public ResponseEntity<Map<String,Object>> sendCode(@RequestHeader(HttpHeaders.AUTHORIZATION)
+//                                                             String authorizationHeader,
+//                                                             @RequestParam String digest,
+//                                                             @RequestParam String qrCode
+//                                                       ) throws Exception {
+//        Map<String, Object> claims = functionsStudentsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
+//        //Check if the JWT is valid
+//        String status = (String) claims.get("status");
+//        if (status.equals("S")) {
+//            //JWT is valid, proceed with business logic
+//            String registerNumber = claims.get("registerNumber").toString();
+//            Map<String, Object> response = new HashMap<>();
+//            String classCode = functionsAttendanceService.extractClassCode(qrCode);
+//            if (!redisService.isQRAttendanceCodeValid(classCode,qrCode)) {
+//                response.put("status", "E");
+//                response.put("message", "Invalid QR code or class code.");
+//                return ResponseEntity.status(404).body(response);
+//            }
+//            if (!functionsAttendanceService.verifyDigest(qrCode,
+//                                                        digest,
+//                                                        redisService.getHmacKey(classCode, registerNumber))){
+//                response.put("status", "E");
+//                response.put("message", "HMAC verification failed. Invalid passcode.");
+//                return ResponseEntity.status(403).body(response);
+//            }
+//            redisService.markStudentVerified(classCode,registerNumber);
+//            redisService.bumpVersionDebounced(classCode);
+//            response.put("status", "S");
+//            response.put("message", "Attendance verified and marked for class-"+classCode);
+//            return ResponseEntity.ok(response);
+//
+//        } else {
+//            //JWT is invalid, return error response
+//            return ResponseEntity.status(401).body(claims);
+//        }
+//    }
     @PostMapping("/student/qr/sendCode")
     public ResponseEntity<Map<String,Object>> sendCode(@RequestHeader(HttpHeaders.AUTHORIZATION)
-                                                             String authorizationHeader,
-                                                             @RequestParam String digest,
-                                                             @RequestParam String qrCode
-                                                       ) throws Exception {
+                                                       String authorizationHeader,
+                                                       @RequestParam String digest,
+                                                       @RequestParam String qrCode,
+                                                       @RequestParam(required = false) String userlat,
+                                                       @RequestParam(required = false) String userlongi
+    ) throws Exception {
+
+
+
         Map<String, Object> claims = functionsStudentsService.checkJwtAuthAfterLoginStudent(authorizationHeader);
-        //Check if the JWT is valid
         String status = (String) claims.get("status");
-        if (status.equals("S")) {
-            //JWT is valid, proceed with business logic
+
+        if ("S".equals(status)) { // Use constant on LHS to avoid NullPointerException
             String registerNumber = claims.get("registerNumber").toString();
             Map<String, Object> response = new HashMap<>();
+
+            // 2. Safe Extraction
+
             String classCode = functionsAttendanceService.extractClassCode(qrCode);
-            if (!redisService.isQRAttendanceCodeValid(classCode,qrCode)) {
+
+            // Validate classCode existence before using it for Key Retrieval
+            if (!redisService.isQRAttendanceCodeValid(classCode, qrCode)) {
                 response.put("status", "E");
                 response.put("message", "Invalid QR code or class code.");
                 return ResponseEntity.status(404).body(response);
             }
-            if (!functionsAttendanceService.verifyDigest(qrCode,
-                                                        digest,
-                                                        redisService.getHmacKey(classCode, registerNumber))){
+
+            // 3. Cryptographic Operation
+
+            boolean isVerified = functionsAttendanceService.verifyDigest(
+                    qrCode,
+                    digest,
+                    redisService.getHmacKey(classCode, registerNumber) // Key retrieval is now guarded by valid classCode
+            );
+
+            if (!isVerified){
                 response.put("status", "E");
                 response.put("message", "HMAC verification failed. Invalid passcode.");
                 return ResponseEntity.status(403).body(response);
             }
-            redisService.markStudentVerified(classCode,registerNumber);
+
+            redisService.markStudentVerified(classCode, registerNumber);
+
             redisService.bumpVersionDebounced(classCode);
+            Map<String,String> teacherLatLong = redisService.getTeacherLatLong(classCode);
+
+            if (userlat == null || userlongi == null || userlat.isEmpty() || userlongi.isEmpty() || teacherLatLong.get("lat") == null || teacherLatLong.get("long") == null) {
+                response.put("status", "S");
+                response.put("message", "Attendance verified and marked for class-" + classCode);
+                return ResponseEntity.ok(response);
+            }
+
+            String dist = functionsAttendanceService.calculateDistance( userlat,  userlongi, teacherLatLong.get("lat"),  teacherLatLong.get("long"));
+            redisService.addComputedStudentDistance(classCode, registerNumber, dist);
             response.put("status", "S");
-            response.put("message", "Attendance verified and marked for class-"+classCode);
+            response.put("message", "Attendance verified and marked for class-" + classCode);
             return ResponseEntity.ok(response);
 
         } else {
-            //JWT is invalid, return error response
             return ResponseEntity.status(401).body(claims);
         }
     }
@@ -444,10 +522,12 @@ public class ControllerAttendance {
             long getVerifiedCount = redisService.getVerifiedStudentCount(classCode);
             Map<String, Object> nameDetails = redisService.getStudentNameFromRedis(classCode,
                                                                         redisService.getVerifiedStudents(classCode));
+            Map<Object,Object> distances = redisService.getAllDistancesForClass(classCode);
             response.put("status", "S");
             response.put("version", currentVersion);
             response.put("verifiedCount", getVerifiedCount);
             response.put("attendanceRecord", nameDetails);
+            response.put("distances", distances);
             response.put("message", "Live attendance data fetched successfully.");
             return ResponseEntity.ok(response);
         } else {
