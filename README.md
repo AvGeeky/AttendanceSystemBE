@@ -4,8 +4,6 @@ Attendez is a Spring Boot backend for managing academic attendance, timetables, 
 
 The backend is currently under active development and is deployed for the SSN College environment at [attendez.ssn.net](https://attendez.ssn.net/). APIs and database models may change as the application evolves.
 
-> **Repository status:** This repository is intended for internal development at present. Do not commit credentials, private keys, Firebase service-account data, certificates, or production connection strings.
-
 ## Features
 
 - Student authentication through:
@@ -48,31 +46,60 @@ The backend is currently under active development and is deployed for the SSN Co
 
 ## Architecture
 
-The application follows a controller, function/service, and database-access organization:
+The application follows a controller, function/service, and database-access organization.
 
-```text
-HTTP request
-    |
-    v
-Controllers/
-    |-- Students
-    |-- Faculty
-    |-- Attendance
-    `-- SuperAdmin
-    |
-    v
-functions/
-    |-- Students
-    |-- Faculty
-    |-- Attendance
-    |-- Class
-    |-- LogicalGrouping
-    |-- SuperAdmin
-    `-- TimetableParser
-    |
-    +--> database/MongoDB
-    +--> database/redis
-    +--> JWT, Firebase, email, and encryption utilities
+```mermaid
+flowchart TD
+    Client[Web or mobile client] --> Gateway[Nginx / API gateway]
+    Gateway --> Controllers[Spring REST controllers]
+    Controllers --> Student[Student controller]
+    Controllers --> Faculty[Faculty controller]
+    Controllers --> Attendance[Attendance controller]
+    Controllers --> Admin[Super-admin controller]
+    Student --> Functions[Business functions]
+    Faculty --> Functions
+    Attendance --> Functions
+    Admin --> Functions
+    Functions --> Mongo[(MongoDB)]
+    Functions --> Redis[(Redis)]
+    Functions --> Auth[JWT and identity utilities]
+    Functions --> External[Firebase, Google, email, and Gmail APIs]
+    Controllers --> Actuator[Spring Boot Actuator]
+    Actuator --> Metrics[Prometheus]
+```
+
+### Request and authentication flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant API as Spring Boot API
+    participant Auth as JWT/Firebase/Google utilities
+    participant R as Redis
+    participant DB as MongoDB
+    C->>API: Send request with credentials
+    API->>Auth: Validate token or application JWT
+    Auth-->>API: Identity and role claims
+    API->>R: Read short-lived OTP/code state
+    API->>DB: Read or update attendance data
+    DB-->>API: Persistent data
+    R-->>API: Ephemeral state
+    API-->>C: status S/E and response payload
+```
+
+### Deployment topology
+
+```mermaid
+flowchart LR
+    Internet[Clients] --> TLS[Nginx with TLS]
+    TLS --> App[Attendez Spring Boot app]
+    App --> Mongo[(MongoDB)]
+    App --> Redis[(Redis)]
+    Backup[Mongo backup service] --> Mongo
+    Backup --> Storage[(Compressed backup volume)]
+    App --> Prometheus[Prometheus metrics]
+    Prometheus --> Grafana[Grafana dashboards]
 ```
 
 The main application class is `com.appbuildersinc.attendance.SmartAttendanceProjectApplication`. It enables asynchronous execution with Spring's `@EnableAsync`.
@@ -94,18 +121,6 @@ Common HTTP statuses include:
 - `503 Service Unavailable` when a dependent service or operation cannot be completed
 
 The exact response body depends on the endpoint. Use the controller implementation or generated OpenAPI documentation as the source of truth for request and response fields.
-
-## Requirements
-
-For local development, install:
-
-- JDK 21
-- Git
-- Docker and Docker Compose, if running MongoDB and Redis through containers
-- A MongoDB instance
-- A Redis instance
-
-The Maven Wrapper is included, so Maven does not need to be installed separately.
 
 ## Configuration
 
@@ -163,94 +178,6 @@ GOOGLE_CLIENT_ID=replace-with-google-client-id
 ```
 
 Do not use production secrets in a local checkout. The Firebase private key must be supplied in the format expected by `FirebaseConfig`; never commit it to source control.
-
-## Running locally
-
-### 1. Start dependencies
-
-Start MongoDB and Redis using local installations or the development Compose definition:
-
-```bash
-docker compose -f redis-setup_dev/docker-compose.yml up -d
-```
-
-If MongoDB is not already available locally, start a MongoDB container separately or use the MongoDB service from `attendance-final_docker/docker-compose.yml`.
-
-### 2. Configure the environment
-
-Export the variables in the configuration section, or load an untracked `.env` file in the environment used to launch the application.
-
-### 3. Start the application
-
-Linux/macOS:
-
-```bash
-./mvnw spring-boot:run
-```
-
-Windows:
-
-```bat
-mvnw.cmd spring-boot:run
-```
-
-The application listens on `0.0.0.0:8080` by default.
-
-### 4. Build and run the packaged application
-
-```bash
-./mvnw clean package
-java -jar target/attendance-1.5.jar
-```
-
-The exact artifact name is controlled by Maven and may change with the project version. To list generated artifacts:
-
-```bash
-ls target/*.jar
-```
-
-## Docker deployment
-
-The repository contains more than one Compose definition for different deployment stages.
-
-### Full deployment
-
-`attendance-final_docker/docker-compose.yml` defines the production-style stack:
-
-- `redis`
-- `mongodb`
-- `app`
-- `nginx`
-- `mongo-backup`
-
-The application image is built from `attendance-final_docker/springBoot/Dockerfile` and expects a compiled JAR at `target/attendance.jar` in that Docker build context. The Nginx service terminates HTTPS, proxies `/api/` requests to the Spring Boot application, and mounts TLS certificates from the Compose host.
-
-Before starting this stack:
-
-1. Provide an `.env` file beside the Compose file.
-2. Provide the certificate files expected by the Nginx volume mounts.
-3. Ensure MongoDB and Redis credentials are not committed.
-4. Build the application artifact and place or copy it where the Dockerfile expects it.
-
-Start the stack with:
-
-```bash
-cd attendance-final_docker
-docker compose up -d --build
-```
-
-Inspect service status and logs with:
-
-```bash
-docker compose ps
-docker compose logs -f app
-```
-
-The backup service performs an immediate compressed MongoDB dump and schedules daily backups, retaining backups newer than three days. Verify backup files and retention behavior in the deployment environment before relying on them for disaster recovery.
-
-### Monitoring-oriented deployment
-
-`attendance-proj-d_m_nginx/docker-compose.yml` is an alternate deployment definition containing Redis, the application, Nginx, Cloudflare Tunnel, Prometheus, Grafana, and a Redis exporter. It references an older application image and additional services, so treat it as environment-specific rather than as the canonical local-development stack.
 
 ## API overview
 
@@ -389,22 +316,6 @@ Health details are disabled by default. Prometheus scraping is enabled and HTTP 
 └── redis-setup_dev                  # Redis development Compose setup
 ```
 
-## Testing
-
-Run the test suite with:
-
-```bash
-./mvnw test
-```
-
-The current test suite includes a Spring application-context test. Integration tests that require MongoDB, Redis, email, Firebase, or Google credentials should provide isolated test configuration and test-only credentials rather than using production services.
-
-Before opening a change, also build the application:
-
-```bash
-./mvnw clean verify
-```
-
 ## Security and operations
 
 - Store secrets in a secret manager or deployment environment, not in Git.
@@ -417,17 +328,3 @@ Before opening a change, also build the application:
 - Monitor `/actuator/prometheus` through an internal monitoring network rather than exposing it directly to the public internet.
 - Test MongoDB restore procedures, not only backup creation.
 - Review TTL values for OTPs, QR codes, passcodes, and Redis keys when changing attendance behavior.
-
-## Development workflow
-
-1. Create a feature branch.
-2. Configure local MongoDB, Redis, and required environment variables.
-3. Run `./mvnw test`.
-4. Implement the smallest cohesive change.
-5. Run `./mvnw clean verify`.
-6. Review endpoint authorization and sensitive-data handling.
-7. Keep deployment files and application configuration synchronized when changing ports, service names, or environment variables.
-
-## License and contribution status
-
-This project is currently maintained as an internal, closed-development codebase. No open-source license or public contribution process is provided at this time. Treat all source code and operational configuration as private unless the project owners explicitly authorize reuse or contribution.
